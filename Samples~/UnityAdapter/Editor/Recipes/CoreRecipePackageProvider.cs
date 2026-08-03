@@ -15,8 +15,10 @@ namespace VirtualLab.Unity.Authoring.Recipes
 
         public RecipePackage Load()
         {
+            // Sample 导入后当前程序集位于 Assets，必须借助核心程序集定位引擎包源目录。
             var packageInfo = PackageInfo.FindForAssembly(
-                typeof(CoreRecipePackageProvider).Assembly);
+                typeof(VirtualLab.Application.Courses.CoreSemanticActionIds)
+                    .Assembly);
             if (packageInfo == null)
             {
                 throw new InvalidOperationException(
@@ -28,8 +30,9 @@ namespace VirtualLab.Unity.Authoring.Recipes
                 RecipeLayer.Platform,
                 Path.Combine(
                     packageInfo.resolvedPath,
+                    "Samples~",
+                    "UnityAdapter",
                     "Editor",
-                    "Authoring",
                     "Recipes",
                     "平台通用"));
         }

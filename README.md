@@ -21,9 +21,8 @@
 - `Runtime/Domain`：实验世界、物质库存、对象关系和持续过程；
 - `Runtime/Application`：命令裁决、配置课程、目标、评分、提示和事件流；
 - `Runtime/Presentation`：与 Unity 无关的表现规则和效果命令；
-- `Runtime/UnityAdapters`：输入、场景对象、空间事实和表现执行适配器；
-- `Editor/Authoring`：中文配置读取、规范化、校验、生成和课程工作台；
-- `Tests`：引擎核心行为、错误路径和 Unity 适配测试；
+- `Tests`：不依赖 Unity 适配器的引擎核心行为与错误路径测试；
+- `Samples~/UnityAdapter`：Unity 输入、场景、资源、表现、课程创作工具及对应测试；
 - `Samples~/Chemistry`：可复用的化学领域能力，不包含具体课程；
 - `Samples~/OxygenCourse`：独立的“氧气的实验室制取与性质”完整课程。
 
@@ -35,8 +34,9 @@
 https://github.com/joe1yu/com.virtuallab.engine.git
 ```
 
-项目最低支持 Unity `2021.3`。需要运行氧气课程时，应先导入“化学实验” Sample，
-再导入“氧气的实验室制取与性质” Sample。
+项目最低支持 Unity `2021.3`。核心引擎可以单独使用。需要 Unity 交互时先导入
+“Unity 适配器” Sample；需要运行氧气课程时，再依次导入“化学实验”和
+“氧气的实验室制取与性质” Sample。
 
 ## 扩展实验
 

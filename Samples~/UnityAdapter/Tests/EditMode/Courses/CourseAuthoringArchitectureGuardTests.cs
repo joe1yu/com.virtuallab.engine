@@ -140,7 +140,7 @@ namespace VirtualLab.Engine.Tests.Courses
         {
             var recipeRoot = Path.Combine(
                 ProjectRoot,
-                "Packages/com.virtuallab.engine/Editor/Authoring/Recipes");
+                "Packages/com.virtuallab.engine/Samples~/UnityAdapter/Editor/Recipes");
             var templateUsages = FindText(recipeRoot, "${", "*.cs", "*.csv");
             var actions = File.ReadAllText(Path.Combine(
                 recipeRoot,
@@ -190,7 +190,7 @@ namespace VirtualLab.Engine.Tests.Courses
                     "Packages/com.virtuallab.engine/Samples~/OxygenCourse/Courses"),
                 Path.Combine(
                     ProjectRoot,
-                    "Packages/com.virtuallab.engine/Editor/Authoring"),
+                    "Packages/com.virtuallab.engine/Samples~/UnityAdapter/Editor"),
                 Path.Combine(
                     ProjectRoot,
                     "Packages/com.virtuallab.engine/Samples~/Chemistry/Editor/Authoring")
