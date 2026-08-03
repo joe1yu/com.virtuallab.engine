@@ -91,6 +91,68 @@ namespace VirtualLab.Engine.Tests.Courses
         }
 
         [Test]
+        public void 课程资产将领域表现和文本产物收敛为单一压缩载荷()
+        {
+            var domainJson = "{\"内容\":\"" + new string('中', 20000) + "\"}";
+            var presentationJson =
+                "{\"表现\":\"" + new string('现', 10000) + "\"}";
+            var artifactContent = new string('产', 5000);
+            var asset = ScriptableObject.CreateInstance<CompiledCourseAsset>();
+            asset.SetData(
+                "压缩课程",
+                domainJson,
+                presentationJson,
+                Array.Empty<CourseResourceBinding>(),
+                new[]
+                {
+                    new CourseTextArtifactBinding("学科产物", artifactContent)
+                },
+                null);
+            AssetDatabase.CreateAsset(asset, AssetPath);
+            AssetDatabase.SaveAssets();
+
+            var serialized = File.ReadAllText(AssetPath);
+            var uncompressedBytes = System.Text.Encoding.UTF8.GetByteCount(
+                domainJson + presentationJson + artifactContent);
+            Assert.That(serialized, Does.Contain("compiledPayload:"));
+            Assert.That(serialized, Does.Not.Contain("domainJson:"));
+            Assert.That(serialized, Does.Not.Contain("presentationJson:"));
+            Assert.That(serialized, Does.Not.Contain("textArtifacts:"));
+            Assert.That(
+                new FileInfo(AssetPath).Length,
+                Is.LessThan(uncompressedBytes / 2),
+                "重复度高的课程配置应显著小于未压缩内容。");
+            Assert.That(asset.DomainJson, Is.EqualTo(domainJson));
+            Assert.That(asset.PresentationJson, Is.EqualTo(presentationJson));
+            Assert.That(
+                asset.RequireTextArtifact("学科产物"),
+                Is.EqualTo(artifactContent));
+        }
+
+        [Test]
+        public void 课程资产载荷损坏时要求重新生成而不是静默读取错误数据()
+        {
+            var asset = ScriptableObject.CreateInstance<CompiledCourseAsset>();
+            asset.SetData(
+                "损坏载荷课程",
+                "{}",
+                "{}",
+                Array.Empty<CourseResourceBinding>(),
+                null);
+            var serialized = new SerializedObject(asset);
+            serialized.FindProperty("compiledPayload").stringValue =
+                "不是有效的压缩载荷";
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+
+            Assert.That(
+                () => _ = asset.DomainJson,
+                Throws.TypeOf<InvalidOperationException>()
+                    .With.Message.Contains("重新生成课程资产"));
+
+            UnityEngine.Object.DestroyImmediate(asset);
+        }
+
+        [Test]
         public void 固定路径重复生成保留GUID并删除失效绑定()
         {
             var generator = new CourseAssetGenerator();

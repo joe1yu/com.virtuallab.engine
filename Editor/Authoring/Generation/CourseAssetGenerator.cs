@@ -172,9 +172,12 @@ namespace VirtualLab.Unity.Authoring.Generation
                 compilation.Presentation);
             var previousAsset = AssetDatabase.LoadAssetAtPath<
                 CompiledCourseAsset>(assetPath);
-            var previousAssetState = previousAsset == null
-                ? null
-                : new AssetState(previousAsset);
+            // 旧字段资产不参与兼容读取，下一次生成直接用当前载荷覆盖；
+            // 仍复用原 ScriptableObject，确保场景中的 GUID 引用不发生变化。
+            var previousAssetState = previousAsset?.HasCompiledPayload == true
+                ? new AssetState(previousAsset)
+                : null;
+            var deleteAssetWhenRollback = previousAsset == null;
             var previousFiles = artifacts.ToDictionary(
                 value => value.FileName,
                 value =>
@@ -226,6 +229,7 @@ namespace VirtualLab.Unity.Authoring.Generation
                 var rollbackError = TryRollback(
                     assetPath,
                     previousAssetState,
+                    deleteAssetWhenRollback,
                     generatedPath,
                     previousFiles);
                 diagnostics = new[]
@@ -503,11 +507,16 @@ namespace VirtualLab.Unity.Authoring.Generation
 
         private static void RestoreAsset(
             string assetPath,
-            AssetState previous)
+            AssetState previous,
+            bool deleteAssetWhenMissing)
         {
             if (previous == null)
             {
-                AssetDatabase.DeleteAsset(assetPath);
+                if (deleteAssetWhenMissing)
+                {
+                    AssetDatabase.DeleteAsset(assetPath);
+                }
+
                 return;
             }
 
@@ -549,12 +558,16 @@ namespace VirtualLab.Unity.Authoring.Generation
         private static string TryRollback(
             string assetPath,
             AssetState previousAsset,
+            bool deleteAssetWhenMissing,
             string generatedPath,
             IReadOnlyDictionary<string, byte[]> previousFiles)
         {
             try
             {
-                RestoreAsset(assetPath, previousAsset);
+                RestoreAsset(
+                    assetPath,
+                    previousAsset,
+                    deleteAssetWhenMissing);
                 RestoreArtifactFiles(generatedPath, previousFiles);
                 AssetDatabase.Refresh();
                 return string.Empty;
