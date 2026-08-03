@@ -1,0 +1,16 @@
+{
+  "name": "VirtualLab.OxygenCourse.PlayModeTests",
+  "rootNamespace": "VirtualLab.OxygenCourse.Tests",
+  "references": [
+    "VirtualLab.Kernel",
+    "VirtualLab.Domain",
+    "VirtualLab.Application",
+    "VirtualLab.Presentation",
+    "VirtualLab.UnityAdapters",
+    "VirtualLab.Chemistry",
+    "VirtualLab.Chemistry.UnityAdapters"
+  ],
+  "optionalUnityReferences": [
+    "TestAssemblies"
+  ]
+}

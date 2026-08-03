@@ -9,6 +9,11 @@
       "displayName": "化学实验",
       "description": "提供可复用的化学能力、反应、过程、配方和知识。",
       "path": "Samples~/Chemistry"
+    },
+    {
+      "displayName": "氧气的实验室制取与性质",
+      "description": "完整的氧气制取与性质课程；导入前需先导入化学实验 Sample。",
+      "path": "Samples~/OxygenCourse"
     }
   ]
 }

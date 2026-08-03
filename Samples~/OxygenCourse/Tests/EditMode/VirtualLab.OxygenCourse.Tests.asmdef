@@ -1,0 +1,26 @@
+{
+  "name": "VirtualLab.OxygenCourse.Tests",
+  "rootNamespace": "VirtualLab.OxygenCourse.Tests",
+  "references": [
+    "VirtualLab.Kernel",
+    "VirtualLab.Domain",
+    "VirtualLab.Application",
+    "VirtualLab.Presentation",
+    "VirtualLab.Chemistry",
+    "VirtualLab.Unity.Authoring",
+    "VirtualLab.UnityAdapters",
+    "VirtualLab.Chemistry.UnityAdapters",
+    "VirtualLab.Chemistry.Authoring",
+    "VirtualLab.OxygenCourse.Authoring"
+  ],
+  "overrideReferences": true,
+  "precompiledReferences": [
+    "Newtonsoft.Json.dll"
+  ],
+  "optionalUnityReferences": [
+    "TestAssemblies"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ]
+}
