@@ -130,19 +130,22 @@ namespace VirtualLab.UnityAdapters.Courses
     }
 
     /// <summary>
-    /// 通用课程启动器。只依赖编译资产和可插拔会话工厂，不按课程 ID 分支。
+    /// 通用课程启动器。场景只保存稳定课程 ID，运行时自动解析编译资产，
+    /// 不要求使用者把生成资产拖拽到场景组件上。
     /// </summary>
     public sealed class ConfigDrivenCourseBootstrap : MonoBehaviour
     {
-        [SerializeField] private CompiledCourseAsset course;
+        [SerializeField] private string courseId;
         [SerializeField] private bool uiSimulationMode;
 
+        [NonSerialized] private CompiledCourseAsset course;
         private CourseRuntimeFacade _runtime;
         private CompiledCourseDefinition _domain;
         private CoursePresentationCoordinator _presentationCoordinator;
         private IConfiguredCoursePresentationSignalSource _signalSource;
 
         public CompiledCourseAsset Course => course;
+        public string CourseId => courseId;
         public CompiledCourseDefinition Domain => _domain;
         public CourseRuntimeFacade Runtime => _runtime;
         public CourseSceneAssembly SceneAssembly { get; private set; }
@@ -157,6 +160,23 @@ namespace VirtualLab.UnityAdapters.Courses
             }
 
             course = value ?? throw new ArgumentNullException(nameof(value));
+            courseId = course.CourseId;
+        }
+
+        public void ConfigureCourseId(string value)
+        {
+            if (IsInitialized)
+            {
+                throw new InvalidOperationException("课程已经初始化。");
+            }
+
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                throw new ArgumentException("课程 ID 不能为空。", nameof(value));
+            }
+
+            courseId = value.Trim();
+            course = null;
         }
 
         public void ConfigureUiSimulationMode(bool enabled = true)
@@ -194,10 +214,7 @@ namespace VirtualLab.UnityAdapters.Courses
                 return;
             }
 
-            if (course == null)
-            {
-                throw new InvalidOperationException("未配置编译课程资产。");
-            }
+            course = course ?? CompiledCourseAssetCatalog.Require(courseId);
 
             var domain = CourseAssetDecoder.DecodeDomain(course);
             if (!string.Equals(

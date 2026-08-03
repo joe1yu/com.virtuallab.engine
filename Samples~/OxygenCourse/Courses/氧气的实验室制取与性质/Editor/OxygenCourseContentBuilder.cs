@@ -73,9 +73,12 @@ namespace VirtualLab.OxygenCourse.Authoring
 
         public static string AuthoringDirectory => CourseRoot + "/Authoring";
         public static string GeneratedDirectory => CourseRoot + "/Generated";
+        public static string CourseAssetDirectory =>
+            CourseRoot + "/Resources/"
+            + CourseRuntimeResourcePaths.CompiledCourses;
         public static string PrefabDirectory => CourseRoot + "/预制体";
         public static string CourseAssetPath =>
-            GeneratedDirectory + "/氧气实验课程.asset";
+            CourseAssetDirectory + "/氧气实验课程.asset";
         public static string UiScenarioPath =>
             CourseRoot + "/UI/UI模拟步骤.csv";
         public static string ProductionScenePath =>
@@ -85,6 +88,7 @@ namespace VirtualLab.OxygenCourse.Authoring
         public static void Build()
         {
             EnsureFolder(GeneratedDirectory);
+            EnsureFolder(CourseAssetDirectory);
             var compilation = CompileCourse();
             ValidatePrefabs(compilation.Domain);
 
@@ -141,7 +145,7 @@ namespace VirtualLab.OxygenCourse.Authoring
             var systems = new GameObject("课程系统");
             systems.AddComponent<ChemistryConfiguredCourseSessionFactory>();
             var bootstrap = systems.AddComponent<ConfigDrivenCourseBootstrap>();
-            bootstrap.ConfigureCourse(course);
+            bootstrap.ConfigureCourseId(course.CourseId);
             systems.AddComponent<CourseSemanticInputGateway>();
             systems.AddComponent<CourseDirectManipulationController>();
 

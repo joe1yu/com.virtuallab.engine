@@ -518,6 +518,24 @@ namespace VirtualLab.Engine.Tests.Courses
             }
         }
 
+        [Test]
+        public void 氧气场景按课程ID自动解析资产且不保存直接引用()
+        {
+            const string courseId = "氧气的实验室制取与性质";
+            var asset = CompiledCourseAssetCatalog.Require(courseId);
+            var sceneText = File.ReadAllText(
+                OxygenCourseContentBuilder.ProductionScenePath);
+            var assetGuid = AssetDatabase.AssetPathToGUID(CourseAssetPath);
+
+            Assert.That(asset, Is.Not.Null);
+            Assert.That(asset.CourseId, Is.EqualTo(courseId));
+            Assert.That(sceneText, Does.Contain("courseId:"));
+            Assert.That(
+                sceneText,
+                Does.Not.Contain(assetGuid),
+                "生产场景不应序列化编译课程资产引用。");
+        }
+
         private static string RuleSignature(
             StructuredRuleDefinition rule)
         {

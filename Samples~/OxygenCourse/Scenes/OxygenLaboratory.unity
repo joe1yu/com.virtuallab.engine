@@ -230,7 +230,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bf7b14550cb8fae4887d834818424503, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  course: {fileID: 11400000, guid: a71e9b2fb6d445b428b81dfc5869850f, type: 2}
+  courseId: "\u6C27\u6C14\u7684\u5B9E\u9A8C\u5BA4\u5236\u53D6\u4E0E\u6027\u8D28"
   uiSimulationMode: 0
 --- !u!114 &967082770
 MonoBehaviour:
