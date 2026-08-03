@@ -1,0 +1,15 @@
+{
+  "name": "VirtualLab.Unity.Authoring",
+  "rootNamespace": "VirtualLab.Unity.Authoring",
+  "references": [
+    "VirtualLab.Kernel",
+    "VirtualLab.Domain",
+    "VirtualLab.Application",
+    "VirtualLab.Presentation",
+    "VirtualLab.UnityAdapters"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "autoReferenced": false
+}
