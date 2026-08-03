@@ -15,20 +15,22 @@ namespace VirtualLab.Application.Courses
             IEnumerable<CourseEntityDefinition> entities,
             IEnumerable<ActionPolicyDefinition> actionPolicies,
             IEnumerable<CourseGoalDefinition> goals,
-            IEnumerable<CourseAssessmentDefinition> assessments)
+            IEnumerable<CourseAssessmentDefinition> assessments,
+            IEnumerable<CourseResourceDefinition> resources = null,
+            string environmentResourceId = null)
         {
             return new CompiledCourseDefinition(
                 courseId,
                 "学生",
                 Array.Empty<string>(),
-                null,
+                environmentResourceId,
                 entities,
                 actionPolicies,
                 goals,
                 assessments,
                 Array.Empty<StructuredRuleDefinition>(),
                 Array.Empty<ConfiguredActionDefinition>(),
-                Array.Empty<CourseResourceDefinition>(),
+                resources ?? Array.Empty<CourseResourceDefinition>(),
                 Array.Empty<CoursePortDefinition>(),
                 Array.Empty<CourseInitialRelationDefinition>(),
                 Array.Empty<ConfiguredMutationDefinition>(),

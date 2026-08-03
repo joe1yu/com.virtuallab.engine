@@ -267,7 +267,6 @@ namespace VirtualLab.Engine.PlayModeTests
         {
             var parent = new GameObject("课程场景根");
             var prefab = new GameObject("通用试管Prefab");
-            var asset = ScriptableObject.CreateInstance<CompiledCourseAsset>();
             try
             {
                 prefab.AddComponent<CourseEntityView>();
@@ -282,25 +281,23 @@ namespace VirtualLab.Engine.PlayModeTests
                     },
                     Array.Empty<ActionPolicyDefinition>(),
                     Array.Empty<CourseGoalDefinition>(),
-                    Array.Empty<CourseAssessmentDefinition>());
-                asset.SetData(
-                    "另一个完全不同的资产ID",
-                    "{}",
-                    "{}",
+                    Array.Empty<CourseAssessmentDefinition>(),
                     new[]
                     {
-                        new CourseResourceBinding(
+                        new CourseResourceDefinition(
                             "预制体.试管",
-                            prefab,
-                            null,
-                            null,
-                            null)
-                    },
-                    null);
+                            "测试资源/试管.prefab",
+                            CourseResourceKind.Prefab)
+                    });
+                var resources = new CourseRuntimeResourceResolver(
+                    definition,
+                    new FixedCourseResourceLoader(
+                        "测试资源/试管.prefab",
+                        prefab));
 
                 var assembly = new CourseSceneAssembler().Assemble(
-                    asset,
                     definition,
+                    resources,
                     parent.transform);
 
                 Assert.That(
@@ -316,7 +313,6 @@ namespace VirtualLab.Engine.PlayModeTests
             {
                 UnityEngine.Object.Destroy(parent);
                 UnityEngine.Object.Destroy(prefab);
-                UnityEngine.Object.Destroy(asset);
             }
 
             yield return null;
@@ -327,6 +323,35 @@ namespace VirtualLab.Engine.PlayModeTests
             StructuredValue value)
         {
             return new KeyValuePair<string, StructuredValue>(key, value);
+        }
+
+        private sealed class FixedCourseResourceLoader : ICourseResourceLoader
+        {
+            private readonly string _path;
+            private readonly UnityEngine.Object _resource;
+
+            public FixedCourseResourceLoader(
+                string path,
+                UnityEngine.Object resource)
+            {
+                _path = path;
+                _resource = resource;
+            }
+
+            public bool TryLoad(
+                string resourcePath,
+                Type expectedType,
+                out UnityEngine.Object resource)
+            {
+                resource = string.Equals(
+                               resourcePath,
+                               _path,
+                               StringComparison.Ordinal)
+                           && expectedType.IsInstanceOfType(_resource)
+                    ? _resource
+                    : null;
+                return resource != null;
+            }
         }
 
         private sealed class FixedSpatialFactProvider :

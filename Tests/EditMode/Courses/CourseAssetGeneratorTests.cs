@@ -44,11 +44,8 @@ namespace VirtualLab.Engine.Tests.Courses
         }
 
         [Test]
-        public void 课程资产保存定义和Unity资源直接引用且没有版本哈希()
+        public void 课程资产保存定义和文本产物()
         {
-            var prefab = new GameObject("试管");
-            var material = new Material(
-                Shader.Find("Sprites/Default"));
             var asset = ScriptableObject.CreateInstance<CompiledCourseAsset>();
             asset.SetData(
                 "最小课程",
@@ -56,25 +53,12 @@ namespace VirtualLab.Engine.Tests.Courses
                 "{}",
                 new[]
                 {
-                    new CourseResourceBinding(
-                        "资源.试管",
-                        prefab,
-                        material,
-                        null,
-                        null)
-                },
-                new[]
-                {
                     new CourseTextArtifactBinding(
                         "化学运行配置",
                         "{\"物质\":[]}")
-                },
-                prefab);
+                });
 
             Assert.That(asset.CourseId, Is.EqualTo("最小课程"));
-            Assert.That(asset.ResourceBindings.Single().Prefab, Is.SameAs(prefab));
-            Assert.That(asset.ResourceBindings.Single().Material, Is.SameAs(material));
-            Assert.That(asset.EnvironmentPrefab, Is.SameAs(prefab));
             Assert.That(
                 asset.RequireTextArtifact("化学运行配置"),
                 Is.EqualTo("{\"物质\":[]}"));
@@ -86,8 +70,6 @@ namespace VirtualLab.Engine.Tests.Courses
             Assert.That(asset.GetType().GetProperty("CourseVersion"), Is.Null);
 
             UnityEngine.Object.DestroyImmediate(asset);
-            UnityEngine.Object.DestroyImmediate(material);
-            UnityEngine.Object.DestroyImmediate(prefab);
         }
 
         [Test]
@@ -102,12 +84,10 @@ namespace VirtualLab.Engine.Tests.Courses
                 "压缩课程",
                 domainJson,
                 presentationJson,
-                Array.Empty<CourseResourceBinding>(),
                 new[]
                 {
                     new CourseTextArtifactBinding("学科产物", artifactContent)
-                },
-                null);
+                });
             AssetDatabase.CreateAsset(asset, AssetPath);
             AssetDatabase.SaveAssets();
 
@@ -118,6 +98,8 @@ namespace VirtualLab.Engine.Tests.Courses
             Assert.That(serialized, Does.Not.Contain("domainJson:"));
             Assert.That(serialized, Does.Not.Contain("presentationJson:"));
             Assert.That(serialized, Does.Not.Contain("textArtifacts:"));
+            Assert.That(serialized, Does.Not.Contain("resourceBindings:"));
+            Assert.That(serialized, Does.Not.Contain("environmentPrefab:"));
             Assert.That(
                 new FileInfo(AssetPath).Length,
                 Is.LessThan(uncompressedBytes / 2),
@@ -136,9 +118,7 @@ namespace VirtualLab.Engine.Tests.Courses
             asset.SetData(
                 "损坏载荷课程",
                 "{}",
-                "{}",
-                Array.Empty<CourseResourceBinding>(),
-                null);
+                "{}");
             var serialized = new SerializedObject(asset);
             serialized.FindProperty("compiledPayload").stringValue =
                 "不是有效的压缩载荷";
@@ -153,61 +133,34 @@ namespace VirtualLab.Engine.Tests.Courses
         }
 
         [Test]
-        public void 固定路径重复生成保留GUID并删除失效绑定()
+        public void 固定路径重复生成保留GUID并更新载荷()
         {
             var generator = new CourseAssetGenerator();
             generator.GenerateOrUpdate(
                 AssetPath,
                 Definition(),
-                "{}",
-                new[]
-                {
-                    new CourseResourceBinding("资源.旧", null, null, null, null),
-                    new CourseResourceBinding("资源.保留", null, null, null, null)
-                },
-                null);
+                "{}");
             var firstGuid = AssetDatabase.AssetPathToGUID(AssetPath);
 
             generator.GenerateOrUpdate(
                 AssetPath,
                 Definition(),
-                "{\"表现\":\"新\"}",
-                new[]
-                {
-                    new CourseResourceBinding("资源.保留", null, null, null, null)
-                },
-                null);
+                "{\"表现\":\"新\"}");
             var asset = AssetDatabase.LoadAssetAtPath<CompiledCourseAsset>(
                 AssetPath);
 
             Assert.That(AssetDatabase.AssetPathToGUID(AssetPath), Is.EqualTo(firstGuid));
-            Assert.That(asset.ResourceBindings.Select(value => value.Key),
-                Is.EqualTo(new[] { "资源.保留" }));
             Assert.That(asset.PresentationJson, Is.EqualTo("{\"表现\":\"新\"}"));
         }
 
         [Test]
-        public void 重复绑定或编译错误不会覆盖上一次可用资产()
+        public void 编译错误不会覆盖上一次可用资产()
         {
             var generator = new CourseAssetGenerator();
             generator.GenerateOrUpdate(
                 AssetPath,
                 Definition(),
-                "{\"状态\":\"可用\"}",
-                Array.Empty<CourseResourceBinding>(),
-                null);
-
-            Assert.Throws<ArgumentException>(() =>
-                generator.GenerateOrUpdate(
-                    AssetPath,
-                    Definition(),
-                    "{}",
-                    new[]
-                    {
-                        new CourseResourceBinding("资源.重复", null, null, null, null),
-                        new CourseResourceBinding("资源.重复", null, null, null, null)
-                    },
-                    null));
+                "{\"状态\":\"可用\"}");
             var failedCompilation = new CourseCompilationResultForGeneration(
                 new[]
                 {
@@ -225,9 +178,7 @@ namespace VirtualLab.Engine.Tests.Courses
                 generator.TryGenerateOrUpdate(
                     AssetPath,
                     failedCompilation,
-                    "{}",
-                    Array.Empty<CourseResourceBinding>(),
-                    null),
+                    "{}"),
                 Is.False);
 
             var asset = AssetDatabase.LoadAssetAtPath<CompiledCourseAsset>(

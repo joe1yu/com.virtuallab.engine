@@ -67,6 +67,8 @@ namespace VirtualLab.OxygenCourse.Authoring
     /// </summary>
     public static class OxygenCourseContentBuilder
     {
+        public const string CourseId = "氧气的实验室制取与性质";
+
         public static string CourseRoot =>
             OxygenCourseSamplePaths.Root
             + "/Courses/氧气的实验室制取与性质";
@@ -76,7 +78,10 @@ namespace VirtualLab.OxygenCourse.Authoring
         public static string CourseAssetDirectory =>
             CourseRoot + "/Resources/"
             + CourseRuntimeResourcePaths.CompiledCourses;
-        public static string PrefabDirectory => CourseRoot + "/预制体";
+        public static string PrefabDirectory =>
+            CourseRoot + "/Resources/"
+            + CourseRuntimeResourcePaths.CourseResources
+            + "/" + CourseId + "/预制体";
         public static string CourseAssetPath =>
             CourseAssetDirectory + "/氧气实验课程.asset";
         public static string UiScenarioPath =>

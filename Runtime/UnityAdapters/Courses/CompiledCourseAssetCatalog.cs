@@ -10,6 +10,8 @@ namespace VirtualLab.UnityAdapters.Courses
     public static class CourseRuntimeResourcePaths
     {
         public const string CompiledCourses = "VirtualLab/编译课程";
+        public const string CourseResources = "VirtualLab/课程资源";
+        public const string ConfiguredCourseResources = "课程资源";
     }
 
     /// <summary>

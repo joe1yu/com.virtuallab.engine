@@ -1,4 +1,5 @@
 using System;
+using VirtualLab.UnityAdapters.Courses;
 
 namespace VirtualLab.Unity.Authoring.Blueprints
 {
@@ -15,6 +16,29 @@ namespace VirtualLab.Unity.Authoring.Blueprints
         public static string Resolve(string reference, string courseRoot)
         {
             var value = (reference ?? string.Empty).Trim().Replace('\\', '/');
+            var runtimeResourcePrefix =
+                CourseRuntimeResourcePaths.ConfiguredCourseResources + "/";
+            if (value.StartsWith(
+                    runtimeResourcePrefix,
+                    StringComparison.Ordinal))
+            {
+                if (string.IsNullOrWhiteSpace(courseRoot))
+                {
+                    throw new ArgumentException(
+                        "解析课程资源路径时必须提供课程根目录。",
+                        nameof(courseRoot));
+                }
+
+                var runtimeRelative = value.Substring(
+                    runtimeResourcePrefix.Length);
+                ValidateRelative(reference, runtimeRelative);
+                return courseRoot.Trim().TrimEnd('/', '\\').Replace('\\', '/')
+                       + "/Resources/"
+                       + CourseRuntimeResourcePaths.CourseResources
+                       + "/"
+                       + runtimeRelative;
+            }
+
             if (!value.StartsWith(
                     CourseDirectoryPrefix,
                     StringComparison.Ordinal))
@@ -30,6 +54,17 @@ namespace VirtualLab.Unity.Authoring.Blueprints
             }
 
             var relative = value.Substring(CourseDirectoryPrefix.Length);
+            ValidateRelative(reference, relative);
+
+            return courseRoot.Trim().TrimEnd('/', '\\').Replace('\\', '/')
+                   + "/"
+                   + relative;
+        }
+
+        private static void ValidateRelative(
+            string reference,
+            string relative)
+        {
             if (relative.Length == 0
                 || relative.StartsWith("/", StringComparison.Ordinal)
                 || relative == ".."
@@ -40,10 +75,6 @@ namespace VirtualLab.Unity.Authoring.Blueprints
                     $"课程资产路径“{reference}”不能离开课程目录。",
                     nameof(reference));
             }
-
-            return courseRoot.Trim().TrimEnd('/', '\\').Replace('\\', '/')
-                   + "/"
-                   + relative;
         }
     }
 }

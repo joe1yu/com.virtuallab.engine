@@ -339,7 +339,7 @@ namespace VirtualLab.Engine.Tests.Courses
         }
 
         [Test]
-        public void 氧气课程资产本地直引全部Prefab且契约有效()
+        public void 氧气课程资产不保存Unity引用且运行时资源均可加载()
         {
             var asset = AssetDatabase.LoadAssetAtPath<CompiledCourseAsset>(
                 CourseAssetPath);
@@ -367,22 +367,28 @@ namespace VirtualLab.Engine.Tests.Courses
                 "生成课程资产已落后于当前 CSV：\n"
                 + string.Join("\n", differences));
             Assert.That(
-                asset.ResourceBindings
-                    .Where(value => value.Prefab != null)
-                    .Select(value => value.Key),
-                Is.EquivalentTo(
-                    course.Resources
-                        .Where(value =>
-                            value.Kind ==
-                            VirtualLab.Application.Courses
-                                .CourseResourceKind.Prefab)
-                        .Select(value => value.ResourceId)));
+                File.ReadAllText(CourseAssetPath),
+                Does.Not.Contain("resourceBindings:")
+                    .And.Not.Contain("environmentPrefab:"));
+
+            var resources = new CourseRuntimeResourceResolver(
+                course,
+                new ResourcesCourseResourceLoader());
+            foreach (var resource in course.Resources)
+            {
+                Assert.That(
+                    resources.TryResolve(
+                        resource.ResourceId,
+                        out var loaded),
+                    Is.True,
+                    resource.ResourceId + " 未能按路径加载。");
+                Assert.That(loaded, Is.Not.Null);
+            }
 
             foreach (var contract in course.PrefabContracts)
             {
-                var prefab = asset.ResourceBindings
-                    .Single(value => value.Key == contract.ResourceId)
-                    .Prefab;
+                var prefab = resources.Require<GameObject>(
+                    contract.ResourceId);
                 Assert.That(
                     PrefabContractValidator.Validate(prefab, contract),
                     Is.Empty,

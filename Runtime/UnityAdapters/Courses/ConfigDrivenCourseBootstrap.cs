@@ -139,6 +139,7 @@ namespace VirtualLab.UnityAdapters.Courses
         [SerializeField] private bool uiSimulationMode;
 
         [NonSerialized] private CompiledCourseAsset course;
+        [NonSerialized] private ICourseResourceLoader resourceLoader;
         private CourseRuntimeFacade _runtime;
         private CompiledCourseDefinition _domain;
         private CoursePresentationCoordinator _presentationCoordinator;
@@ -177,6 +178,17 @@ namespace VirtualLab.UnityAdapters.Courses
 
             courseId = value.Trim();
             course = null;
+        }
+
+        public void ConfigureResourceLoader(ICourseResourceLoader value)
+        {
+            if (IsInitialized)
+            {
+                throw new InvalidOperationException("课程已经初始化。");
+            }
+
+            resourceLoader = value
+                ?? throw new ArgumentNullException(nameof(value));
         }
 
         public void ConfigureUiSimulationMode(bool enabled = true)
@@ -230,13 +242,21 @@ namespace VirtualLab.UnityAdapters.Courses
 
             var presentation =
                 CourseAssetDecoder.DecodePresentation(course);
+            var selectedResourceLoader = resourceLoader
+                ?? GetComponents<MonoBehaviour>()
+                    .OfType<ICourseResourceLoader>()
+                    .SingleOrDefault()
+                ?? new ResourcesCourseResourceLoader();
+            var runtimeResources = new CourseRuntimeResourceResolver(
+                domain,
+                selectedResourceLoader);
             SceneAssembly = uiSimulationMode
                 ? new CourseSceneAssembly(
                     null,
                     new CourseEntityViewRegistry())
                 : new CourseSceneAssembler().Assemble(
-                    course,
                     domain,
+                    runtimeResources,
                     transform);
             var world = CourseWorldFactory.Create(domain);
             ConfiguredCourseRuntimeCatalog.EnsureInstalled(
@@ -281,7 +301,7 @@ namespace VirtualLab.UnityAdapters.Courses
                         .SingleOrDefault())
                 : UnityPresentationDispatcher.CreateDefault(
                     SceneAssembly.CourseViews,
-                    new CourseAssetResourceResolver(course),
+                    runtimeResources,
                     FindObjectsOfType<MonoBehaviour>(true)
                         .OfType<IPresentationMessageSink>()
                         .FirstOrDefault(),

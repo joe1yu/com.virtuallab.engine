@@ -41,37 +41,22 @@ namespace VirtualLab.Unity.Authoring.Generation
         public CompiledCourseAsset GenerateOrUpdate(
             string assetPath,
             CompiledCourseDefinition definition,
-            string presentationJson,
-            IEnumerable<CourseResourceBinding> bindings,
-            GameObject environmentPrefab)
+            string presentationJson)
         {
             return GenerateOrUpdate(
                 assetPath,
                 definition,
                 presentationJson,
-                bindings,
-                Array.Empty<CourseTextArtifactBinding>(),
-                environmentPrefab);
+                Array.Empty<CourseTextArtifactBinding>());
         }
 
         public CompiledCourseAsset GenerateOrUpdate(
             string assetPath,
             CompiledCourseDefinition definition,
             string presentationJson,
-            IEnumerable<CourseResourceBinding> bindings,
-            IEnumerable<CourseTextArtifactBinding> textArtifacts,
-            GameObject environmentPrefab)
+            IEnumerable<CourseTextArtifactBinding> textArtifacts)
         {
             ValidatePath(assetPath);
-            var bindingArray = ValidateBindings(bindings);
-            if (environmentPrefab != null
-                && !EditorUtility.IsPersistent(environmentPrefab))
-            {
-                throw new ArgumentException(
-                    "环境 Prefab 必须是已保存的工程资产。",
-                    nameof(environmentPrefab));
-            }
-
             var domainJson = CourseAssetDecoder.EncodeDomain(definition);
 
             var asset = AssetDatabase.LoadAssetAtPath<CompiledCourseAsset>(
@@ -87,9 +72,7 @@ namespace VirtualLab.Unity.Authoring.Generation
                 definition.CourseId,
                 domainJson,
                 presentationJson,
-                bindingArray,
-                textArtifacts,
-                environmentPrefab);
+                textArtifacts);
             if (created)
             {
                 AssetDatabase.CreateAsset(asset, assetPath);
@@ -103,9 +86,7 @@ namespace VirtualLab.Unity.Authoring.Generation
         public bool TryGenerateOrUpdate(
             string assetPath,
             CourseCompilationResultForGeneration compilation,
-            string presentationJson,
-            IEnumerable<CourseResourceBinding> bindings,
-            GameObject environmentPrefab)
+            string presentationJson)
         {
             if (compilation == null)
             {
@@ -120,9 +101,7 @@ namespace VirtualLab.Unity.Authoring.Generation
             GenerateOrUpdate(
                 assetPath,
                 compilation.Definition,
-                presentationJson,
-                bindings,
-                environmentPrefab);
+                presentationJson);
             return true;
         }
 
@@ -148,11 +127,9 @@ namespace VirtualLab.Unity.Authoring.Generation
                 return false;
             }
 
-            if (!TryResolveResources(
+            if (!TryValidateResources(
                     compilation.Domain,
                     generatedDirectory,
-                    out var bindings,
-                    out var environmentPrefab,
                     out diagnostics))
             {
                 return false;
@@ -173,7 +150,7 @@ namespace VirtualLab.Unity.Authoring.Generation
             var previousAsset = AssetDatabase.LoadAssetAtPath<
                 CompiledCourseAsset>(assetPath);
             // 旧字段资产不参与兼容读取，下一次生成直接用当前载荷覆盖；
-            // 仍复用原 ScriptableObject，确保场景中的 GUID 引用不发生变化。
+            // 仍复用原 ScriptableObject，保持生成资产身份稳定。
             var previousAssetState = previousAsset?.HasCompiledPayload == true
                 ? new AssetState(previousAsset)
                 : null;
@@ -204,12 +181,10 @@ namespace VirtualLab.Unity.Authoring.Generation
                     assetPath,
                     compilation.Domain,
                     presentationJson,
-                    bindings,
                     artifacts.Select(value =>
                         new CourseTextArtifactBinding(
                             value.ArtifactId,
-                            value.TextContent)),
-                    environmentPrefab);
+                            value.TextContent)));
 
                 Directory.CreateDirectory(generatedPath);
                 foreach (var artifact in artifacts)
@@ -275,16 +250,13 @@ namespace VirtualLab.Unity.Authoring.Generation
             }
         }
 
-        private static bool TryResolveResources(
+        private static bool TryValidateResources(
             CompiledCourseDefinition domain,
             string generatedDirectory,
-            out IReadOnlyList<CourseResourceBinding> bindings,
-            out GameObject environmentPrefab,
             out IReadOnlyList<CourseCompilationDiagnostic> diagnostics)
         {
             var errors = new List<CourseCompilationDiagnostic>();
-            var resolved = new List<CourseResourceBinding>();
-            environmentPrefab = null;
+            var hasEnvironmentPrefab = false;
             var prefabContracts = domain.PrefabContracts.ToDictionary(
                 value => value.ResourceId,
                 StringComparer.Ordinal);
@@ -310,9 +282,6 @@ namespace VirtualLab.Unity.Authoring.Generation
                 }
 
                 GameObject prefab = null;
-                Material material = null;
-                AudioClip audio = null;
-                UnityEngine.Object presentation = null;
                 var typeMatches = true;
                 switch (resource.Kind)
                 {
@@ -323,15 +292,12 @@ namespace VirtualLab.Unity.Authoring.Generation
                             != PrefabAssetType.NotAPrefab;
                         break;
                     case CourseResourceKind.Material:
-                        material = loaded as Material;
-                        typeMatches = material != null;
+                        typeMatches = loaded is Material;
                         break;
                     case CourseResourceKind.Audio:
-                        audio = loaded as AudioClip;
-                        typeMatches = audio != null;
+                        typeMatches = loaded is AudioClip;
                         break;
                     case CourseResourceKind.Presentation:
-                        presentation = loaded;
                         break;
                     default:
                         typeMatches = false;
@@ -369,22 +335,16 @@ namespace VirtualLab.Unity.Authoring.Generation
                     }
                 }
 
-                resolved.Add(new CourseResourceBinding(
-                    resource.ResourceId,
-                    prefab,
-                    material,
-                    audio,
-                    presentation));
                 if (string.Equals(
                     resource.ResourceId,
                     domain.EnvironmentResourceId,
                     StringComparison.Ordinal))
                 {
-                    environmentPrefab = prefab;
+                    hasEnvironmentPrefab = prefab != null;
                 }
             }
 
-            if (environmentPrefab == null)
+            if (!hasEnvironmentPrefab)
             {
                 errors.Add(new CourseCompilationDiagnostic(
                     "course.environment-prefab.missing",
@@ -397,7 +357,6 @@ namespace VirtualLab.Unity.Authoring.Generation
                     "将环境资源类型设置为预制体并修正资源路径。"));
             }
 
-            bindings = resolved;
             diagnostics = errors;
             return errors.Count == 0;
         }
@@ -526,9 +485,7 @@ namespace VirtualLab.Unity.Authoring.Generation
                 previous.CourseId,
                 previous.DomainJson,
                 previous.PresentationJson,
-                previous.Bindings,
-                previous.TextArtifacts,
-                previous.EnvironmentPrefab);
+                previous.TextArtifacts);
             EditorUtility.SetDirty(asset);
             AssetDatabase.SaveAssets();
         }
@@ -620,56 +577,13 @@ namespace VirtualLab.Unity.Authoring.Generation
                 CourseId = asset.CourseId;
                 DomainJson = asset.DomainJson;
                 PresentationJson = asset.PresentationJson;
-                Bindings = asset.ResourceBindings.ToArray();
                 TextArtifacts = asset.TextArtifacts.ToArray();
-                EnvironmentPrefab = asset.EnvironmentPrefab;
             }
 
             public string CourseId { get; }
             public string DomainJson { get; }
             public string PresentationJson { get; }
-            public CourseResourceBinding[] Bindings { get; }
             public CourseTextArtifactBinding[] TextArtifacts { get; }
-            public GameObject EnvironmentPrefab { get; }
-        }
-
-        private static CourseResourceBinding[] ValidateBindings(
-            IEnumerable<CourseResourceBinding> bindings)
-        {
-            var copy = bindings?.ToArray()
-                ?? throw new ArgumentNullException(nameof(bindings));
-            if (copy.Any(value => value == null))
-            {
-                throw new ArgumentException("资源绑定不能包含空项。");
-            }
-
-            var duplicate = copy
-                .GroupBy(value => value.Key, StringComparer.Ordinal)
-                .FirstOrDefault(value => value.Count() > 1)?.Key;
-            if (duplicate != null)
-            {
-                throw new ArgumentException($"资源绑定 Key“{duplicate}”重复。");
-            }
-
-            foreach (var binding in copy)
-            {
-                var objects = new UnityEngine.Object[]
-                {
-                    binding.Prefab,
-                    binding.Material,
-                    binding.AudioClip,
-                    binding.PresentationResource
-                };
-                if (objects.Any(value =>
-                    value != null && !EditorUtility.IsPersistent(value)))
-                {
-                    throw new ArgumentException(
-                        $"资源绑定“{binding.Key}”必须引用已保存的工程资产。",
-                        nameof(bindings));
-                }
-            }
-
-            return copy;
         }
 
         private static CourseCompilationDiagnostic ResourceDiagnostic(

@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using NUnit.Framework;
 using UnityEngine;
+using VirtualLab.UnityAdapters.Courses;
 
 namespace VirtualLab.Engine.Tests.Courses
 {
@@ -172,6 +173,16 @@ namespace VirtualLab.Engine.Tests.Courses
         [Test]
         public void 生产配置除资源定位路径外只使用自然中文()
         {
+            var resourcePathPrefixes = string.Join(
+                "|",
+                new[]
+                {
+                    "Assets",
+                    "Packages",
+                    "课程目录",
+                    Regex.Escape(
+                        CourseRuntimeResourcePaths.ConfiguredCourseResources)
+                });
             var roots = new[]
             {
                 Path.Combine(
@@ -195,7 +206,7 @@ namespace VirtualLab.Engine.Tests.Courses
                     Path = path,
                     Content = Regex.Replace(
                         File.ReadAllText(path),
-                        @"(?:Assets|Packages|课程目录)/[^,\r\n""]+\.[A-Za-z0-9]+",
+                        $@"(?:{resourcePathPrefixes})/[^,\r\n""]+\.[A-Za-z0-9]+",
                         string.Empty)
                 })
                 .Where(value => Regex.IsMatch(value.Content, "[A-Za-z]"))

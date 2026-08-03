@@ -30,41 +30,6 @@ namespace VirtualLab.UnityAdapters.Courses
         public string Content => content;
     }
 
-    [Serializable]
-    public sealed class CourseResourceBinding
-    {
-        [SerializeField] private string key;
-        [SerializeField] private GameObject prefab;
-        [SerializeField] private Material material;
-        [SerializeField] private AudioClip audioClip;
-        [SerializeField] private UnityEngine.Object presentationResource;
-
-        public CourseResourceBinding(
-            string key,
-            GameObject prefab,
-            Material material,
-            AudioClip audioClip,
-            UnityEngine.Object presentationResource)
-        {
-            if (string.IsNullOrWhiteSpace(key))
-            {
-                throw new ArgumentException("资源绑定 Key 不能为空。", nameof(key));
-            }
-
-            this.key = key.Trim();
-            this.prefab = prefab;
-            this.material = material;
-            this.audioClip = audioClip;
-            this.presentationResource = presentationResource;
-        }
-
-        public string Key => key;
-        public GameObject Prefab => prefab;
-        public Material Material => material;
-        public AudioClip AudioClip => audioClip;
-        public UnityEngine.Object PresentationResource => presentationResource;
-    }
-
     /// <summary>
     /// 课程资产中与 Unity 对象引用无关的运行时数据快照。
     /// 领域、表现和学科文本产物统一放在这里，避免由多个序列化字段重复承担协议职责。
@@ -193,15 +158,12 @@ namespace VirtualLab.UnityAdapters.Courses
     }
 
     /// <summary>
-    /// 当前课程的本地直接引用资产，不携带版本号或内容指纹。
+    /// 当前课程的纯数据编译资产，不保存 Unity 对象引用、版本号或内容指纹。
     /// </summary>
     public sealed class CompiledCourseAsset : ScriptableObject
     {
         [SerializeField] private string courseId;
         [SerializeField, HideInInspector] private string compiledPayload;
-        [SerializeField] private CourseResourceBinding[] resourceBindings =
-            Array.Empty<CourseResourceBinding>();
-        [SerializeField] private GameObject environmentPrefab;
 
         [NonSerialized] private string decodedSource;
         [NonSerialized] private CompiledCoursePayload decodedPayload;
@@ -209,11 +171,8 @@ namespace VirtualLab.UnityAdapters.Courses
         public string CourseId => courseId;
         public string DomainJson => Payload.DomainJson;
         public string PresentationJson => Payload.PresentationJson;
-        public IReadOnlyList<CourseResourceBinding> ResourceBindings =>
-            resourceBindings;
         public IReadOnlyList<CourseTextArtifactBinding> TextArtifacts =>
             Payload.TextArtifacts;
-        public GameObject EnvironmentPrefab => environmentPrefab;
         public bool HasCompiledPayload =>
             !string.IsNullOrWhiteSpace(compiledPayload);
 
@@ -239,26 +198,20 @@ namespace VirtualLab.UnityAdapters.Courses
         public void SetData(
             string newCourseId,
             string newDomainJson,
-            string newPresentationJson,
-            IEnumerable<CourseResourceBinding> newResourceBindings,
-            GameObject newEnvironmentPrefab)
+            string newPresentationJson)
         {
             SetData(
                 newCourseId,
                 newDomainJson,
                 newPresentationJson,
-                newResourceBindings,
-                Array.Empty<CourseTextArtifactBinding>(),
-                newEnvironmentPrefab);
+                Array.Empty<CourseTextArtifactBinding>());
         }
 
         public void SetData(
             string newCourseId,
             string newDomainJson,
             string newPresentationJson,
-            IEnumerable<CourseResourceBinding> newResourceBindings,
-            IEnumerable<CourseTextArtifactBinding> newTextArtifacts,
-            GameObject newEnvironmentPrefab)
+            IEnumerable<CourseTextArtifactBinding> newTextArtifacts)
         {
             if (string.IsNullOrWhiteSpace(newCourseId))
             {
@@ -273,21 +226,6 @@ namespace VirtualLab.UnityAdapters.Courses
             if (newPresentationJson == null)
             {
                 throw new ArgumentNullException(nameof(newPresentationJson));
-            }
-
-            var bindings = newResourceBindings?.ToArray()
-                ?? throw new ArgumentNullException(nameof(newResourceBindings));
-            if (bindings.Any(value => value == null))
-            {
-                throw new ArgumentException("资源绑定不能包含空项。");
-            }
-
-            var duplicate = bindings
-                .GroupBy(value => value.Key, StringComparer.Ordinal)
-                .FirstOrDefault(value => value.Count() > 1)?.Key;
-            if (duplicate != null)
-            {
-                throw new ArgumentException($"资源绑定 Key“{duplicate}”重复。");
             }
 
             var artifacts = newTextArtifacts?.ToArray()
@@ -318,10 +256,6 @@ namespace VirtualLab.UnityAdapters.Courses
             compiledPayload = encodedPayload;
             decodedSource = encodedPayload;
             decodedPayload = payload;
-            resourceBindings = bindings
-                .OrderBy(value => value.Key, StringComparer.Ordinal)
-                .ToArray();
-            environmentPrefab = newEnvironmentPrefab;
         }
 
         public bool TryGetTextArtifact(string key, out string content)
