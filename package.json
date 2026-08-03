@@ -11,6 +11,11 @@
       "path": "Samples~/UnityAdapter"
     },
     {
+      "displayName": "ArkFramework 资源加载",
+      "description": "通过 ArkFramework 和 Addressables 异步预加载课程资源；需先安装 ArkFramework 并导入 Unity 适配器。",
+      "path": "Samples~/ArkFrameworkResourceLoading"
+    },
+    {
       "displayName": "化学实验",
       "description": "提供可复用的化学能力、反应、过程、配方和知识；导入前需先导入 Unity 适配器。",
       "path": "Samples~/Chemistry"

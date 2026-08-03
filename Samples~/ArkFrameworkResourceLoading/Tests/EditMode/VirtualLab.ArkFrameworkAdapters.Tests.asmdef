@@ -1,0 +1,17 @@
+{
+  "name": "VirtualLab.ArkFrameworkAdapters.Tests",
+  "rootNamespace": "VirtualLab.ArkFrameworkAdapters.Tests",
+  "references": [
+    "VirtualLab.Application",
+    "VirtualLab.UnityAdapters",
+    "VirtualLab.ArkFrameworkAdapters",
+    "ArkFramework.Core",
+    "ArkFramework.Resource"
+  ],
+  "optionalUnityReferences": [
+    "TestAssemblies"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ]
+}

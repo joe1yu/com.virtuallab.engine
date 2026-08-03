@@ -1,0 +1,14 @@
+{
+  "name": "VirtualLab.ArkFrameworkAdapters.Editor",
+  "rootNamespace": "VirtualLab.ArkFrameworkAdapters.Editor",
+  "references": [
+    "VirtualLab.Application",
+    "VirtualLab.UnityAdapters",
+    "VirtualLab.ArkFrameworkAdapters",
+    "Unity.Addressables.Editor"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "autoReferenced": true
+}

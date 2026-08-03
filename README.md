@@ -23,6 +23,7 @@
 - `Runtime/Presentation`：与 Unity 无关的表现规则和效果命令；
 - `Tests`：不依赖 Unity 适配器的引擎核心行为与错误路径测试；
 - `Samples~/UnityAdapter`：Unity 输入、场景、资源、表现、课程创作工具及对应测试；
+- `Samples~/ArkFrameworkResourceLoading`：可选的 ArkFramework、Addressables 资源加载集成；
 - `Samples~/Chemistry`：可复用的化学领域能力，不包含具体课程；
 - `Samples~/OxygenCourse`：独立的“氧气的实验室制取与性质”完整课程。
 
@@ -37,6 +38,11 @@ https://github.com/joe1yu/com.virtuallab.engine.git
 项目最低支持 Unity `2021.3`。核心引擎可以单独使用。需要 Unity 交互时先导入
 “Unity 适配器” Sample；需要运行氧气课程时，再依次导入“化学实验”和
 “氧气的实验室制取与性质” Sample。
+
+需要使用 Addressables 时，可安装
+`https://github.com/joe1yu/com.kmax.arkframework.git#main`，再导入
+“ArkFramework 资源加载” Sample。该集成会在课程初始化前异步预加载资源，
+并由 ArkFramework 管理资源 lease 的释放。
 
 ## 扩展实验
 

@@ -13,3 +13,6 @@
 
 课程 CSV 使用 `课程目录/...` 引用同课程资源，因此导入目录和引擎版本变化后
 不需要修改配置表。
+
+如需通过 ArkFramework 和 Addressables 加载资源，再导入“ArkFramework 资源加载”
+Sample，并按其 README 同步生成的氧气课程资产即可；课程 CSV 无需修改。
