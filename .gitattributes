@@ -1,0 +1,3 @@
+*.unity text eol=lf whitespace=-trailing-space
+*.asset text eol=lf whitespace=-trailing-space
+*.meta text eol=lf whitespace=-trailing-space
