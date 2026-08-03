@@ -1,0 +1,7 @@
+{
+  "name": "com.virtuallab.engine",
+  "version": "0.1.0",
+  "displayName": "虚拟实验引擎",
+  "unity": "2021.3",
+  "description": "面向多学科虚拟实验的领域内核与 Unity 适配器。"
+}

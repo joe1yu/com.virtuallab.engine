@@ -1,0 +1,8 @@
+{
+  "name": "VirtualLab.Domain",
+  "rootNamespace": "VirtualLab.Domain",
+  "references": [
+    "VirtualLab.Kernel"
+  ],
+  "autoReferenced": true
+}
