@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
 using UnityEngine;
 using VirtualLab.Application.Courses;
 using VirtualLab.UnityAdapters.Presentation;
@@ -18,6 +20,17 @@ namespace VirtualLab.UnityAdapters.Courses
             string resourcePath,
             Type expectedType,
             out UnityEngine.Object resource);
+    }
+
+    /// <summary>
+    /// 异步资源系统在课程场景装配前预加载资源，完成后仍通过同步加载端口读取缓存。
+    /// 这样场景与表现执行器不需要感知 Addressables 等异步实现。
+    /// </summary>
+    public interface ICourseResourcePreloader
+    {
+        ValueTask PreloadAsync(
+            IReadOnlyList<CourseResourceDefinition> resources,
+            CancellationToken token = default);
     }
 
     /// <summary>
