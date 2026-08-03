@@ -1,0 +1,21 @@
+{
+  "name": "VirtualLab.Chemistry.Tests",
+  "rootNamespace": "VirtualLab.Chemistry.Tests",
+  "references": [
+    "VirtualLab.Kernel",
+    "VirtualLab.Domain",
+    "VirtualLab.Application",
+    "VirtualLab.Presentation",
+    "VirtualLab.Chemistry",
+    "VirtualLab.Unity.Authoring",
+    "VirtualLab.UnityAdapters",
+    "VirtualLab.Chemistry.UnityAdapters",
+    "VirtualLab.Chemistry.Authoring"
+  ],
+  "optionalUnityReferences": [
+    "TestAssemblies"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ]
+}

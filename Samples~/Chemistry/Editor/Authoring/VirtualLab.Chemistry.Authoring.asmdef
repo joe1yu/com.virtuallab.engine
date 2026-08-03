@@ -1,0 +1,14 @@
+{
+  "name": "VirtualLab.Chemistry.Authoring",
+  "rootNamespace": "VirtualLab.Chemistry.Authoring",
+  "references": [
+    "VirtualLab.Kernel",
+    "VirtualLab.Domain",
+    "VirtualLab.Chemistry",
+    "VirtualLab.Unity.Authoring"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "autoReferenced": false
+}

@@ -1,0 +1,14 @@
+{
+  "name": "VirtualLab.Chemistry",
+  "rootNamespace": "VirtualLab.Chemistry",
+  "references": [
+    "VirtualLab.Kernel",
+    "VirtualLab.Domain",
+    "VirtualLab.Application"
+  ],
+  "overrideReferences": true,
+  "precompiledReferences": [
+    "Newtonsoft.Json.dll"
+  ],
+  "autoReferenced": true
+}

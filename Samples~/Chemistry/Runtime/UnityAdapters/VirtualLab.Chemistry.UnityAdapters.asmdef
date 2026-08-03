@@ -1,0 +1,13 @@
+{
+  "name": "VirtualLab.Chemistry.UnityAdapters",
+  "rootNamespace": "VirtualLab.Chemistry.UnityAdapters",
+  "references": [
+    "VirtualLab.Kernel",
+    "VirtualLab.Domain",
+    "VirtualLab.Application",
+    "VirtualLab.Presentation",
+    "VirtualLab.UnityAdapters",
+    "VirtualLab.Chemistry"
+  ],
+  "autoReferenced": true
+}
