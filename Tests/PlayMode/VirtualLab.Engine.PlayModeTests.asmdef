@@ -1,0 +1,14 @@
+{
+  "name": "VirtualLab.Engine.PlayModeTests",
+  "rootNamespace": "VirtualLab.Engine.Tests",
+  "references": [
+    "VirtualLab.Kernel",
+    "VirtualLab.Domain",
+    "VirtualLab.Application",
+    "VirtualLab.Presentation",
+    "VirtualLab.UnityAdapters"
+  ],
+  "optionalUnityReferences": [
+    "TestAssemblies"
+  ]
+}
