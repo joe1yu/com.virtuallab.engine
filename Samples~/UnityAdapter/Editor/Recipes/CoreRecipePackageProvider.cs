@@ -1,6 +1,6 @@
 using System;
 using System.IO;
-using UnityEditor.PackageManager;
+using UnityEditor.Compilation;
 
 namespace VirtualLab.Unity.Authoring.Recipes
 {
@@ -15,24 +15,27 @@ namespace VirtualLab.Unity.Authoring.Recipes
 
         public RecipePackage Load()
         {
-            // Sample 导入后当前程序集位于 Assets，必须借助核心程序集定位引擎包源目录。
-            var packageInfo = PackageInfo.FindForAssembly(
-                typeof(VirtualLab.Application.Courses.CoreSemanticActionIds)
-                    .Assembly);
-            if (packageInfo == null)
+            // 从程序集定义所在目录推导配方位置，使 Sample 可导入到任意 Assets 路径。
+            var assemblyName = typeof(CoreRecipePackageProvider)
+                .Assembly
+                .GetName()
+                .Name;
+            var assemblyDefinitionPath = CompilationPipeline
+                .GetAssemblyDefinitionFilePathFromAssemblyName(assemblyName);
+            if (string.IsNullOrWhiteSpace(assemblyDefinitionPath))
             {
                 throw new InvalidOperationException(
-                    "无法定位平台通用配方所在的 Unity 包。");
+                    "无法定位平台通用配方所在的课程创作程序集。");
             }
+
+            var authoringDirectory = Path.GetDirectoryName(
+                assemblyDefinitionPath);
 
             return new RecipePackageCsvLoader().Load(
                 Id,
                 RecipeLayer.Platform,
                 Path.Combine(
-                    packageInfo.resolvedPath,
-                    "Samples~",
-                    "UnityAdapter",
-                    "Editor",
+                    authoringDirectory,
                     "Recipes",
                     "平台通用"));
         }
