@@ -175,6 +175,7 @@ namespace VirtualLab.UnityAdapters.Presentation
                 if (_context.Resources == null
                     || !_context.Resources.TryResolve(
                         resourceId,
+                        parameter.ResourceType,
                         out var resource)
                     || resource == null)
                 {

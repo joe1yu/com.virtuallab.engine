@@ -6,31 +6,23 @@ using VirtualLab.Domain.Relations;
 
 namespace VirtualLab.Application.Courses
 {
-    public enum CourseResourceKind
-    {
-        Prefab,
-        Material,
-        Audio,
-        Presentation
-    }
-
+    /// <summary>
+    /// 课程仅记录稳定资源 ID 和加载地址，资源类型由实际使用方声明。
+    /// </summary>
     public sealed class CourseResourceDefinition
     {
         public CourseResourceDefinition(
             string resourceId,
-            string assetPath,
-            CourseResourceKind kind)
+            string assetPath)
         {
             ResourceId = CourseContractGuard.Required(resourceId, "资源 ID");
             AssetPath = CourseContractGuard.Required(
                 assetPath,
                 $"资源“{ResourceId}”的路径");
-            Kind = kind;
         }
 
         public string ResourceId { get; }
         public string AssetPath { get; }
-        public CourseResourceKind Kind { get; }
     }
 
     public sealed class CoursePortDefinition

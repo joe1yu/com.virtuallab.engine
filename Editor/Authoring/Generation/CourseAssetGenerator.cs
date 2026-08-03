@@ -257,6 +257,14 @@ namespace VirtualLab.Unity.Authoring.Generation
         {
             var errors = new List<CourseCompilationDiagnostic>();
             var hasEnvironmentPrefab = false;
+            var prefabResourceIds = new HashSet<string>(
+                domain.Entities.Select(value => value.PrefabReference),
+                StringComparer.Ordinal);
+            if (!string.IsNullOrWhiteSpace(domain.EnvironmentResourceId))
+            {
+                prefabResourceIds.Add(domain.EnvironmentResourceId);
+            }
+
             var prefabContracts = domain.PrefabContracts.ToDictionary(
                 value => value.ResourceId,
                 StringComparer.Ordinal);
@@ -282,36 +290,21 @@ namespace VirtualLab.Unity.Authoring.Generation
                 }
 
                 GameObject prefab = null;
-                var typeMatches = true;
-                switch (resource.Kind)
+                if (prefabResourceIds.Contains(resource.ResourceId))
                 {
-                    case CourseResourceKind.Prefab:
-                        prefab = loaded as GameObject;
-                        typeMatches = prefab != null
-                            && PrefabUtility.GetPrefabAssetType(prefab)
-                            != PrefabAssetType.NotAPrefab;
-                        break;
-                    case CourseResourceKind.Material:
-                        typeMatches = loaded is Material;
-                        break;
-                    case CourseResourceKind.Audio:
-                        typeMatches = loaded is AudioClip;
-                        break;
-                    case CourseResourceKind.Presentation:
-                        break;
-                    default:
-                        typeMatches = false;
-                        break;
-                }
-
-                if (!typeMatches)
-                {
-                    errors.Add(ResourceDiagnostic(
-                        "course.asset.type-mismatch",
-                        resource,
-                        $"资源类型与资产“{loaded.GetType().Name}”不匹配。",
-                        "修正资源类型或改用对应类型的持久化资产。"));
-                    continue;
+                    prefab = loaded as GameObject;
+                    if (prefab == null
+                        || PrefabUtility.GetPrefabAssetType(prefab)
+                        == PrefabAssetType.NotAPrefab)
+                    {
+                        errors.Add(ResourceDiagnostic(
+                            "course.asset.type-mismatch",
+                            resource,
+                            $"场景对象资源必须是 Prefab，当前资产为“"
+                            + loaded.GetType().Name + "”。",
+                            "将该资源路径修正为持久化 Prefab 资产。"));
+                        continue;
+                    }
                 }
 
                 if (prefab != null
@@ -354,7 +347,7 @@ namespace VirtualLab.Unity.Authoring.Generation
                     string.Empty,
                     domain.EnvironmentResourceId ?? string.Empty,
                     "课程环境资源没有解析为 Prefab。",
-                    "将环境资源类型设置为预制体并修正资源路径。"));
+                    "将环境资源路径修正为持久化 Prefab 资产。"));
             }
 
             diagnostics = errors;

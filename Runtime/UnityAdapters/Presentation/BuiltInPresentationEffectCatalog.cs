@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 using VirtualLab.Application.Courses;
 using VirtualLab.Presentation;
 using VirtualLab.UnityAdapters.Authoring;
@@ -126,7 +127,7 @@ namespace VirtualLab.UnityAdapters.Presentation
                     SlotTarget(PresentationSlotKind.Content),
                     new[]
                     {
-                        Resource("资源ID", CourseResourceKind.Material)
+                        Resource<Material>("资源ID")
                     },
                     () => new MaterialEffectExecutor("material.set")),
                 Effect(
@@ -137,7 +138,7 @@ namespace VirtualLab.UnityAdapters.Presentation
                     SlotTarget(PresentationSlotKind.Content),
                     new[]
                     {
-                        Resource("资源ID", CourseResourceKind.Material),
+                        Resource<Material>("资源ID"),
                         Number("持续秒数", 0.3, 0)
                     },
                     () => new MaterialEffectExecutor("material.animate")),
@@ -171,7 +172,7 @@ namespace VirtualLab.UnityAdapters.Presentation
                     SlotTarget(PresentationSlotKind.Content),
                     new[]
                     {
-                        Resource("资源ID", CourseResourceKind.Audio),
+                        Resource<AudioClip>("资源ID"),
                         Boolean("循环", false)
                     },
                     () => new AudioVfxEffectExecutor("audio.play")),
@@ -444,9 +445,8 @@ namespace VirtualLab.UnityAdapters.Presentation
                 null);
         }
 
-        private static PresentationParameterDescriptor Resource(
-            string name,
-            CourseResourceKind kind)
+        private static PresentationParameterDescriptor Resource<T>(string name)
+            where T : UnityEngine.Object
         {
             return new PresentationParameterDescriptor(
                 name,
@@ -456,7 +456,7 @@ namespace VirtualLab.UnityAdapters.Presentation
                 null,
                 null,
                 Array.Empty<string>(),
-                kind);
+                typeof(T));
         }
     }
 }

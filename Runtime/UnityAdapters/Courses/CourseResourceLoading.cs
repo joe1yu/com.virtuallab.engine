@@ -131,9 +131,22 @@ namespace VirtualLab.UnityAdapters.Courses
 
         public bool TryResolve(
             string resourceId,
+            Type expectedType,
             out UnityEngine.Object resource)
         {
             resource = null;
+            if (expectedType == null)
+            {
+                throw new ArgumentNullException(nameof(expectedType));
+            }
+
+            if (!typeof(UnityEngine.Object).IsAssignableFrom(expectedType))
+            {
+                throw new ArgumentException(
+                    $"课程资源类型“{expectedType.Name}”不是 Unity 对象。",
+                    nameof(expectedType));
+            }
+
             if (string.IsNullOrWhiteSpace(resourceId))
             {
                 return false;
@@ -142,7 +155,8 @@ namespace VirtualLab.UnityAdapters.Courses
             var normalizedId = resourceId.Trim();
             if (_loaded.TryGetValue(normalizedId, out resource))
             {
-                return resource != null;
+                return resource != null
+                       && expectedType.IsInstanceOfType(resource);
             }
 
             if (!_definitions.TryGetValue(normalizedId, out var definition))
@@ -150,7 +164,6 @@ namespace VirtualLab.UnityAdapters.Courses
                 return false;
             }
 
-            var expectedType = CourseResourceTypes.For(definition.Kind);
             if (!_loader.TryLoad(
                     definition.AssetPath,
                     expectedType,
@@ -168,7 +181,7 @@ namespace VirtualLab.UnityAdapters.Courses
 
         public T Require<T>(string resourceId) where T : UnityEngine.Object
         {
-            if (TryResolve(resourceId, out var resource)
+            if (TryResolve(resourceId, typeof(T), out var resource)
                 && resource is T typed)
             {
                 return typed;
@@ -176,29 +189,6 @@ namespace VirtualLab.UnityAdapters.Courses
 
             throw new InvalidOperationException(
                 $"课程资源“{resourceId}”无法加载为“{typeof(T).Name}”。");
-        }
-    }
-
-    internal static class CourseResourceTypes
-    {
-        public static Type For(CourseResourceKind kind)
-        {
-            switch (kind)
-            {
-                case CourseResourceKind.Prefab:
-                    return typeof(GameObject);
-                case CourseResourceKind.Material:
-                    return typeof(Material);
-                case CourseResourceKind.Audio:
-                    return typeof(AudioClip);
-                case CourseResourceKind.Presentation:
-                    return typeof(UnityEngine.Object);
-                default:
-                    throw new ArgumentOutOfRangeException(
-                        nameof(kind),
-                        kind,
-                        "未知课程资源类型。");
-            }
         }
     }
 }

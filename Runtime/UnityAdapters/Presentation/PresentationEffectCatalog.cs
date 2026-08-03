@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using VirtualLab.Application.Courses;
+using UnityEngine;
 using VirtualLab.Presentation;
 using VirtualLab.UnityAdapters.Authoring;
 
@@ -37,7 +37,7 @@ namespace VirtualLab.UnityAdapters.Presentation
             double? minimum,
             double? maximum,
             IEnumerable<string> allowedValues,
-            CourseResourceKind? resourceKind)
+            Type resourceType)
         {
             Name = RequireText(name, "表现参数名");
             Kind = kind;
@@ -48,7 +48,7 @@ namespace VirtualLab.UnityAdapters.Presentation
             AllowedValues = CopyDistinct(
                 allowedValues,
                 $"表现参数“{Name}”的允许值");
-            ResourceKind = resourceKind;
+            ResourceType = resourceType;
             ValidateContract();
         }
 
@@ -66,7 +66,10 @@ namespace VirtualLab.UnityAdapters.Presentation
 
         public IReadOnlyList<string> AllowedValues { get; }
 
-        public CourseResourceKind? ResourceKind { get; }
+        /// <summary>
+        /// 资源参数由表现原语声明所需 Unity 类型，不写入课程资源协议。
+        /// </summary>
+        public Type ResourceType { get; }
 
         public bool Matches(PresentationValue value, out string reason)
         {
@@ -143,11 +146,20 @@ namespace VirtualLab.UnityAdapters.Presentation
                     $"枚举参数“{Name}”必须声明允许值。");
             }
 
-            if (Kind == PresentationParameterKind.Resource &&
-                !ResourceKind.HasValue)
+            if (Kind == PresentationParameterKind.Resource
+                && (ResourceType == null
+                    || !typeof(UnityEngine.Object).IsAssignableFrom(
+                        ResourceType)))
             {
                 throw new ArgumentException(
-                    $"资源参数“{Name}”必须声明资源种类。");
+                    $"资源参数“{Name}”必须声明 Unity 资源类型。");
+            }
+
+            if (Kind != PresentationParameterKind.Resource
+                && ResourceType != null)
+            {
+                throw new ArgumentException(
+                    $"非资源参数“{Name}”不能声明资源类型。");
             }
 
             if (DefaultValue != null &&

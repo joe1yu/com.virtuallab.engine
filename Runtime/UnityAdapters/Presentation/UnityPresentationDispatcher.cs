@@ -10,7 +10,10 @@ namespace VirtualLab.UnityAdapters.Presentation
 {
     public interface IPresentationResourceResolver
     {
-        bool TryResolve(string resourceId, out UnityEngine.Object resource);
+        bool TryResolve(
+            string resourceId,
+            Type expectedType,
+            out UnityEngine.Object resource);
     }
 
     public interface IPresentationMessageSink

@@ -286,8 +286,7 @@ namespace VirtualLab.Engine.PlayModeTests
                     {
                         new CourseResourceDefinition(
                             "预制体.试管",
-                            "测试资源/试管.prefab",
-                            CourseResourceKind.Prefab)
+                            "测试资源/试管.prefab")
                     });
                 var resources = new CourseRuntimeResourceResolver(
                     definition,

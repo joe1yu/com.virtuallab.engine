@@ -432,14 +432,12 @@ namespace VirtualLab.Unity.Authoring.Blueprints
             {
                 new CourseResourceDefinition(
                     "资源.课程环境",
-                    blueprint.Course.EnvironmentPrefab,
-                    CourseResourceKind.Prefab)
+                    blueprint.Course.EnvironmentPrefab)
             };
             resources.AddRange(model.Entities.Select(value =>
                 new CourseResourceDefinition(
                     ResourceId(value.Definition.EntityId),
-                    value.Definition.PrefabReference,
-                    CourseResourceKind.Prefab)));
+                    value.Definition.PrefabReference)));
 
             var entities = model.Entities.Select(value =>
                 new CourseEntityDefinition(

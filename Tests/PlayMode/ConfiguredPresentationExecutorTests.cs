@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using NUnit.Framework;
@@ -8,6 +9,7 @@ using VirtualLab.UnityAdapters;
 using VirtualLab.UnityAdapters.Authoring;
 using VirtualLab.UnityAdapters.Courses;
 using VirtualLab.UnityAdapters.Presentation;
+using Object = UnityEngine.Object;
 
 namespace VirtualLab.Engine.PlayModeTests
 {
@@ -506,10 +508,14 @@ namespace VirtualLab.Engine.PlayModeTests
 
             public IReadOnlyList<string> ResolvedIds => _resolvedIds;
 
-            public bool TryResolve(string resourceId, out Object resource)
+            public bool TryResolve(
+                string resourceId,
+                Type expectedType,
+                out Object resource)
             {
                 _resolvedIds.Add(resourceId);
-                return _resources.TryGetValue(resourceId, out resource);
+                return _resources.TryGetValue(resourceId, out resource)
+                       && expectedType.IsInstanceOfType(resource);
             }
         }
 

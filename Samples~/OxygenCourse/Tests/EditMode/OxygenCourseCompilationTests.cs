@@ -374,11 +374,20 @@ namespace VirtualLab.Engine.Tests.Courses
             var resources = new CourseRuntimeResourceResolver(
                 course,
                 new ResourcesCourseResourceLoader());
+            var prefabResourceIds = new HashSet<string>(
+                course.Entities.Select(value => value.PrefabReference),
+                StringComparer.Ordinal)
+            {
+                course.EnvironmentResourceId
+            };
             foreach (var resource in course.Resources)
             {
                 Assert.That(
                     resources.TryResolve(
                         resource.ResourceId,
+                        prefabResourceIds.Contains(resource.ResourceId)
+                            ? typeof(GameObject)
+                            : typeof(UnityEngine.Object),
                         out var loaded),
                     Is.True,
                     resource.ResourceId + " 未能按路径加载。");
@@ -411,8 +420,7 @@ namespace VirtualLab.Engine.Tests.Courses
                 "实体|" + value.EntityId + "|" + value.PrefabReference + "|"
                 + string.Join(";", value.CapabilityIds)));
             result.AddRange(course.Resources.Select(value =>
-                "资源|" + value.ResourceId + "|" + value.AssetPath + "|"
-                + value.Kind));
+                "资源|" + value.ResourceId + "|" + value.AssetPath));
             result.AddRange(course.Ports.Select(value =>
                 "端口|" + value.PortId + "|" + value.EntityId + "|"
                 + value.CompatibilityGroup));

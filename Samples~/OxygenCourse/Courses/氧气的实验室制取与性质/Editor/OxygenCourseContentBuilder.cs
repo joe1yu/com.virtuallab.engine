@@ -214,9 +214,10 @@ namespace VirtualLab.OxygenCourse.Authoring
             var contracts = course.PrefabContracts.ToDictionary(
                 value => value.ResourceId,
                 StringComparer.Ordinal);
+            var prefabResourceIds = PrefabResourceIds(course);
             var errors = new List<string>();
             foreach (var resource in course.Resources.Where(value =>
-                         value.Kind == CourseResourceKind.Prefab))
+                         prefabResourceIds.Contains(value.ResourceId)))
             {
                 var assetPath = VirtualLab.Unity.Authoring.Blueprints
                     .CourseAssetPath.Resolve(
@@ -257,9 +258,10 @@ namespace VirtualLab.OxygenCourse.Authoring
             var contracts = course.PrefabContracts.ToDictionary(
                 value => value.ResourceId,
                 StringComparer.Ordinal);
+            var prefabResourceIds = PrefabResourceIds(course);
 
             foreach (var resource in course.Resources
-                .Where(value => value.Kind == CourseResourceKind.Prefab)
+                .Where(value => prefabResourceIds.Contains(value.ResourceId))
                 .OrderBy(value => value.ResourceId, StringComparer.Ordinal))
             {
                 var assetPath = VirtualLab.Unity.Authoring.Blueprints
@@ -284,6 +286,24 @@ namespace VirtualLab.OxygenCourse.Authoring
                     entity?.EntityId ?? "化学实验室环境",
                     contract);
             }
+        }
+
+        /// <summary>
+        /// 预制体身份由场景对象和课程环境的实际引用推导，
+        /// 不再依赖课程资源表中的全局类型枚举。
+        /// </summary>
+        private static HashSet<string> PrefabResourceIds(
+            CompiledCourseDefinition course)
+        {
+            var result = new HashSet<string>(
+                course.Entities.Select(value => value.PrefabReference),
+                StringComparer.Ordinal);
+            if (!string.IsNullOrWhiteSpace(course.EnvironmentResourceId))
+            {
+                result.Add(course.EnvironmentResourceId);
+            }
+
+            return result;
         }
 
         private static void CreatePrefab(
