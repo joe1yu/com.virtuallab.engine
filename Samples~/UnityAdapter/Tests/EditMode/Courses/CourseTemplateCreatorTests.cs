@@ -27,7 +27,7 @@ namespace VirtualLab.Engine.Tests.Courses
                 Assert.That(Directory.Exists(result.CourseDirectory), Is.True);
                 Assert.That(
                     Directory.Exists(Path.Combine(result.CourseDirectory, "Prefabs")),
-                    Is.True);
+                    Is.False);
                 Assert.That(
                     Directory.Exists(Path.Combine(result.CourseDirectory, "Generated")),
                     Is.True);
@@ -45,6 +45,12 @@ namespace VirtualLab.Engine.Tests.Courses
                 Assert.That(course["显示名称"], Is.EqualTo("气体体积测量实验"));
                 Assert.That(course["学科配方包"], Is.EqualTo("化学基础"));
                 Assert.That(course["操作者实体ID"], Is.EqualTo("学生"));
+                Assert.That(
+                    course["实验Prefab"],
+                    Is.EqualTo("Assets/课程环境.prefab"));
+                Assert.That(
+                    documents.GetRequiredDocument("实验对象.csv").Headers,
+                    Does.Not.Contain("Prefab"));
                 Assert.That(
                     documents.GetRequiredDocument("实验对象.csv").Rows,
                     Is.Empty);

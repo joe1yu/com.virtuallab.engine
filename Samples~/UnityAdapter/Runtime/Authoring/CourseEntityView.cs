@@ -9,6 +9,7 @@ namespace VirtualLab.UnityAdapters.Authoring
     [DisallowMultipleComponent]
     public sealed class CourseEntityView : MonoBehaviour
     {
+        [SerializeField]
         private string _entityId;
         private SemanticAnchorMarker[] _anchors =
             Array.Empty<SemanticAnchorMarker>();
@@ -21,7 +22,7 @@ namespace VirtualLab.UnityAdapters.Authoring
         private bool _indexReady;
 
         /// <summary>
-        /// 课程实体 ID 由课程装配器在运行时绑定，不写入可复用预制体。
+        /// 课程实体 ID 保存在实验总预制体中，用于将预制体节点绑定到领域实体。
         /// </summary>
         public string EntityId => string.IsNullOrWhiteSpace(_entityId)
             ? null

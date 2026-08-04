@@ -35,7 +35,7 @@ namespace VirtualLab.Unity.Authoring.Workbench
         private const float SeparateOverviewMinimumWidth = 1450f;
         private static readonly string[] CoreObjectColumns =
         {
-            "实体ID", "显示名称", "Prefab", "特征列表", "初始位置", "初始旋转"
+            "实体ID", "显示名称", "特征列表", "初始位置", "初始旋转"
         };
         private static readonly string[] ReferenceSummaryColumns =
         {
@@ -352,7 +352,7 @@ namespace VirtualLab.Unity.Authoring.Workbench
                 EditorGUILayout.EndHorizontal();
                 EditorGUILayout.Space(3f);
                 EditorGUILayout.LabelField(
-                    "怎么使用：左侧添加或选择对象 → 中间指定模型预制体、勾选能力并填写参数 → 右侧确认生成结果 → 修正底部问题 → 生成课程。",
+                    "怎么使用：左侧添加或选择对象 → 中间勾选能力并填写参数 → 在实验总预制体中放置同 ID 对象 → 修正底部问题 → 生成课程。",
                     EditorStyles.wordWrappedLabel);
                 EditorGUILayout.LabelField(
                     "普通课程不需要直接编辑自动生成的动作、规则和表现；只有默认行为不满足要求时，才在关联课程表中填写例外。",
@@ -473,7 +473,7 @@ namespace VirtualLab.Unity.Authoring.Workbench
             GUILayout.Space(14f);
             GUILayout.Label("这门课程还没有实验对象", EditorStyles.largeLabel);
             EditorGUILayout.LabelField(
-                "每个可操作器材、试剂、容器或实验参与者都是一个对象。先添加对象，再选择已经制作好的模型预制体；勾选“可抓取”“可加热”等能力后，工作台会自动生成标准操作。",
+                "每个可操作器材、试剂、容器或实验参与者都是一个对象。对象模型统一放在实验总预制体中，并通过 CourseEntityView 的实体 ID 与这里的配置对应；勾选“可抓取”“可加热”等能力后，工作台会自动生成标准操作。",
                 EditorStyles.wordWrappedLabel);
             EditorGUILayout.Space(8f);
             if (GUILayout.Button(
@@ -559,7 +559,6 @@ namespace VirtualLab.Unity.Authoring.Workbench
             DrawEntityId(row);
             DrawActorSelection(row);
             DrawTextCell(row, "显示名称", "面向教师和学生显示的自然中文名称。", true);
-            DrawPrefabCell(row);
             DrawVectorCell(row, "初始位置");
             DrawVectorCell(row, "初始旋转");
             EditorGUILayout.Space(6f);
@@ -642,30 +641,6 @@ namespace VirtualLab.Unity.Authoring.Workbench
 
             EditorGUI.EndDisabledGroup();
             EditorGUILayout.EndHorizontal();
-        }
-
-        private void DrawPrefabCell(EditableCsvRow row)
-        {
-            var currentPath = row["Prefab"];
-            var current = AssetDatabase.LoadAssetAtPath<GameObject>(currentPath);
-            EditorGUI.BeginChangeCheck();
-            var selected = (GameObject)EditorGUILayout.ObjectField(
-                new GUIContent("模型预制体", "该实验对象使用的 Unity 预制体资源。"),
-                current,
-                typeof(GameObject),
-                false);
-            if (EditorGUI.EndChangeCheck())
-            {
-                SetCell(row, "Prefab", AssetDatabase.GetAssetPath(selected));
-            }
-
-            if (current == null && !string.IsNullOrWhiteSpace(currentPath))
-            {
-                EditorGUILayout.HelpBox(
-                    $"当前路径无法载入模型预制体：{currentPath}",
-                    MessageType.Error);
-                DrawTextCell(row, "Prefab", "可直接修正资产路径。", false);
-            }
         }
 
         private void DrawVectorCell(EditableCsvRow row, string column)
@@ -1799,8 +1774,7 @@ namespace VirtualLab.Unity.Authoring.Workbench
 
         private static bool IsObjectIncomplete(EditableCsvRow row) =>
             string.IsNullOrWhiteSpace(row["实体ID"])
-            || string.IsNullOrWhiteSpace(row["显示名称"])
-            || string.IsNullOrWhiteSpace(row["Prefab"]);
+            || string.IsNullOrWhiteSpace(row["显示名称"]);
 
         private void SelectFirstIncompleteObject()
         {
@@ -1831,7 +1805,6 @@ namespace VirtualLab.Unity.Authoring.Workbench
             var missing = new List<string>();
             if (string.IsNullOrWhiteSpace(row["实体ID"])) missing.Add("对象 ID");
             if (string.IsNullOrWhiteSpace(row["显示名称"])) missing.Add("显示名称");
-            if (string.IsNullOrWhiteSpace(row["Prefab"])) missing.Add("模型预制体");
             SetOperationMessage(
                 $"已定位“{row["显示名称"]}”。请补全：{string.Join("、", missing)}。",
                 MessageType.Warning);

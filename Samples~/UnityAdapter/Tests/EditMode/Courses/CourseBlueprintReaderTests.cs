@@ -30,7 +30,7 @@ namespace VirtualLab.Engine.Tests.Courses
         {
             var result = new StrictCsvReader().Read(
                 "课程.csv",
-                "课程标识,操作者实体标识,环境预制体\n"
+                "课程标识,操作者实体标识,实验预制体\n"
                 + "演示课程,学生,环境.prefab\n");
 
             Assert.That(result.Diagnostics, Is.Empty);
@@ -39,25 +39,25 @@ namespace VirtualLab.Engine.Tests.Courses
                 {
                     "课程ID",
                     "操作者实体ID",
-                    "环境Prefab"
+                    "实验Prefab"
                 }));
             Assert.That(result.ConfiguredHeaders,
                 Is.EqualTo(new[]
                 {
                     "课程标识",
                     "操作者实体标识",
-                    "环境预制体"
+                    "实验预制体"
                 }));
             Assert.That(result.Rows.Single()["课程ID"],
                 Is.EqualTo("演示课程"));
-            Assert.That(result.Rows.Single()["环境Prefab"],
+            Assert.That(result.Rows.Single()["实验Prefab"],
                 Is.EqualTo("环境.prefab"));
 
             var editable = EditableCsvDocument.Parse(
                 "课程.csv",
-                "课程标识,环境预制体\n演示课程,环境.prefab\n");
+                "课程标识,实验预制体\n演示课程,环境.prefab\n");
             StringAssert.StartsWith(
-                "课程标识,环境预制体",
+                "课程标识,实验预制体",
                 editable.ToCsv());
         }
 
@@ -161,13 +161,13 @@ namespace VirtualLab.Engine.Tests.Courses
                 MinimumBlueprint()
                     .Replace(
                         "课程.csv",
-                        "课程ID,显示名称,学科配方包,操作者实体ID,环境Prefab\n"
+                        "课程ID,显示名称,学科配方包,操作者实体ID,实验Prefab\n"
                         + "最小课程,最小课程,化学基础,教师,环境.prefab\n")
                     .Replace(
                         "实验对象.csv",
-                        "实体ID,显示名称,Prefab,特征列表,初始位置,初始旋转\n"
-                        + "试管,试管,试管.prefab,可抓取,0|1|0,0|0|0\n"
-                        + "教师,教师,教师.prefab,,0|0|0,0|0|0\n"));
+                        "实体ID,显示名称,特征列表,初始位置,初始旋转\n"
+                        + "试管,试管,可抓取,0|1|0,0|0|0\n"
+                        + "教师,教师,,0|0|0,0|0|0\n"));
 
             Assert.That(valid.IsSuccess, Is.True);
             Assert.That(valid.Blueprint.Course.ActorEntityId, Is.EqualTo("教师"));
@@ -175,7 +175,7 @@ namespace VirtualLab.Engine.Tests.Courses
             var invalid = new CourseBlueprintReader().Read(
                 MinimumBlueprint().Replace(
                     "课程.csv",
-                    "课程ID,显示名称,学科配方包,操作者实体ID,环境Prefab\n"
+                    "课程ID,显示名称,学科配方包,操作者实体ID,实验Prefab\n"
                     + "最小课程,最小课程,化学基础,教师,环境.prefab\n"));
             Assert.That(
                 invalid.Diagnostics.Select(value => value.Code),
@@ -188,13 +188,13 @@ namespace VirtualLab.Engine.Tests.Courses
             var source = MinimumBlueprint()
                 .Replace(
                     "课程.csv",
-                    "课程ID,显示名称,环境Prefab\n"
+                    "课程ID,显示名称,实验Prefab\n"
                     + "最小课程,最小课程,环境.prefab\n")
                 .Replace(
                     "实验对象.csv",
-                    "实体ID,显示名称,Prefab,特征列表,初始位置,初始旋转\n"
-                    + "试管,试管,试管.prefab,可抓取,不是向量,0|0|0\n"
-                    + "试管,重复试管,试管.prefab,可抓取,0|0|0,0|0|0\n");
+                    "实体ID,显示名称,特征列表,初始位置,初始旋转\n"
+                    + "试管,试管,可抓取,不是向量,0|0|0\n"
+                    + "试管,重复试管,可抓取,0|0|0,0|0|0\n");
 
             var result = new CourseBlueprintReader().Read(source);
             var codes = result.Diagnostics.Select(value => value.Code);
@@ -238,9 +238,9 @@ namespace VirtualLab.Engine.Tests.Courses
             var result = new CourseBlueprintReader().Read(
                 MinimumBlueprint().Replace(
                     "实验对象.csv",
-                    "实体ID,显示名称,Prefab,特征列表,初始位置,初始旋转,"
+                    "实体ID,显示名称,特征列表,初始位置,初始旋转,"
                     + "参数.端口.出口兼容组,初始关系.位于,初始物质.水.毫升\n"
-                    + "试管,试管,试管.prefab,可抓取,0|1|0,0|0|0,"
+                    + "试管,试管,可抓取,0|1|0,0|0|0,"
                     + "组.导气,铁架台,10\n"));
 
             Assert.That(result.IsSuccess, Is.False);
@@ -294,15 +294,15 @@ namespace VirtualLab.Engine.Tests.Courses
         {
             var courseBytes = Encoding.UTF8.GetPreamble()
                 .Concat(Encoding.UTF8.GetBytes(
-                    "课程ID,显示名称,学科配方包,环境Prefab\n"
+                    "课程ID,显示名称,学科配方包,实验Prefab\n"
                     + "最小课程,最小课程,,环境.prefab\n"))
                 .ToArray();
             var source = MinimumBlueprint()
                 .Replace("课程.csv", courseBytes)
                 .Replace(
                     "实验对象.csv",
-                    "实体ID,显示名称,Prefab,特征列表,初始位置,初始旋转,随意备注\n"
-                    + "试管,试管,试管.prefab,可抓取,0|0|0,0|0|0,备注\n");
+                    "实体ID,显示名称,特征列表,初始位置,初始旋转,随意备注\n"
+                    + "试管,试管,可抓取,0|0|0,0|0|0,备注\n");
 
             var result = new CourseBlueprintReader().Read(source);
 
@@ -319,8 +319,8 @@ namespace VirtualLab.Engine.Tests.Courses
         {
             var source = MinimumBlueprint().Replace(
                 "实验对象.csv",
-                "实体ID,显示名称,Prefab,特征列表,初始位置,初始旋转,参数.容量,参数.容量\n"
-                + "试管,试管,试管.prefab,可抓取,0|0|0,0|0|0,100,200\n");
+                "实体ID,显示名称,特征列表,初始位置,初始旋转,参数.容量,参数.容量\n"
+                + "试管,试管,可抓取,0|0|0,0|0|0,100,200\n");
 
             CourseBlueprintReadResult result = null;
             Assert.DoesNotThrow(() =>
@@ -444,13 +444,13 @@ namespace VirtualLab.Engine.Tests.Courses
             {
                 new CourseBlueprintFile(
                     "课程.csv",
-                    "课程ID,显示名称,学科配方包,环境Prefab\n"
+                    "课程ID,显示名称,学科配方包,实验Prefab\n"
                     + "最小课程,最小课程,化学基础,环境.prefab\n"),
                 new CourseBlueprintFile(
                     "实验对象.csv",
-                    "实体ID,显示名称,Prefab,特征列表,初始位置,初始旋转,"
+                    "实体ID,显示名称,特征列表,初始位置,初始旋转,"
                     + "参数.容量毫升\n"
-                    + "试管,试管,试管.prefab,可抓取;容器,"
+                    + "试管,试管,可抓取;容器,"
                     + "0|1|0,0|0|0,100\n")
             });
         }

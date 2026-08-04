@@ -263,20 +263,22 @@ namespace VirtualLab.Engine.PlayModeTests
         }
 
         [UnityTest]
-        public IEnumerator 场景装配器仅按资源引用实例化课程实体()
+        public IEnumerator 场景装配器只实例化实验总预制体并注册内部实体()
         {
             var parent = new GameObject("课程场景根");
-            var prefab = new GameObject("通用试管Prefab");
+            var prefab = new GameObject("实验总Prefab");
             try
             {
-                prefab.AddComponent<CourseEntityView>();
+                var entityObject = new GameObject("器材.试管");
+                entityObject.transform.SetParent(prefab.transform, false);
+                entityObject.AddComponent<CourseEntityView>()
+                    .Configure("器材.试管");
                 var definition = CompiledCourseDefinition.CreateBasic(
                     "任意课程ID",
                     new[]
                     {
                         new CourseEntityDefinition(
                             "器材.试管",
-                            "预制体.试管",
                             Array.Empty<string>())
                     },
                     Array.Empty<ActionPolicyDefinition>(),
@@ -285,13 +287,14 @@ namespace VirtualLab.Engine.PlayModeTests
                     new[]
                     {
                         new CourseResourceDefinition(
-                            "预制体.试管",
-                            "测试资源/试管.prefab")
-                    });
+                            "预制体.实验",
+                            "测试资源/实验.prefab")
+                    },
+                    "预制体.实验");
                 var resources = new CourseRuntimeResourceResolver(
                     definition,
                     new FixedCourseResourceLoader(
-                        "测试资源/试管.prefab",
+                        "测试资源/实验.prefab",
                         prefab));
 
                 var assembly = new CourseSceneAssembler().Assemble(
@@ -306,7 +309,59 @@ namespace VirtualLab.Engine.PlayModeTests
                     Is.True);
                 Assert.That(assembled.name, Is.EqualTo("器材.试管"));
                 Assert.That(assembled.transform.parent,
+                    Is.SameAs(assembly.ExperimentRoot.transform));
+                Assert.That(assembly.ExperimentRoot.transform.parent,
                     Is.SameAs(parent.transform));
+            }
+            finally
+            {
+                UnityEngine.Object.Destroy(parent);
+                UnityEngine.Object.Destroy(prefab);
+            }
+
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator 实验总预制体缺少声明实体时拒绝装配并清理实例()
+        {
+            var parent = new GameObject("课程场景根");
+            var prefab = new GameObject("不完整实验总Prefab");
+            try
+            {
+                var definition = CompiledCourseDefinition.CreateBasic(
+                    "不完整课程",
+                    new[]
+                    {
+                        new CourseEntityDefinition(
+                            "器材.试管",
+                            Array.Empty<string>())
+                    },
+                    Array.Empty<ActionPolicyDefinition>(),
+                    Array.Empty<CourseGoalDefinition>(),
+                    Array.Empty<CourseAssessmentDefinition>(),
+                    new[]
+                    {
+                        new CourseResourceDefinition(
+                            "预制体.实验",
+                            "测试资源/不完整实验.prefab")
+                    },
+                    "预制体.实验");
+                var resources = new CourseRuntimeResourceResolver(
+                    definition,
+                    new FixedCourseResourceLoader(
+                        "测试资源/不完整实验.prefab",
+                        prefab));
+
+                Assert.Throws<InvalidOperationException>(() =>
+                    new CourseSceneAssembler().Assemble(
+                        definition,
+                        resources,
+                        parent.transform));
+
+                // 运行模式下 Destroy 延迟到帧末执行。
+                yield return null;
+                Assert.That(parent.transform.childCount, Is.Zero);
             }
             finally
             {

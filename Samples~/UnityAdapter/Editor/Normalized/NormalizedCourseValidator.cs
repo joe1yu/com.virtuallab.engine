@@ -293,7 +293,7 @@ namespace VirtualLab.Unity.Authoring.Normalized
                     item.Definition.EntityId,
                     entityIds,
                     "normalized.reference.entity-missing",
-                    "Prefab 契约实体",
+                    "实体视图契约实体",
                     item,
                     diagnostics);
             }

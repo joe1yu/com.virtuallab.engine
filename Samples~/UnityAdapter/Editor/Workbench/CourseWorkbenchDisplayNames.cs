@@ -76,7 +76,6 @@ namespace VirtualLab.Unity.Authoring.Workbench
         public static string Field(string csvColumn) => csvColumn switch
         {
             "实体ID" => "对象 ID",
-            "Prefab" => "模型预制体",
             "初始位置" => "初始位置",
             "初始旋转" => "初始朝向",
             _ => csvColumn ?? string.Empty

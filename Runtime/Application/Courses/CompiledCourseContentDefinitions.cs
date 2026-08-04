@@ -7,6 +7,14 @@ using VirtualLab.Domain.Relations;
 namespace VirtualLab.Application.Courses
 {
     /// <summary>
+    /// 引擎保留的课程级资源 ID。具体表现资源仍由课程自行命名。
+    /// </summary>
+    public static class CourseResourceIds
+    {
+        public const string ExperimentPrefab = "资源.实验预制体";
+    }
+
+    /// <summary>
     /// 课程仅记录稳定资源 ID 和加载地址，资源类型由实际使用方声明。
     /// </summary>
     public sealed class CourseResourceDefinition
@@ -473,25 +481,28 @@ namespace VirtualLab.Application.Courses
         public string Content { get; }
     }
 
+    /// <summary>
+    /// 实验总预制体内单个实体视图必须满足的组件、锚点和插槽要求。
+    /// </summary>
     public sealed class CoursePrefabContractDefinition
     {
         public CoursePrefabContractDefinition(
-            string resourceId,
+            string entityId,
             IEnumerable<string> capabilityIds,
             IEnumerable<string> portIds)
         {
-            ResourceId = CourseContractGuard.Required(
-                resourceId,
-                "Prefab 契约资源 ID");
+            EntityId = CourseContractGuard.Required(
+                entityId,
+                "实体视图契约实体 ID");
             CapabilityIds = CopyOptionalStrings(
                 capabilityIds,
-                $"Prefab“{ResourceId}”的能力");
+                $"实体视图“{EntityId}”的能力");
             PortIds = CopyOptionalStrings(
                 portIds,
-                $"Prefab“{ResourceId}”的端口");
+                $"实体视图“{EntityId}”的端口");
         }
 
-        public string ResourceId { get; }
+        public string EntityId { get; }
         public IReadOnlyList<string> CapabilityIds { get; }
         public IReadOnlyList<string> PortIds { get; }
 

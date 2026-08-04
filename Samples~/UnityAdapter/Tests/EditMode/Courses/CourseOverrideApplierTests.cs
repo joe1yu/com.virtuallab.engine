@@ -161,8 +161,8 @@ namespace VirtualLab.Engine.Tests.Courses
                 CourseFile(),
                 new CourseBlueprintFile(
                     "实验对象.csv",
-                    "实体ID,显示名称,Prefab,特征列表,初始位置,初始旋转\n"
-                    + $"{entityId},{entityId},{entityId}.prefab,{features},0|0|0,0|0|0\n"),
+                    "实体ID,显示名称,特征列表,初始位置,初始旋转\n"
+                    + $"{entityId},{entityId},{features},0|0|0,0|0|0\n"),
                 new CourseBlueprintFile(
                     "交互规则.csv",
                     InteractionHeader() + interactionRows)
@@ -177,10 +177,10 @@ namespace VirtualLab.Engine.Tests.Courses
                 CourseFile(),
                 new CourseBlueprintFile(
                     "实验对象.csv",
-                    "实体ID,显示名称,Prefab,特征列表,初始位置,初始旋转,"
+                    "实体ID,显示名称,特征列表,初始位置,初始旋转,"
                     + "参数.端口.出口.兼容组,参数.端口.入口.兼容组\n"
-                    + "导气管,导气管,导气管.prefab,可连接,0|0|0,0|0|0,组.导气,\n"
-                    + "集气瓶,集气瓶,集气瓶.prefab,可连接,0|0|0,0|0|0,,组.导气\n"),
+                    + "导气管,导气管,可连接,0|0|0,0|0|0,组.导气,\n"
+                    + "集气瓶,集气瓶,可连接,0|0|0,0|0|0,,组.导气\n"),
                 new CourseBlueprintFile(
                     "高级覆盖.csv",
                     "覆盖ID,配方ID,来源实体,目标实体,生成项,操作,字段,值\n"
@@ -191,7 +191,7 @@ namespace VirtualLab.Engine.Tests.Courses
         private static CourseBlueprintFile CourseFile() =>
             new CourseBlueprintFile(
                 "课程.csv",
-                "课程ID,显示名称,学科配方包,环境Prefab\n"
+                "课程ID,显示名称,学科配方包,实验Prefab\n"
                 + "覆盖测试,覆盖测试,,环境.prefab\n");
 
         private static string InteractionHeader() =>

@@ -93,7 +93,7 @@ namespace VirtualLab.Unity.Authoring.Workbench
             {
                 return State(
                     Step("1. 选择课程", "选择已有课程，或新建一门课程。", CourseWorkbenchStepStatus.Current),
-                    Step("2. 准备对象", "选择模型预制体，并声明对象能力。", CourseWorkbenchStepStatus.Pending),
+                    Step("2. 准备对象", "在实验总预制体中放置对象，并声明对象能力。", CourseWorkbenchStepStatus.Pending),
                     Step("3. 检查配置", "让工作台自动生成并检查规则。", CourseWorkbenchStepStatus.Pending),
                     Step("4. 生成课程", "保存 CSV，并生成运行时课程资产。", CourseWorkbenchStepStatus.Pending),
                     CourseWorkbenchRecommendedAction.CreateCourse,
@@ -138,13 +138,13 @@ namespace VirtualLab.Unity.Authoring.Workbench
             if (objectCount == 0)
             {
                 return State(steps, CourseWorkbenchRecommendedAction.AddObject,
-                    "添加第一个实验对象，然后为它选择模型预制体和对象能力。");
+                    "添加第一个实验对象，在实验总预制体中放置同 ID 对象，然后声明对象能力。");
             }
 
             if (incompleteObjectCount > 0)
             {
                 return State(steps, CourseWorkbenchRecommendedAction.CompleteObject,
-                    $"有 {incompleteObjectCount} 个对象尚未填写对象 ID、显示名称或模型预制体。先补全第一个对象。");
+                    $"有 {incompleteObjectCount} 个对象尚未填写对象 ID 或显示名称。先补全第一个对象。");
             }
 
             if (!hasCompilation || !compilationSucceeded)

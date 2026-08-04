@@ -9,6 +9,7 @@ using VirtualLab.Application.Courses;
 using VirtualLab.Unity.Authoring.Blueprints;
 using VirtualLab.Unity.Authoring.Diagnostics;
 using VirtualLab.Unity.Authoring.Normalized;
+using VirtualLab.UnityAdapters.Authoring;
 using VirtualLab.UnityAdapters.Courses;
 
 namespace VirtualLab.Unity.Authoring.Generation
@@ -256,17 +257,9 @@ namespace VirtualLab.Unity.Authoring.Generation
             out IReadOnlyList<CourseCompilationDiagnostic> diagnostics)
         {
             var errors = new List<CourseCompilationDiagnostic>();
-            var hasEnvironmentPrefab = false;
-            var prefabResourceIds = new HashSet<string>(
-                domain.Entities.Select(value => value.PrefabReference),
-                StringComparer.Ordinal);
-            if (!string.IsNullOrWhiteSpace(domain.EnvironmentResourceId))
-            {
-                prefabResourceIds.Add(domain.EnvironmentResourceId);
-            }
-
+            var hasExperimentPrefab = false;
             var prefabContracts = domain.PrefabContracts.ToDictionary(
-                value => value.ResourceId,
+                value => value.EntityId,
                 StringComparer.Ordinal);
             var courseRoot = Path.GetDirectoryName(
                 generatedDirectory.TrimEnd('/', '\\'));
@@ -289,70 +282,145 @@ namespace VirtualLab.Unity.Authoring.Generation
                     continue;
                 }
 
-                GameObject prefab = null;
-                if (prefabResourceIds.Contains(resource.ResourceId))
-                {
-                    prefab = loaded as GameObject;
-                    if (prefab == null
-                        || PrefabUtility.GetPrefabAssetType(prefab)
-                        == PrefabAssetType.NotAPrefab)
-                    {
-                        errors.Add(ResourceDiagnostic(
-                            "course.asset.type-mismatch",
-                            resource,
-                            $"场景对象资源必须是 Prefab，当前资产为“"
-                            + loaded.GetType().Name + "”。",
-                            "将该资源路径修正为持久化 Prefab 资产。"));
-                        continue;
-                    }
-                }
-
-                if (prefab != null
-                    && prefabContracts.TryGetValue(
+                if (!string.Equals(
                         resource.ResourceId,
-                        out var contract))
+                        domain.ExperimentPrefabResourceId,
+                        StringComparison.Ordinal))
                 {
-                    foreach (var diagnostic in
-                             PrefabContractValidator.Validate(prefab, contract))
-                    {
-                        errors.Add(new CourseCompilationDiagnostic(
-                            diagnostic.Code,
-                            PrefabContractRequirementCatalog.ConfigFileName
-                            + ".csv",
-                            2,
-                            1,
-                            string.Empty,
-                            resource.ResourceId,
-                            diagnostic.Message,
-                            "修正 Prefab 通用组件、语义锚点或表现插槽。"));
-                    }
+                    continue;
                 }
 
-                if (string.Equals(
-                    resource.ResourceId,
-                    domain.EnvironmentResourceId,
-                    StringComparison.Ordinal))
+                var prefab = loaded as GameObject;
+                if (prefab == null
+                    || PrefabUtility.GetPrefabAssetType(prefab)
+                    == PrefabAssetType.NotAPrefab)
                 {
-                    hasEnvironmentPrefab = prefab != null;
+                    errors.Add(ResourceDiagnostic(
+                        "course.asset.type-mismatch",
+                        resource,
+                        $"实验资源必须是 Prefab，当前资产为“"
+                        + loaded.GetType().Name + "”。",
+                        "将实验预制体路径修正为持久化 Prefab 资产。"));
+                    continue;
                 }
+
+                hasExperimentPrefab = true;
+                ValidateExperimentPrefab(
+                    domain,
+                    prefab,
+                    prefabContracts,
+                    errors);
             }
 
-            if (!hasEnvironmentPrefab)
+            if (!hasExperimentPrefab)
             {
                 errors.Add(new CourseCompilationDiagnostic(
-                    "course.environment-prefab.missing",
+                    "course.experiment-prefab.missing",
                     "课程.csv",
                     2,
                     1,
                     string.Empty,
-                    domain.EnvironmentResourceId ?? string.Empty,
-                    "课程环境资源没有解析为 Prefab。",
-                    "将环境资源路径修正为持久化 Prefab 资产。"));
+                    domain.ExperimentPrefabResourceId ?? string.Empty,
+                    "课程实验资源没有解析为 Prefab。",
+                    "将实验预制体路径修正为持久化 Prefab 资产。"));
             }
 
             diagnostics = errors;
             return errors.Count == 0;
         }
+
+        private static void ValidateExperimentPrefab(
+            CompiledCourseDefinition domain,
+            GameObject prefab,
+            IReadOnlyDictionary<string, CoursePrefabContractDefinition>
+                contracts,
+            ICollection<CourseCompilationDiagnostic> errors)
+        {
+            var views = prefab.GetComponentsInChildren<CourseEntityView>(true);
+            var viewsById = views
+                .Where(value => !string.IsNullOrWhiteSpace(value.EntityId))
+                .GroupBy(value => value.EntityId, StringComparer.Ordinal)
+                .ToDictionary(
+                    value => value.Key,
+                    value => value.ToArray(),
+                    StringComparer.Ordinal);
+            if (views.Any(value => string.IsNullOrWhiteSpace(value.EntityId)))
+            {
+                errors.Add(ExperimentPrefabDiagnostic(
+                    "course.experiment-prefab.entity-id-missing",
+                    domain.CourseId,
+                    "实验预制体包含未填写实体 ID 的 CourseEntityView。",
+                    "为每个操作对象节点填写唯一且与实验对象.csv 一致的实体 ID。"));
+            }
+
+            var expected = new HashSet<string>(
+                domain.Entities.Select(value => value.EntityId),
+                StringComparer.Ordinal);
+            foreach (var pair in viewsById.Where(value =>
+                         value.Value.Length > 1))
+            {
+                errors.Add(ExperimentPrefabDiagnostic(
+                    "course.experiment-prefab.entity-id-duplicate",
+                    pair.Key,
+                    $"实验预制体包含 {pair.Value.Length} 个实体视图“{pair.Key}”。",
+                    "每个领域实体在实验预制体中只保留一个 CourseEntityView。"));
+            }
+
+            foreach (var unknown in viewsById.Keys.Where(value =>
+                         !expected.Contains(value)))
+            {
+                errors.Add(ExperimentPrefabDiagnostic(
+                    "course.experiment-prefab.entity-unknown",
+                    unknown,
+                    $"实验预制体中的实体视图“{unknown}”未在实验对象.csv 中声明。",
+                    "删除该实体视图，或在实验对象.csv 中声明同 ID 实体。"));
+            }
+
+            foreach (var entityId in expected.Where(value =>
+                         !viewsById.ContainsKey(value)))
+            {
+                errors.Add(ExperimentPrefabDiagnostic(
+                    "course.experiment-prefab.entity-missing",
+                    entityId,
+                    $"实验预制体缺少实体视图“{entityId}”。",
+                    "在实验预制体中添加带同 ID CourseEntityView 的操作对象。"));
+            }
+
+            foreach (var pair in contracts)
+            {
+                if (!viewsById.TryGetValue(pair.Key, out var matching)
+                    || matching.Length != 1)
+                {
+                    continue;
+                }
+
+                foreach (var diagnostic in PrefabContractValidator.Validate(
+                             matching[0],
+                             pair.Value))
+                {
+                    errors.Add(ExperimentPrefabDiagnostic(
+                        diagnostic.Code,
+                        pair.Key,
+                        diagnostic.Message,
+                        "修正实体节点的通用组件、语义锚点或表现插槽。"));
+                }
+            }
+        }
+
+        private static CourseCompilationDiagnostic ExperimentPrefabDiagnostic(
+            string code,
+            string entityId,
+            string reason,
+            string suggestion) =>
+            new CourseCompilationDiagnostic(
+                code,
+                "实验预制体",
+                1,
+                1,
+                string.Empty,
+                entityId,
+                reason,
+                suggestion);
 
         private static bool TryValidateArtifacts(
             string generatedDirectory,

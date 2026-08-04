@@ -18,9 +18,9 @@ namespace VirtualLab.Engine.Tests.Courses
                 Write(
                     directory,
                     "实验对象.csv",
-                    "实体ID,显示名称,Prefab,特征列表,初始位置,初始旋转\r\n"
-                    + "试管,试管,,可抓取,0|0|0,0|0|0\r\n"
-                    + "烧杯,烧杯,,,0|0|0,0|0|0\r\n");
+                    "实体ID,显示名称,特征列表,初始位置,初始旋转\r\n"
+                    + "试管,试管,可抓取,0|0|0,0|0|0\r\n"
+                    + "烧杯,烧杯,,0|0|0,0|0|0\r\n");
                 Write(
                     directory,
                     "交互规则.csv",

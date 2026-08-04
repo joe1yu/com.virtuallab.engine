@@ -16,7 +16,8 @@ namespace VirtualLab.Chemistry.Tests.EngineIntegration
             var prefab = new GameObject("完整实验器材");
             try
             {
-                prefab.AddComponent<CourseEntityView>();
+                var view = prefab.AddComponent<CourseEntityView>();
+                view.Configure("完整器材");
                 prefab.AddComponent<BoxCollider>();
                 AddAnchor(prefab, "端口.连接", SemanticAnchorKind.ConnectionPort);
                 AddAnchor(prefab, "锚点.倾倒出口", SemanticAnchorKind.PourOutlet);
@@ -26,7 +27,7 @@ namespace VirtualLab.Chemistry.Tests.EngineIntegration
                 AddSlot(prefab, "插槽.液面", PresentationSlotKind.Liquid);
                 AddSlot(prefab, "插槽.燃烧", PresentationSlotKind.Combustion);
                 var contract = new CoursePrefabContractDefinition(
-                    "预制体.完整器材",
+                    "完整器材",
                     new[]
                     {
                         "可抓取", "可连接", "可倾倒", "容器", "可加热",
@@ -35,7 +36,7 @@ namespace VirtualLab.Chemistry.Tests.EngineIntegration
                     new[] { "端口.连接" });
 
                 Assert.That(
-                    PrefabContractValidator.Validate(prefab, contract),
+                    PrefabContractValidator.Validate(view, contract),
                     Is.Empty);
             }
             finally
@@ -50,11 +51,13 @@ namespace VirtualLab.Chemistry.Tests.EngineIntegration
             var prefab = new GameObject("不完整器材");
             try
             {
+                var view = prefab.AddComponent<CourseEntityView>();
+                view.Configure("不完整器材");
                 var contract = new CoursePrefabContractDefinition(
-                    "预制体.不完整器材",
+                    "不完整器材",
                     new[] { "可抓取", "可倾倒", "容器" },
                     Array.Empty<string>());
-                var codes = PrefabContractValidator.Validate(prefab, contract)
+                var codes = PrefabContractValidator.Validate(view, contract)
                     .Select(value => value.Code);
 
                 Assert.That(codes, Does.Contain("预制体.需要碰撞体"));

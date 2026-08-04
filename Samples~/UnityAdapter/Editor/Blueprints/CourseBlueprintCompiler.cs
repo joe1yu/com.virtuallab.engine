@@ -329,7 +329,7 @@ namespace VirtualLab.Unity.Authoring.Blueprints
                     "blueprint.prefab-contract.duplicate",
                     duplicate.First().Provenance.Sources.First(),
                     duplicate.Key,
-                    $"Prefab 契约“{duplicate.Key}”重复。",
+                    $"实体视图契约“{duplicate.Key}”重复。",
                     "每个实体、契约类型和标识只保留一项。"));
             }
         }
@@ -431,18 +431,13 @@ namespace VirtualLab.Unity.Authoring.Blueprints
             var resources = new List<CourseResourceDefinition>
             {
                 new CourseResourceDefinition(
-                    "资源.课程环境",
-                    blueprint.Course.EnvironmentPrefab)
+                    CourseResourceIds.ExperimentPrefab,
+                    blueprint.Course.ExperimentPrefab)
             };
-            resources.AddRange(model.Entities.Select(value =>
-                new CourseResourceDefinition(
-                    ResourceId(value.Definition.EntityId),
-                    value.Definition.PrefabReference)));
 
             var entities = model.Entities.Select(value =>
                 new CourseEntityDefinition(
                     value.Definition.EntityId,
-                    ResourceId(value.Definition.EntityId),
                     RuntimeCapabilities(
                         value.Definition.FeatureIds))).ToArray();
             var actionPolicies = model.Actions.Select(value =>
@@ -640,7 +635,7 @@ namespace VirtualLab.Unity.Authoring.Blueprints
                     value.InitialRotation.Z)).ToArray();
             var prefabContracts = model.Entities.Select(entity =>
                 new CoursePrefabContractDefinition(
-                    ResourceId(entity.Definition.EntityId),
+                    entity.Definition.EntityId,
                     RuntimeCapabilities(
                         entity.Definition.FeatureIds),
                     model.Ports
@@ -652,7 +647,7 @@ namespace VirtualLab.Unity.Authoring.Blueprints
                 blueprint.Course.CourseId,
                 blueprint.Course.ActorEntityId,
                 blueprint.Course.DisciplinePackageIds,
-                "资源.课程环境",
+                CourseResourceIds.ExperimentPrefab,
                 entities,
                 actionPolicies,
                 goals,
@@ -962,9 +957,6 @@ namespace VirtualLab.Unity.Authoring.Blueprints
 
             return StructuredValue.FromText(rawValue ?? string.Empty);
         }
-
-        private static string ResourceId(string entityId) =>
-            "资源." + entityId;
 
         private static string NullIfEmpty(string value) =>
             string.IsNullOrWhiteSpace(value) ? null : value.Trim();

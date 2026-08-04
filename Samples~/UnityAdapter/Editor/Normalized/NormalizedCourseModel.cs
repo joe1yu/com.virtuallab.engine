@@ -92,16 +92,13 @@ namespace VirtualLab.Unity.Authoring.Normalized
     {
         public NormalizedEntityDefinition(
             string entityId,
-            string prefabReference = "",
             IEnumerable<string> featureIds = null)
         {
             EntityId = entityId ?? string.Empty;
-            PrefabReference = prefabReference ?? string.Empty;
             FeatureIds = Copy(featureIds);
         }
 
         public string EntityId { get; }
-        public string PrefabReference { get; }
         public IReadOnlyList<string> FeatureIds { get; }
         public string DefinitionId => EntityId;
 

@@ -124,7 +124,6 @@ namespace VirtualLab.Unity.Authoring.Recipes
                         courseObject.EntityId),
                     new NormalizedEntityDefinition(
                         courseObject.EntityId,
-                        courseObject.Prefab,
                         courseObject.FeatureIds),
                     new[] { courseObject.Source }));
 

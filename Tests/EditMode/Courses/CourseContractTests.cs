@@ -43,7 +43,6 @@ namespace VirtualLab.Engine.Tests.Courses
             {
                 new CourseEntityDefinition(
                     "器材.试管",
-                    "预制体/试管",
                     new[] { "可抓取" })
             };
             var course = CompiledCourseDefinition.CreateBasic(
@@ -56,6 +55,11 @@ namespace VirtualLab.Engine.Tests.Courses
             entities.Clear();
 
             Assert.That(course.Entities, Has.Count.EqualTo(1));
+            Assert.That(
+                typeof(CourseEntityDefinition).GetProperty(
+                    "PrefabReference"),
+                Is.Null,
+                "操作对象不应再持有独立模型预制体引用。");
             Assert.Throws<ArgumentException>(() =>
                 CompiledCourseDefinition.CreateBasic(
                     "课程.重复实体",
@@ -63,11 +67,9 @@ namespace VirtualLab.Engine.Tests.Courses
                     {
                         new CourseEntityDefinition(
                             "器材.试管",
-                            "预制体/试管",
                             Array.Empty<string>()),
                         new CourseEntityDefinition(
                             "器材.试管",
-                            "预制体/另一试管",
                             Array.Empty<string>())
                     },
                     Array.Empty<ActionPolicyDefinition>(),

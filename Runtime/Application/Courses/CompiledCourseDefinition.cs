@@ -17,13 +17,13 @@ namespace VirtualLab.Application.Courses
             IEnumerable<CourseGoalDefinition> goals,
             IEnumerable<CourseAssessmentDefinition> assessments,
             IEnumerable<CourseResourceDefinition> resources = null,
-            string environmentResourceId = null)
+            string experimentPrefabResourceId = null)
         {
             return new CompiledCourseDefinition(
                 courseId,
                 "学生",
                 Array.Empty<string>(),
-                environmentResourceId,
+                experimentPrefabResourceId,
                 entities,
                 actionPolicies,
                 goals,
@@ -47,7 +47,7 @@ namespace VirtualLab.Application.Courses
             string courseId,
             string actorEntityId,
             IEnumerable<string> disciplinePackageIds,
-            string environmentResourceId,
+            string experimentPrefabResourceId,
             IEnumerable<CourseEntityDefinition> entities,
             IEnumerable<ActionPolicyDefinition> actionPolicies,
             IEnumerable<CourseGoalDefinition> goals,
@@ -79,8 +79,8 @@ namespace VirtualLab.Application.Courses
                 .Distinct(StringComparer.Ordinal)
                 .OrderBy(value => value, StringComparer.Ordinal)
                 .ToArray());
-            EnvironmentResourceId =
-                CourseContractGuard.Optional(environmentResourceId);
+            ExperimentPrefabResourceId = CourseContractGuard.Optional(
+                experimentPrefabResourceId);
             Entities = CourseContractGuard.CopyUnique(
                 entities,
                 value => value.EntityId,
@@ -147,8 +147,8 @@ namespace VirtualLab.Application.Courses
                 "场景布局");
             PrefabContracts = CourseContractGuard.CopyUnique(
                 prefabContracts,
-                value => value.ResourceId,
-                "Prefab 契约");
+                value => value.EntityId,
+                "实体视图契约");
         }
 
         public string CourseId { get; }
@@ -157,7 +157,7 @@ namespace VirtualLab.Application.Courses
 
         public IReadOnlyList<string> DisciplinePackageIds { get; }
 
-        public string EnvironmentResourceId { get; }
+        public string ExperimentPrefabResourceId { get; }
 
         public IReadOnlyList<CourseEntityDefinition> Entities { get; }
 
@@ -192,27 +192,21 @@ namespace VirtualLab.Application.Courses
     }
 
     /// <summary>
-    /// 课程中的实体及其预制体资源引用。
+    /// 课程中的语义实体。实体的 Unity 视图由实验总预制体中的同 ID 节点提供。
     /// </summary>
     public sealed class CourseEntityDefinition
     {
         public CourseEntityDefinition(
             string entityId,
-            string prefabReference,
             IEnumerable<string> capabilityIds)
         {
             EntityId = CourseContractGuard.Required(entityId, "实体 ID");
-            PrefabReference = CourseContractGuard.Required(
-                prefabReference,
-                $"实体“{EntityId}”的预制体资源引用");
             CapabilityIds = CourseContractGuard.CopyStrings(
                 capabilityIds,
                 $"实体“{EntityId}”的能力 ID");
         }
 
         public string EntityId { get; }
-
-        public string PrefabReference { get; }
 
         public IReadOnlyList<string> CapabilityIds { get; }
     }

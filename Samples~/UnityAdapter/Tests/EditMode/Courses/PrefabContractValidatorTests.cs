@@ -16,7 +16,8 @@ namespace VirtualLab.Engine.Tests.Courses
             var prefab = new GameObject("物理实验器材");
             try
             {
-                prefab.AddComponent<CourseEntityView>();
+                var view = prefab.AddComponent<CourseEntityView>();
+                view.Configure("测力计");
                 var catalog = new PrefabContractRequirementCatalog(new[]
                 {
                     new PrefabContractRequirement(
@@ -27,12 +28,12 @@ namespace VirtualLab.Engine.Tests.Courses
                         "测力对象必须包含读数观察点。")
                 });
                 var contract = new CoursePrefabContractDefinition(
-                    "预制体.测力计",
+                    "测力计",
                     new[] { "可观察受力" },
                     Array.Empty<string>());
 
                 var diagnostics = PrefabContractValidator.Validate(
-                    prefab,
+                    view,
                     contract,
                     catalog);
 

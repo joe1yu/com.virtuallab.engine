@@ -189,13 +189,11 @@ namespace VirtualLab.Engine.Tests.Courses
         [Test]
         public void 蓝图编译阶段固定且成功结果包含运行时内容摘要和来源链()
         {
-            var environmentPath = TestFolder + "/蓝图实验室.prefab";
-            var tubePath = TestFolder + "/蓝图试管.prefab";
-            SaveBasicPrefab(environmentPath, "蓝图实验室");
-            SaveBasicPrefab(tubePath, "蓝图试管");
+            var experimentPath = TestFolder + "/蓝图实验.prefab";
+            SaveExperimentPrefab(experimentPath, "蓝图实验", "试管");
 
             var result = new CourseBlueprintCompiler().Compile(
-                BlueprintSource(environmentPath, tubePath),
+                BlueprintSource(experimentPath),
                 new CoreRecipePackageProvider(),
                 new IRecipePackageProvider[]
                 {
@@ -240,12 +238,10 @@ namespace VirtualLab.Engine.Tests.Courses
         [Test]
         public void 蓝图生成原子更新课程资产和学科产物()
         {
-            var environmentPath = TestFolder + "/原子实验室.prefab";
-            var tubePath = TestFolder + "/原子试管.prefab";
-            SaveBasicPrefab(environmentPath, "原子实验室");
-            SaveBasicPrefab(tubePath, "原子试管");
+            var experimentPath = TestFolder + "/原子实验.prefab";
+            SaveExperimentPrefab(experimentPath, "原子实验", "试管");
             var compilation = new CourseBlueprintCompiler().Compile(
-                BlueprintSource(environmentPath, tubePath),
+                BlueprintSource(experimentPath),
                 new CoreRecipePackageProvider(),
                 new IRecipePackageProvider[]
                 {
@@ -281,7 +277,7 @@ namespace VirtualLab.Engine.Tests.Courses
                 Is.EqualTo("第一次可用内容"));
             var previousDomain = generatedAsset.DomainJson;
 
-            Assert.That(AssetDatabase.DeleteAsset(tubePath), Is.True);
+            Assert.That(AssetDatabase.DeleteAsset(experimentPath), Is.True);
             Assert.That(
                 generator.TryGenerateFromBlueprint(
                     AssetPath,
@@ -309,7 +305,6 @@ namespace VirtualLab.Engine.Tests.Courses
                 {
                     new CourseEntityDefinition(
                         "器材.试管",
-                        "资源.试管",
                         new[] { "可抓取" })
                 },
                 Array.Empty<ActionPolicyDefinition>(),
@@ -317,27 +312,32 @@ namespace VirtualLab.Engine.Tests.Courses
                 Array.Empty<CourseAssessmentDefinition>());
         }
 
-        private static void SaveBasicPrefab(string path, string name)
+        private static void SaveExperimentPrefab(
+            string path,
+            string name,
+            string entityId)
         {
-            var instance = new GameObject(name);
-            instance.AddComponent<CourseEntityView>();
-            PrefabUtility.SaveAsPrefabAsset(instance, path);
-            UnityEngine.Object.DestroyImmediate(instance);
+            var root = new GameObject(name);
+            var entity = new GameObject(entityId);
+            entity.transform.SetParent(root.transform, false);
+            entity.AddComponent<BoxCollider>();
+            entity.AddComponent<CourseEntityView>().Configure(entityId);
+            PrefabUtility.SaveAsPrefabAsset(root, path);
+            UnityEngine.Object.DestroyImmediate(root);
         }
 
         private static CourseBlueprintSource BlueprintSource(
-            string environmentPath,
-            string tubePath) =>
+            string experimentPath) =>
             new CourseBlueprintSource(new[]
             {
                 new CourseBlueprintFile(
                     "课程.csv",
-                    "课程ID,显示名称,学科配方包,环境Prefab\n"
-                    + $"蓝图生成测试,蓝图生成测试,测试学科,{environmentPath}\n"),
+                    "课程ID,显示名称,学科配方包,实验Prefab\n"
+                    + $"蓝图生成测试,蓝图生成测试,测试学科,{experimentPath}\n"),
                 new CourseBlueprintFile(
                     "实验对象.csv",
-                    "实体ID,显示名称,Prefab,特征列表,初始位置,初始旋转\n"
-                    + $"试管,试管,{tubePath},可夹持,0|0|0,0|0|0\n")
+                    "实体ID,显示名称,特征列表,初始位置,初始旋转\n"
+                    + "试管,试管,可夹持,0|0|0,0|0|0\n")
             });
 
         private sealed class TestDisciplineProvider :

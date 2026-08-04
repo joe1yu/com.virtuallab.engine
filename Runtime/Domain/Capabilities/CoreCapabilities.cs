@@ -54,7 +54,7 @@ namespace VirtualLab.Domain.Capabilities
     }
 
     /// <summary>
-    /// 连接端口是实体内部可独立占用的稳定端点。端口 ID 对应 Prefab 中的语义锚点，
+    /// 连接端口是实体内部可独立占用的稳定端点。端口 ID 对应实验预制体实体节点中的语义锚点，
     /// 兼容组只负责判断两个端口能否建立连接。
     /// </summary>
     public sealed class ConnectionPortDefinition

@@ -122,14 +122,14 @@ namespace VirtualLab.Engine.Tests.Courses
             {
                 new CourseBlueprintFile(
                     "课程.csv",
-                    "课程ID,显示名称,学科配方包,环境Prefab\n"
+                    "课程ID,显示名称,学科配方包,实验Prefab\n"
                     + "放置测试,放置测试,,环境.prefab\n"),
                 new CourseBlueprintFile(
                     "实验对象.csv",
-                    "实体ID,显示名称,Prefab,特征列表,初始位置,初始旋转,"
+                    "实体ID,显示名称,特征列表,初始位置,初始旋转,"
                     + "参数.作用组.放置\n"
-                    + "集气瓶,集气瓶,集气瓶.prefab,可放置源,0|0|0,0|0|0,水槽\n"
-                    + "水槽,水槽,水槽.prefab,可放置目标,0|0|0,0|0|0,水槽\n")
+                    + "集气瓶,集气瓶,可放置源,0|0|0,0|0|0,水槽\n"
+                    + "水槽,水槽,可放置目标,0|0|0,0|0|0,水槽\n")
             });
             var read = new CourseBlueprintReader().Read(source);
             Assert.That(read.IsSuccess, Is.True);
@@ -160,14 +160,14 @@ namespace VirtualLab.Engine.Tests.Courses
             {
                 new CourseBlueprintFile(
                     "课程.csv",
-                    "课程ID,显示名称,学科配方包,环境Prefab\n"
+                    "课程ID,显示名称,学科配方包,实验Prefab\n"
                     + "固定连接测试,固定连接测试,,环境.prefab\n"),
                 new CourseBlueprintFile(
                     "实验对象.csv",
-                    "实体ID,显示名称,Prefab,特征列表,初始位置,初始旋转,"
+                    "实体ID,显示名称,特征列表,初始位置,初始旋转,"
                     + "参数.端口.出口.兼容组,参数.端口.入口.兼容组\n"
-                    + "铁架台,铁架台,铁架台.prefab,可夹持,0|0|0,0|0|0,组.夹持,\n"
-                    + "试管,试管,试管.prefab,可连接,0|0|0,0|0|0,,组.夹持\n")
+                    + "铁架台,铁架台,可夹持,0|0|0,0|0|0,组.夹持,\n"
+                    + "试管,试管,可连接,0|0|0,0|0|0,,组.夹持\n")
             });
             var read = new CourseBlueprintReader().Read(source);
             Assert.That(read.IsSuccess, Is.True);
@@ -190,16 +190,16 @@ namespace VirtualLab.Engine.Tests.Courses
             {
                 new CourseBlueprintFile(
                     "课程.csv",
-                    "课程ID,显示名称,学科配方包,环境Prefab\n"
+                    "课程ID,显示名称,学科配方包,实验Prefab\n"
                     + "连接测试,连接测试,,环境.prefab\n"),
                 new CourseBlueprintFile(
                     "实验对象.csv",
-                    "实体ID,显示名称,Prefab,特征列表,初始位置,初始旋转,"
+                    "实体ID,显示名称,特征列表,初始位置,初始旋转,"
                     + "参数.端口.出口.兼容组,参数.端口.入口.兼容组\n"
-                    + "导气管,导气管,导气管.prefab,可连接,0|0|0,0|0|0,组.导气,\n"
-                    + "集气瓶,集气瓶,集气瓶.prefab,可连接,0|0|0,0|0|0,,"
+                    + "导气管,导气管,可连接,0|0|0,0|0|0,组.导气,\n"
+                    + "集气瓶,集气瓶,可连接,0|0|0,0|0|0,,"
                     + (includeTargetGroup ? "组.导气\n" : "\n")
-                    + "铁架台,铁架台,铁架台.prefab,可连接,0|0|0,0|0|0,,组.夹持\n")
+                    + "铁架台,铁架台,可连接,0|0|0,0|0|0,,组.夹持\n")
             });
             var read = new CourseBlueprintReader().Read(source);
             Assert.That(read.IsSuccess, Is.True);

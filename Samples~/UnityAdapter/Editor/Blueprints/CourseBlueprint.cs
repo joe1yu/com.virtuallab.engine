@@ -53,14 +53,14 @@ namespace VirtualLab.Unity.Authoring.Blueprints
             string displayName,
             IEnumerable<string> disciplinePackageIds,
             string actorEntityId,
-            string environmentPrefab,
+            string experimentPrefab,
             ConfigurationSource source)
         {
             CourseId = courseId;
             DisplayName = displayName;
             DisciplinePackageIds = disciplinePackageIds.ToArray();
             ActorEntityId = actorEntityId;
-            EnvironmentPrefab = environmentPrefab;
+            ExperimentPrefab = experimentPrefab;
             Source = source;
         }
 
@@ -68,7 +68,7 @@ namespace VirtualLab.Unity.Authoring.Blueprints
         public string DisplayName { get; }
         public IReadOnlyList<string> DisciplinePackageIds { get; }
         public string ActorEntityId { get; }
-        public string EnvironmentPrefab { get; }
+        public string ExperimentPrefab { get; }
         public ConfigurationSource Source { get; }
     }
 
@@ -77,7 +77,6 @@ namespace VirtualLab.Unity.Authoring.Blueprints
         public CourseObjectBlueprint(
             string entityId,
             string displayName,
-            string prefab,
             IEnumerable<string> featureIds,
             BlueprintVector3 initialPosition,
             BlueprintVector3 initialRotation,
@@ -86,7 +85,6 @@ namespace VirtualLab.Unity.Authoring.Blueprints
         {
             EntityId = entityId;
             DisplayName = displayName;
-            Prefab = prefab;
             FeatureIds = featureIds.ToArray();
             InitialPosition = initialPosition;
             InitialRotation = initialRotation;
@@ -96,7 +94,6 @@ namespace VirtualLab.Unity.Authoring.Blueprints
 
         public string EntityId { get; }
         public string DisplayName { get; }
-        public string Prefab { get; }
         public IReadOnlyList<string> FeatureIds { get; }
         public BlueprintVector3 InitialPosition { get; }
         public BlueprintVector3 InitialRotation { get; }

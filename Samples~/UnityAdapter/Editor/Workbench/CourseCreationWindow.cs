@@ -34,7 +34,7 @@ namespace VirtualLab.Unity.Authoring.Workbench
             string courseId,
             string displayName,
             string disciplinePackageIds,
-            string environmentPrefab,
+            string experimentPrefab,
             string actorEntityId = "学生")
         {
             if (string.IsNullOrWhiteSpace(coursesRoot))
@@ -62,12 +62,11 @@ namespace VirtualLab.Unity.Authoring.Workbench
             {
                 var authoring = Path.Combine(staging, "Authoring");
                 Directory.CreateDirectory(authoring);
-                Directory.CreateDirectory(Path.Combine(staging, "Prefabs"));
                 Directory.CreateDirectory(Path.Combine(staging, "Generated"));
 
                 var course = EditableCsvDocument.Parse(
                     "课程.csv",
-                    "课程标识,显示名称,学科配方包,操作者实体标识,环境预制体\r\n");
+                    "课程标识,显示名称,学科配方包,操作者实体标识,实验预制体\r\n");
                 course.AddRow(new[]
                 {
                     Pair("课程ID", courseId),
@@ -76,12 +75,12 @@ namespace VirtualLab.Unity.Authoring.Workbench
                     Pair("操作者实体ID", string.IsNullOrWhiteSpace(actorEntityId)
                         ? "学生"
                         : actorEntityId.Trim()),
-                    Pair("环境Prefab", environmentPrefab ?? string.Empty)
+                    Pair("实验Prefab", experimentPrefab ?? string.Empty)
                 });
                 WriteUtf8(Path.Combine(authoring, "课程.csv"), course.ToCsv());
                 WriteUtf8(
                     Path.Combine(authoring, "实验对象.csv"),
-                    "实体标识,显示名称,预制体,特征列表,初始位置,初始旋转\r\n");
+                    "实体标识,显示名称,特征列表,初始位置,初始旋转\r\n");
 
                 Directory.Move(staging, target);
                 return new CourseCreationResult(
@@ -138,7 +137,7 @@ namespace VirtualLab.Unity.Authoring.Workbench
         private string _actorEntityId = "学生";
         private IReadOnlyList<string> _availableDisciplinePackageIds =
             Array.Empty<string>();
-        private GameObject _environmentPrefab;
+        private GameObject _experimentPrefab;
         private string _message = string.Empty;
 
         public static void Open()
@@ -173,7 +172,7 @@ namespace VirtualLab.Unity.Authoring.Workbench
         {
             GUILayout.Label("创建最小课程", EditorStyles.boldLabel);
             EditorGUILayout.HelpBox(
-                "只创建课程基础表、实验对象表、预制体目录（Prefabs）和生成资源目录（Generated）；其他配置表按实际需要再添加。",
+                "只创建课程基础表、实验对象表和生成资源目录（Generated）；所有操作对象统一放入一个实验预制体，其他配置表按实际需要再添加。",
                 MessageType.Info);
             _courseId = EditorGUILayout.TextField(
                 new GUIContent("课程 ID", "稳定中文 ID，同时作为课程目录名。"),
@@ -185,9 +184,9 @@ namespace VirtualLab.Unity.Authoring.Workbench
                     "操作者对象 ID",
                     "接收输入命令的课程对象 ID。创建后请在实验对象中添加同名对象。"),
                 _actorEntityId);
-            _environmentPrefab = (GameObject)EditorGUILayout.ObjectField(
-                "实验室场景预制体",
-                _environmentPrefab,
+            _experimentPrefab = (GameObject)EditorGUILayout.ObjectField(
+                "实验总预制体",
+                _experimentPrefab,
                 typeof(GameObject),
                 false);
 
@@ -270,7 +269,7 @@ namespace VirtualLab.Unity.Authoring.Workbench
                     _courseId,
                     _displayName,
                     _disciplinePackageIds,
-                    AssetDatabase.GetAssetPath(_environmentPrefab),
+                    AssetDatabase.GetAssetPath(_experimentPrefab),
                     _actorEntityId);
                 AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
                 var assetPath = ToAssetPath(

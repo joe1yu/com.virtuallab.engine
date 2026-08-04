@@ -247,16 +247,16 @@ namespace VirtualLab.Engine.Tests.Courses
             {
                 new CourseBlueprintFile(
                     "课程.csv",
-                    "课程ID,显示名称,学科配方包,环境Prefab\n"
+                    "课程ID,显示名称,学科配方包,实验Prefab\n"
                     + "内容编译测试,内容编译测试,,环境.prefab\n"),
                 new CourseBlueprintFile(
                     "实验对象.csv",
-                    "实体ID,显示名称,Prefab,特征列表,初始位置,初始旋转\n"
-                    + "试管,试管,试管.prefab,可夹持,0|0|0,0|0|0\n"
-                    + "酒精灯,酒精灯,酒精灯.prefab,可夹持,0|0|0,0|0|0\n"
-                    + "大试管,大试管,大试管.prefab,可夹持,0|0|0,0|0|0\n"
-                    + "集气瓶,集气瓶,集气瓶.prefab,可夹持,0|0|0,0|0|0\n"
-                    + "水槽,水槽,水槽.prefab,可夹持,0|0|0,0|0|0\n")
+                    "实体ID,显示名称,特征列表,初始位置,初始旋转\n"
+                    + "试管,试管,可夹持,0|0|0,0|0|0\n"
+                    + "酒精灯,酒精灯,可夹持,0|0|0,0|0|0\n"
+                    + "大试管,大试管,可夹持,0|0|0,0|0|0\n"
+                    + "集气瓶,集气瓶,可夹持,0|0|0,0|0|0\n"
+                    + "水槽,水槽,可夹持,0|0|0,0|0|0\n")
             }.Concat(optionalFiles);
             var result = new CourseBlueprintReader().Read(
                 new CourseBlueprintSource(files));

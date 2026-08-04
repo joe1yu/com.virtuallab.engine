@@ -45,13 +45,13 @@ namespace VirtualLab.Unity.Authoring.Blueprints
                 {
                     [CourseFile] = new FileSchema(
                         "课程ID",
-                        new[] { "课程ID", "显示名称", "学科配方包", "环境Prefab" },
+                        new[] { "课程ID", "显示名称", "学科配方包", "实验Prefab" },
                         optionalColumns: new[] { "操作者实体ID" }),
                     [ObjectsFile] = new FileSchema(
                         "实体ID",
                         new[]
                         {
-                            "实体ID", "显示名称", "Prefab", "特征列表",
+                            "实体ID", "显示名称", "特征列表",
                             "初始位置", "初始旋转"
                         },
                         new[] { "参数." }),
@@ -365,7 +365,7 @@ namespace VirtualLab.Unity.Authoring.Blueprints
                     "课程ID",
                     string.Empty,
                     "课程表必须包含一条课程记录。",
-                    "在课程表第二行填写课程 ID、显示名称、学科配方包和环境 Prefab。"));
+                    "在课程表第二行填写课程 ID、显示名称、学科配方包和实验 Prefab。"));
                 return null;
             }
 
@@ -398,7 +398,7 @@ namespace VirtualLab.Unity.Authoring.Blueprints
                     && !string.IsNullOrWhiteSpace(row["操作者实体ID"])
                         ? row["操作者实体ID"].Trim()
                         : "学生",
-                row["环境Prefab"].Trim(),
+                row["实验Prefab"].Trim(),
                 Source(CourseFile, table, row, "课程ID", courseId, courseId));
         }
 
@@ -495,7 +495,6 @@ namespace VirtualLab.Unity.Authoring.Blueprints
                 result.Add(new CourseObjectBlueprint(
                     entityId,
                     row["显示名称"].Trim(),
-                    row["Prefab"].Trim(),
                     SplitList(row["特征列表"]),
                     position,
                     rotation,

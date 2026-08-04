@@ -24,13 +24,13 @@ namespace VirtualLab.Unity.Authoring.Normalized
     public static class PrefabContractValidator
     {
         public static IReadOnlyList<PrefabContractDiagnostic> Validate(
-            GameObject prefab,
+            CourseEntityView view,
             CoursePrefabContractDefinition contract,
             PrefabContractRequirementCatalog requirementCatalog = null)
         {
-            if (prefab == null)
+            if (view == null)
             {
-                throw new ArgumentNullException(nameof(prefab));
+                throw new ArgumentNullException(nameof(view));
             }
 
             if (contract == null)
@@ -39,18 +39,19 @@ namespace VirtualLab.Unity.Authoring.Normalized
             }
 
             var diagnostics = new List<PrefabContractDiagnostic>();
-            var anchors = prefab
-                .GetComponentsInChildren<SemanticAnchorMarker>(true);
-            var slots = prefab
-                .GetComponentsInChildren<PresentationSlotMarker>(true);
+            var anchors = view.Anchors;
+            var slots = view.PresentationSlots;
             requirementCatalog = requirementCatalog ??
                 PrefabContractRequirementCatalog.Default;
 
-            if (prefab.GetComponent<CourseEntityView>() == null)
+            if (!string.Equals(
+                    view.EntityId,
+                    contract.EntityId,
+                    StringComparison.Ordinal))
             {
                 diagnostics.Add(new PrefabContractDiagnostic(
-                    "prefab.course-entity-view.required",
-                    "课程实体 Prefab 根节点必须包含 CourseEntityView。"));
+                    "prefab.entity-id.mismatch",
+                    $"实体视图 ID“{view.EntityId}”与契约实体 ID“{contract.EntityId}”不一致。"));
             }
 
             foreach (var requirement in
@@ -58,7 +59,7 @@ namespace VirtualLab.Unity.Authoring.Normalized
             {
                 ValidateRequirement(
                     requirement,
-                    prefab,
+                    view,
                     anchors,
                     slots,
                     diagnostics);
@@ -86,7 +87,7 @@ namespace VirtualLab.Unity.Authoring.Normalized
 
         private static void ValidateRequirement(
             PrefabContractRequirement requirement,
-            GameObject prefab,
+            CourseEntityView view,
             IEnumerable<SemanticAnchorMarker> anchors,
             IEnumerable<PresentationSlotMarker> slots,
             ICollection<PrefabContractDiagnostic> diagnostics)
@@ -94,7 +95,9 @@ namespace VirtualLab.Unity.Authoring.Normalized
             switch (requirement.Kind)
             {
                 case PrefabContractRequirementKind.Collider:
-                    if (prefab.GetComponentInChildren<Collider>(true) == null)
+                    if (!view.GetComponentsInChildren<Collider>(true)
+                            .Any(value => value.GetComponentInParent<
+                                CourseEntityView>(true) == view))
                     {
                         AddRequirementDiagnostic(requirement, diagnostics);
                     }

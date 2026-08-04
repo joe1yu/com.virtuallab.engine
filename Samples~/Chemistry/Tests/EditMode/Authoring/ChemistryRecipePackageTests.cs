@@ -125,15 +125,15 @@ namespace VirtualLab.Chemistry.Tests.Authoring
                 {
                     new CourseBlueprintFile(
                         "课程.csv",
-                        "课程ID,显示名称,学科配方包,环境Prefab\n"
+                        "课程ID,显示名称,学科配方包,实验Prefab\n"
                         + "化学动作测试,化学动作测试,化学基础,环境.prefab\n"),
                     new CourseBlueprintFile(
                         "实验对象.csv",
-                        "实体ID,显示名称,Prefab,特征列表,初始位置,初始旋转,"
+                        "实体ID,显示名称,特征列表,初始位置,初始旋转,"
                         + "参数.作用组.倾倒\n"
-                        + "量筒,量筒,量筒.prefab,可倾倒,0|0|0,0|0|0,组.液体\n"
-                        + "烧杯,烧杯,烧杯.prefab,容器,0|0|0,0|0|0,组.液体\n"
-                        + "锥形瓶,锥形瓶,锥形瓶.prefab,可振荡,0|0|0,0|0|0,\n")
+                        + "量筒,量筒,可倾倒,0|0|0,0|0|0,组.液体\n"
+                        + "烧杯,烧杯,容器,0|0|0,0|0|0,组.液体\n"
+                        + "锥形瓶,锥形瓶,可振荡,0|0|0,0|0|0,\n")
                 }));
             Assert.That(read.IsSuccess, Is.True);
             var catalog = RecipeCatalog.Create(
@@ -168,14 +168,14 @@ namespace VirtualLab.Chemistry.Tests.Authoring
                 {
                     new CourseBlueprintFile(
                         "课程.csv",
-                        "课程ID,显示名称,学科配方包,环境Prefab\n"
+                        "课程ID,显示名称,学科配方包,实验Prefab\n"
                         + "过程参数测试,过程参数测试,化学基础,环境.prefab\n"),
                     new CourseBlueprintFile(
                         "实验对象.csv",
-                        "实体ID,显示名称,Prefab,特征列表,初始位置,初始旋转,"
+                        "实体ID,显示名称,特征列表,初始位置,初始旋转,"
                         + "参数.作用组.倾倒\n"
-                        + "试剂瓶,试剂瓶,试剂瓶.prefab,可倾倒,0|0|0,0|0|0,组.液体\n"
-                        + "烧杯,烧杯,烧杯.prefab,容器,0|0|0,0|0|0,组.液体\n"),
+                        + "试剂瓶,试剂瓶,可倾倒,0|0|0,0|0|0,组.液体\n"
+                        + "烧杯,烧杯,容器,0|0|0,0|0|0,组.液体\n"),
                     new CourseBlueprintFile(
                         "学科过程.csv",
                         "配置ID,类型,配方,主体,来源,目标,操作名称,协议,参数\n"
@@ -261,12 +261,12 @@ namespace VirtualLab.Chemistry.Tests.Authoring
                 {
                     new CourseBlueprintFile(
                         "课程.csv",
-                        "课程ID,显示名称,学科配方包,环境Prefab\n"
+                        "课程ID,显示名称,学科配方包,实验Prefab\n"
                         + "化学测试,化学测试,化学基础,环境.prefab\n"),
                     new CourseBlueprintFile(
                         "实验对象.csv",
-                        "实体ID,显示名称,Prefab,特征列表,初始位置,初始旋转\n"
-                        + "反应容器,反应容器,反应容器.prefab,容器,0|0|0,0|0|0\n"),
+                        "实体ID,显示名称,特征列表,初始位置,初始旋转\n"
+                        + "反应容器,反应容器,容器,0|0|0,0|0|0\n"),
                     new CourseBlueprintFile("学科过程.csv", header + rows)
                 }));
             Assert.That(read.IsSuccess, Is.True);
