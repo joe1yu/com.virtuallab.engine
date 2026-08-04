@@ -62,7 +62,7 @@ namespace VirtualLab.OxygenCourse.Authoring
     }
 
     /// <summary>
-    /// 氧气课程的编辑期资源构建入口。生成的 Prefab 只包含通用视图、
+    /// 氧气课程的编辑期资源构建入口。实验总预制体包含全部操作对象的通用视图、
     /// 碰撞体、语义锚点和表现插槽，不写入课程规则。
     /// </summary>
     public static class OxygenCourseContentBuilder
@@ -78,10 +78,10 @@ namespace VirtualLab.OxygenCourse.Authoring
         public static string CourseAssetDirectory =>
             CourseRoot + "/Resources/"
             + CourseRuntimeResourcePaths.CompiledCourses;
-        public static string PrefabDirectory =>
+        public static string ExperimentPrefabPath =>
             CourseRoot + "/Resources/"
             + CourseRuntimeResourcePaths.CourseResources
-            + "/" + CourseId + "/预制体";
+            + "/" + CourseId + "/氧气实验.prefab";
         public static string CourseAssetPath =>
             CourseAssetDirectory + "/氧气实验课程.asset";
         public static string UiScenarioPath =>
@@ -95,7 +95,7 @@ namespace VirtualLab.OxygenCourse.Authoring
             EnsureFolder(GeneratedDirectory);
             EnsureFolder(CourseAssetDirectory);
             var compilation = CompileCourse();
-            ValidatePrefabs(compilation.Domain);
+            ValidateExperimentPrefab(compilation.Domain);
 
             if (!new CourseAssetGenerator().TryGenerateFromBlueprint(
                     CourseAssetPath,
@@ -111,16 +111,17 @@ namespace VirtualLab.OxygenCourse.Authoring
             Debug.Log($"已生成配置课程资产：{CourseAssetPath}");
         }
 
-        [MenuItem("Virtual Lab/课程/资源/创建缺失的氧气实验示例 Prefab")]
-        public static void CreateMissingExamplePrefabs()
+        [MenuItem("Virtual Lab/课程/资源/创建缺失的氧气实验总预制体")]
+        public static void CreateMissingExampleExperimentPrefab()
         {
-            EnsureFolder(PrefabDirectory);
+            EnsureFolder(Path.GetDirectoryName(ExperimentPrefabPath)
+                ?.Replace('\\', '/'));
             var compilation = CompileCourse();
-            CreatePrefabs(compilation.Domain, false);
+            CreateExperimentPrefab(compilation.Domain, false);
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
-            ValidatePrefabs(compilation.Domain);
-            Debug.Log("缺失的氧气实验示例 Prefab 已补齐；已有美术资源未被覆盖。");
+            ValidateExperimentPrefab(compilation.Domain);
+            Debug.Log("缺失的氧气实验总预制体已创建；已有美术资源未被覆盖。");
         }
 
         [MenuItem("Virtual Lab/课程/场景/生成氧气实验生产场景")]
@@ -209,129 +210,140 @@ namespace VirtualLab.OxygenCourse.Authoring
             return compilation;
         }
 
-        private static void ValidatePrefabs(CompiledCourseDefinition course)
+        private static void ValidateExperimentPrefab(
+            CompiledCourseDefinition course)
         {
             var contracts = course.PrefabContracts.ToDictionary(
-                value => value.ResourceId,
+                value => value.EntityId,
                 StringComparer.Ordinal);
-            var prefabResourceIds = PrefabResourceIds(course);
             var errors = new List<string>();
-            foreach (var resource in course.Resources.Where(value =>
-                         prefabResourceIds.Contains(value.ResourceId)))
+            var resource = course.Resources.SingleOrDefault(value =>
+                string.Equals(
+                    value.ResourceId,
+                    course.ExperimentPrefabResourceId,
+                    StringComparison.Ordinal));
+            if (resource == null)
             {
-                var assetPath = VirtualLab.Unity.Authoring.Blueprints
-                    .CourseAssetPath.Resolve(
-                    resource.AssetPath,
-                    CourseRoot);
-                var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(
-                    assetPath);
-                if (prefab == null)
-                {
-                    errors.Add($"缺少 Prefab：{assetPath}");
-                    continue;
-                }
+                throw new InvalidOperationException("课程没有声明实验预制体资源。");
+            }
 
-                if (!contracts.TryGetValue(resource.ResourceId, out var contract))
-                {
-                    continue;
-                }
+            var assetPath = VirtualLab.Unity.Authoring.Blueprints
+                .CourseAssetPath.Resolve(resource.AssetPath, CourseRoot);
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(assetPath);
+            if (prefab == null)
+            {
+                errors.Add($"缺少实验预制体：{assetPath}");
+            }
+            else
+            {
+                var views = prefab
+                    .GetComponentsInChildren<CourseEntityView>(true)
+                    .GroupBy(value => value.EntityId, StringComparer.Ordinal)
+                    .ToDictionary(
+                        value => value.Key ?? string.Empty,
+                        value => value.ToArray(),
+                        StringComparer.Ordinal);
+                var expected = new HashSet<string>(
+                    course.Entities.Select(value => value.EntityId),
+                    StringComparer.Ordinal);
+                errors.AddRange(views
+                    .Where(value => string.IsNullOrWhiteSpace(value.Key))
+                    .Select(_ => "实验预制体包含未填写实体 ID 的视图。"));
+                errors.AddRange(views
+                    .Where(value => value.Value.Length > 1)
+                    .Select(value => $"实验预制体包含重复实体视图：{value.Key}"));
+                errors.AddRange(views.Keys
+                    .Where(value => !string.IsNullOrWhiteSpace(value)
+                                    && !expected.Contains(value))
+                    .Select(value => $"实验预制体包含未知实体视图：{value}"));
+                errors.AddRange(expected
+                    .Where(value => !views.ContainsKey(value))
+                    .Select(value => $"实验预制体缺少实体视图：{value}"));
 
-                errors.AddRange(PrefabContractValidator
-                    .Validate(prefab, contract)
-                    .Select(value => $"{assetPath}：{value.Message}"));
+                foreach (var contract in contracts)
+                {
+                    if (!views.TryGetValue(contract.Key, out var matching)
+                        || matching.Length != 1)
+                    {
+                        continue;
+                    }
+
+                    errors.AddRange(PrefabContractValidator
+                        .Validate(matching[0], contract.Value)
+                        .Select(value =>
+                            $"{contract.Key}：{value.Message}"));
+                }
             }
 
             if (errors.Count > 0)
             {
                 throw new InvalidOperationException(
-                    "Prefab 资源未满足课程契约：\n" + string.Join("\n", errors));
+                    "实验预制体未满足课程契约：\n" + string.Join("\n", errors));
             }
         }
 
-        private static void CreatePrefabs(
+        private static void CreateExperimentPrefab(
             CompiledCourseDefinition course,
             bool overwriteExisting)
         {
-            var entitiesByResource = course.Entities.ToDictionary(
-                value => value.PrefabReference,
-                StringComparer.Ordinal);
+            if (!overwriteExisting
+                && AssetDatabase.LoadAssetAtPath<GameObject>(
+                    ExperimentPrefabPath) != null)
+            {
+                return;
+            }
+
             var contracts = course.PrefabContracts.ToDictionary(
-                value => value.ResourceId,
+                value => value.EntityId,
                 StringComparer.Ordinal);
-            var prefabResourceIds = PrefabResourceIds(course);
-
-            foreach (var resource in course.Resources
-                .Where(value => prefabResourceIds.Contains(value.ResourceId))
-                .OrderBy(value => value.ResourceId, StringComparer.Ordinal))
-            {
-                var assetPath = VirtualLab.Unity.Authoring.Blueprints
-                    .CourseAssetPath.Resolve(
-                    resource.AssetPath,
-                    CourseRoot);
-                if (!overwriteExisting
-                    && AssetDatabase.LoadAssetAtPath<GameObject>(
-                        assetPath) != null)
-                {
-                    continue;
-                }
-
-                entitiesByResource.TryGetValue(
-                    resource.ResourceId,
-                    out var entity);
-                contracts.TryGetValue(
-                    resource.ResourceId,
-                    out var contract);
-                CreatePrefab(
-                    assetPath,
-                    entity?.EntityId ?? "化学实验室环境",
-                    contract);
-            }
-        }
-
-        /// <summary>
-        /// 预制体身份由场景对象和课程环境的实际引用推导，
-        /// 不再依赖课程资源表中的全局类型枚举。
-        /// </summary>
-        private static HashSet<string> PrefabResourceIds(
-            CompiledCourseDefinition course)
-        {
-            var result = new HashSet<string>(
-                course.Entities.Select(value => value.PrefabReference),
+            var layouts = course.SceneLayouts.ToDictionary(
+                value => value.EntityId,
                 StringComparer.Ordinal);
-            if (!string.IsNullOrWhiteSpace(course.EnvironmentResourceId))
-            {
-                result.Add(course.EnvironmentResourceId);
-            }
-
-            return result;
-        }
-
-        private static void CreatePrefab(
-            string assetPath,
-            string entityId,
-            CoursePrefabContractDefinition contract)
-        {
-            var root = string.Equals(
-                    entityId,
-                    "化学实验室环境",
-                    StringComparison.Ordinal)
-                ? CreateEnvironment(entityId)
-                : GameObject.CreatePrimitive(PrimitiveFor(entityId));
+            var root = CreateEnvironment(course.CourseId);
             try
             {
-                root.name = entityId;
-                root.transform.localScale = ScaleFor(entityId);
-                var view = root.AddComponent<CourseEntityView>();
-
-                if (contract != null)
+                foreach (var entity in course.Entities.OrderBy(
+                             value => value.EntityId,
+                             StringComparer.Ordinal))
                 {
-                    AddAnchors(root.transform, entityId, contract);
-                    AddSlots(root.transform, entityId, contract);
+                    var entityObject = GameObject.CreatePrimitive(
+                        PrimitiveFor(entity.EntityId));
+                    entityObject.name = entity.EntityId;
+                    entityObject.transform.SetParent(root.transform, false);
+                    entityObject.transform.localScale = ScaleFor(
+                        entity.EntityId);
+                    if (layouts.TryGetValue(entity.EntityId, out var layout))
+                    {
+                        entityObject.transform.localPosition = new Vector3(
+                            (float)layout.PositionX,
+                            (float)layout.PositionY,
+                            (float)layout.PositionZ);
+                        entityObject.transform.localEulerAngles = new Vector3(
+                            (float)layout.RotationX,
+                            (float)layout.RotationY,
+                            (float)layout.RotationZ);
+                    }
+
+                    var view = entityObject.AddComponent<CourseEntityView>();
+                    if (contracts.TryGetValue(
+                            entity.EntityId,
+                            out var contract))
+                    {
+                        AddAnchors(
+                            entityObject.transform,
+                            entity.EntityId,
+                            contract);
+                        AddSlots(
+                            entityObject.transform,
+                            entity.EntityId,
+                            contract);
+                    }
+
+                    view.Configure(entity.EntityId);
                 }
 
-                view.Configure(entityId);
-                PrefabUtility.SaveAsPrefabAsset(root, assetPath);
-                RemoveTrailingWhitespace(assetPath);
+                PrefabUtility.SaveAsPrefabAsset(root, ExperimentPrefabPath);
+                RemoveTrailingWhitespace(ExperimentPrefabPath);
             }
             finally
             {

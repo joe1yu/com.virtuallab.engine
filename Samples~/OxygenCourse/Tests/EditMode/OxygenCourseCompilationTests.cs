@@ -303,38 +303,38 @@ namespace VirtualLab.Engine.Tests.Courses
         }
 
         [Test]
-        public void 氧气课程Prefab提供表现配置引用的稳定插槽()
+        public void 氧气实验总预制体内的实体提供稳定表现插槽()
         {
             AssertPrefabAnchors(
-                "学生.prefab",
+                "学生",
                 ("抓取锚点", SemanticAnchorKind.InteractionGrip));
             AssertPrefabSlots(
-                "大试管.prefab",
+                "大试管",
                 ("插槽.内容", PresentationSlotKind.Content));
             AssertPrefabSlots(
-                "导气管.prefab",
+                "导气管",
                 ("插槽.内容", PresentationSlotKind.Content));
             AssertPrefabSlots(
-                "水槽.prefab",
+                "水槽",
                 ("插槽.液体", PresentationSlotKind.Liquid));
             AssertPrefabSlots(
-                "酒精灯.prefab",
+                "酒精灯",
                 ("插槽.燃烧", PresentationSlotKind.Combustion));
             AssertPrefabSlots(
-                "集气瓶一.prefab",
+                "集气瓶一",
                 ("插槽.液体", PresentationSlotKind.Liquid),
                 ("插槽.燃烧", PresentationSlotKind.Combustion),
                 ("插槽.高亮", PresentationSlotKind.Highlight));
             AssertPrefabSlots(
-                "集气瓶二.prefab",
+                "集气瓶二",
                 ("插槽.液体", PresentationSlotKind.Liquid),
                 ("插槽.燃烧", PresentationSlotKind.Combustion),
                 ("插槽.高亮", PresentationSlotKind.Highlight));
             AssertPrefabSlots(
-                "木炭.prefab",
+                "木炭",
                 ("插槽.燃烧", PresentationSlotKind.Combustion));
             AssertPrefabSlots(
-                "细铁丝.prefab",
+                "细铁丝",
                 ("插槽.燃烧", PresentationSlotKind.Combustion));
         }
 
@@ -374,34 +374,32 @@ namespace VirtualLab.Engine.Tests.Courses
             var resources = new CourseRuntimeResourceResolver(
                 course,
                 new ResourcesCourseResourceLoader());
-            var prefabResourceIds = new HashSet<string>(
-                course.Entities.Select(value => value.PrefabReference),
-                StringComparer.Ordinal)
-            {
-                course.EnvironmentResourceId
-            };
+            Assert.That(course.Resources, Has.Count.EqualTo(1));
             foreach (var resource in course.Resources)
             {
                 Assert.That(
                     resources.TryResolve(
                         resource.ResourceId,
-                        prefabResourceIds.Contains(resource.ResourceId)
-                            ? typeof(GameObject)
-                            : typeof(UnityEngine.Object),
+                        typeof(GameObject),
                         out var loaded),
                     Is.True,
                     resource.ResourceId + " 未能按路径加载。");
                 Assert.That(loaded, Is.Not.Null);
             }
 
+            var experimentPrefab = resources.Require<GameObject>(
+                course.ExperimentPrefabResourceId);
+            var views = experimentPrefab
+                .GetComponentsInChildren<CourseEntityView>(true)
+                .ToDictionary(value => value.EntityId, StringComparer.Ordinal);
             foreach (var contract in course.PrefabContracts)
             {
-                var prefab = resources.Require<GameObject>(
-                    contract.ResourceId);
                 Assert.That(
-                    PrefabContractValidator.Validate(prefab, contract),
+                    PrefabContractValidator.Validate(
+                        views[contract.EntityId],
+                        contract),
                     Is.Empty,
-                    contract.ResourceId);
+                    contract.EntityId);
             }
 
             Assert.That(
@@ -414,10 +412,11 @@ namespace VirtualLab.Engine.Tests.Courses
         {
             var result = new List<string>
             {
-                "课程|" + course.CourseId + "|" + course.EnvironmentResourceId
+                "课程|" + course.CourseId + "|"
+                + course.ExperimentPrefabResourceId
             };
             result.AddRange(course.Entities.Select(value =>
-                "实体|" + value.EntityId + "|" + value.PrefabReference + "|"
+                "实体|" + value.EntityId + "|"
                 + string.Join(";", value.CapabilityIds)));
             result.AddRange(course.Resources.Select(value =>
                 "资源|" + value.ResourceId + "|" + value.AssetPath));
@@ -468,7 +467,7 @@ namespace VirtualLab.Engine.Tests.Courses
                 + value.RotationX + "|" + value.RotationY + "|"
                 + value.RotationZ));
             result.AddRange(course.PrefabContracts.Select(value =>
-                "Prefab|" + value.ResourceId + "|"
+                "实体视图|" + value.EntityId + "|"
                 + string.Join(";", value.CapabilityIds) + "|"
                 + string.Join(";", value.PortIds)));
             return result;
@@ -484,16 +483,16 @@ namespace VirtualLab.Engine.Tests.Courses
                 });
 
         private static void AssertPrefabSlots(
-            string prefabName,
+            string entityId,
             params (string Id, PresentationSlotKind Kind)[] expected)
         {
-            var path = OxygenCourseContentBuilder.PrefabDirectory
-                       + "/"
-                       + prefabName;
+            var path = OxygenCourseContentBuilder.ExperimentPrefabPath;
             var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
             Assert.That(prefab, Is.Not.Null, path);
-            var slots = prefab
-                .GetComponentsInChildren<PresentationSlotMarker>(true)
+            var view = prefab
+                .GetComponentsInChildren<CourseEntityView>(true)
+                .Single(value => value.EntityId == entityId);
+            var slots = view.PresentationSlots
                 .Select(value => (value.SlotId, value.Kind))
                 .ToArray();
             foreach (var item in expected)
@@ -511,16 +510,16 @@ namespace VirtualLab.Engine.Tests.Courses
         }
 
         private static void AssertPrefabAnchors(
-            string prefabName,
+            string entityId,
             params (string Id, SemanticAnchorKind Kind)[] expected)
         {
-            var path = OxygenCourseContentBuilder.PrefabDirectory
-                       + "/"
-                       + prefabName;
+            var path = OxygenCourseContentBuilder.ExperimentPrefabPath;
             var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
             Assert.That(prefab, Is.Not.Null, path);
-            var anchors = prefab
-                .GetComponentsInChildren<SemanticAnchorMarker>(true)
+            var view = prefab
+                .GetComponentsInChildren<CourseEntityView>(true)
+                .Single(value => value.EntityId == entityId);
+            var anchors = view.Anchors
                 .Select(value => (value.AnchorId, value.Kind))
                 .ToArray();
             foreach (var item in expected)
