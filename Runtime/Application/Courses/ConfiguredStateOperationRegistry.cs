@@ -453,8 +453,9 @@ namespace VirtualLab.Application.Courses
                         candidate.TargetPortId,
                         StringComparison.Ordinal))
                 {
-                    throw new InvalidOperationException(
-                        "相同关系已经存在。");
+                    // “设置关系”采用幂等语义。重复提交同一放置或覆盖结果时，
+                    // 保持既有状态即可；只有同类关系指向不同端点时才算冲突。
+                    return;
                 }
 
                 if (existing.Kind != candidate.Kind)

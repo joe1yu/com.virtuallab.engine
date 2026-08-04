@@ -416,7 +416,7 @@ namespace VirtualLab.Engine.Tests.Courses
         }
 
         [Test]
-        public void 关系操作拒绝未定义类型和重复持有者()
+        public void 关系操作允许重复设置同一关系并拒绝冲突持有者()
         {
             var registry = new ConfiguredStateOperationRegistry();
             var world = WorldWith("器材.试管", "学生", "另一学生");
@@ -445,6 +445,17 @@ namespace VirtualLab.Engine.Tests.Courses
                         Parameters(
                             ("关系类型", StructuredValue.FromText("由对象持有"))))
                 });
+            Assert.DoesNotThrow(() => registry.ApplyAtomically(
+                request,
+                world,
+                new[]
+                {
+                    new ConfiguredMutationDefinition(
+                        "变更.重复设置首次持有",
+                        "设置关系",
+                        Parameters(
+                            ("关系类型", StructuredValue.FromText("由对象持有"))))
+                }));
             Assert.Throws<ConfiguredStateOperationException>(() =>
                 registry.ApplyAtomically(
                     request,
