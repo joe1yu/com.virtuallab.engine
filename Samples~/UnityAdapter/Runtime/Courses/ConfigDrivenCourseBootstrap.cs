@@ -2,8 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using UnityEngine;
 using VirtualLab.Application.Commands;
 using VirtualLab.Application.Courses;
@@ -142,9 +140,6 @@ namespace VirtualLab.UnityAdapters.Courses
 
         [NonSerialized] private CompiledCourseAsset course;
         [NonSerialized] private ICourseResourceLoader resourceLoader;
-        private readonly CancellationTokenSource _lifetime =
-            new CancellationTokenSource();
-        private Task _initializationTask;
         private CourseRuntimeFacade _runtime;
         private CompiledCourseDefinition _domain;
         private CoursePresentationCoordinator _presentationCoordinator;
@@ -157,14 +152,12 @@ namespace VirtualLab.UnityAdapters.Courses
         public CourseSceneAssembly SceneAssembly { get; private set; }
         public bool IsInitialized =>
             _runtime != null && _presentationCoordinator != null;
-        public bool IsInitializing =>
-            _initializationTask != null && !_initializationTask.IsCompleted;
 
         public void ConfigureCourse(CompiledCourseAsset value)
         {
-            if (IsInitialized || _initializationTask != null)
+            if (IsInitialized)
             {
-                throw new InvalidOperationException("课程已经开始初始化。");
+                throw new InvalidOperationException("课程已经初始化。");
             }
 
             course = value ?? throw new ArgumentNullException(nameof(value));
@@ -173,9 +166,9 @@ namespace VirtualLab.UnityAdapters.Courses
 
         public void ConfigureCourseId(string value)
         {
-            if (IsInitialized || _initializationTask != null)
+            if (IsInitialized)
             {
-                throw new InvalidOperationException("课程已经开始初始化。");
+                throw new InvalidOperationException("课程已经初始化。");
             }
 
             if (string.IsNullOrWhiteSpace(value))
@@ -189,9 +182,9 @@ namespace VirtualLab.UnityAdapters.Courses
 
         public void ConfigureResourceLoader(ICourseResourceLoader value)
         {
-            if (IsInitialized || _initializationTask != null)
+            if (IsInitialized)
             {
-                throw new InvalidOperationException("课程已经开始初始化。");
+                throw new InvalidOperationException("课程已经初始化。");
             }
 
             resourceLoader = value
@@ -200,9 +193,9 @@ namespace VirtualLab.UnityAdapters.Courses
 
         public void ConfigureUiSimulationMode(bool enabled = true)
         {
-            if (IsInitialized || _initializationTask != null)
+            if (IsInitialized)
             {
-                throw new InvalidOperationException("课程已经开始初始化。");
+                throw new InvalidOperationException("课程已经初始化。");
             }
 
             uiSimulationMode = enabled;
@@ -233,84 +226,9 @@ namespace VirtualLab.UnityAdapters.Courses
                 return;
             }
 
-            if (_initializationTask != null)
-            {
-                if (!_initializationTask.IsCompleted)
-                {
-                    throw new InvalidOperationException(
-                        "课程正在异步初始化。");
-                }
-
-                _initializationTask.GetAwaiter().GetResult();
-                return;
-            }
-
-            PrepareInitialization(
-                out var domain,
-                out var presentation,
-                out var selectedResourceLoader);
-            if (!uiSimulationMode
-                && selectedResourceLoader is ICourseResourcePreloader)
-            {
-                throw new InvalidOperationException(
-                    "当前资源加载器需要异步预加载，请调用 InitializeAsync。");
-            }
-
-            CompleteInitialization(
-                domain,
-                presentation,
-                selectedResourceLoader);
-        }
-
-        public ValueTask InitializeAsync(CancellationToken token = default)
-        {
-            if (IsInitialized)
-            {
-                return default;
-            }
-
-            if (_initializationTask == null)
-            {
-                _initializationTask = InitializeAsyncCore(token);
-            }
-
-            return new ValueTask(_initializationTask);
-        }
-
-        private async Task InitializeAsyncCore(CancellationToken token)
-        {
-            using (var linked = CancellationTokenSource
-                       .CreateLinkedTokenSource(token, _lifetime.Token))
-            {
-                PrepareInitialization(
-                    out var domain,
-                    out var presentation,
-                    out var selectedResourceLoader);
-                if (!uiSimulationMode
-                    && selectedResourceLoader is ICourseResourcePreloader
-                        preloader)
-                {
-                    await preloader.PreloadAsync(
-                        domain.Resources,
-                        linked.Token);
-                }
-
-                linked.Token.ThrowIfCancellationRequested();
-                CompleteInitialization(
-                    domain,
-                    presentation,
-                    selectedResourceLoader);
-            }
-        }
-
-        private void PrepareInitialization(
-            out CompiledCourseDefinition domain,
-            out CoursePresentationDefinition presentation,
-            out ICourseResourceLoader selectedResourceLoader)
-        {
             course = course ?? CompiledCourseAssetCatalog.Require(courseId);
 
-            domain = CourseAssetDecoder.DecodeDomain(course);
+            var domain = CourseAssetDecoder.DecodeDomain(course);
             if (!string.Equals(
                     course.CourseId,
                     domain.CourseId,
@@ -320,20 +238,15 @@ namespace VirtualLab.UnityAdapters.Courses
                     "课程资产 ID 与领域配置 ID 不一致。");
             }
 
-            presentation = CourseAssetDecoder.DecodePresentation(course);
-            selectedResourceLoader = resourceLoader
+            _domain = domain;
+
+            var presentation =
+                CourseAssetDecoder.DecodePresentation(course);
+            var selectedResourceLoader = resourceLoader
                 ?? GetComponents<MonoBehaviour>()
                     .OfType<ICourseResourceLoader>()
                     .SingleOrDefault()
                 ?? new ResourcesCourseResourceLoader();
-        }
-
-        private void CompleteInitialization(
-            CompiledCourseDefinition domain,
-            CoursePresentationDefinition presentation,
-            ICourseResourceLoader selectedResourceLoader)
-        {
-            _domain = domain;
             var runtimeResources = new CourseRuntimeResourceResolver(
                 domain,
                 selectedResourceLoader);
@@ -446,29 +359,16 @@ namespace VirtualLab.UnityAdapters.Courses
                 _presentationCoordinator.LastCommands);
         }
 
-        private async void Start()
+        private void Start()
         {
             if (!IsInitialized)
             {
-                try
-                {
-                    await InitializeAsync(_lifetime.Token);
-                }
-                catch (OperationCanceledException)
-                {
-                    // 组件销毁会取消尚未完成的资源加载，无需再报告错误。
-                }
-                catch (Exception exception)
-                {
-                    Debug.LogException(exception, this);
-                }
+                Initialize();
             }
         }
 
         private void OnDestroy()
         {
-            _lifetime.Cancel();
-            _lifetime.Dispose();
             if (_signalSource != null)
             {
                 _signalSource.PresentationSignalProduced -=
