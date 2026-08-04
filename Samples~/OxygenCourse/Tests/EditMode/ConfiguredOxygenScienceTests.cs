@@ -62,17 +62,17 @@ namespace VirtualLab.Engine.Tests.Courses
             Assert.That(
                 runtime.Session.Execute(
                     Request(
-                        "命令.取下灯帽",
+                        "命令.取下酒精灯帽",
                         CoreSemanticActionIds.Grab,
-                        "灯帽",
+                        "酒精灯帽",
                         null)).IsAccepted,
                 Is.True);
             Assert.That(
                 runtime.Session.Execute(
                     Request(
-                        "命令.放下灯帽",
+                        "命令.放下酒精灯帽",
                         CoreSemanticActionIds.Release,
-                        "灯帽",
+                        "酒精灯帽",
                         null)).IsAccepted,
                 Is.True);
 
@@ -146,7 +146,7 @@ namespace VirtualLab.Engine.Tests.Courses
                 Request(
                     "命令.试剂瓶直接倾倒",
                     ChemistrySemanticActionIds.BeginPour,
-                    "高锰酸钾试剂瓶",
+                    "高锰酸钾广口瓶",
                     "大试管",
                     ("请求流量克每秒",
                         StructuredValue.FromNumber(632d))));
@@ -173,10 +173,19 @@ namespace VirtualLab.Engine.Tests.Courses
             Assert.That(
                 runtime.Session.Execute(
                     Request(
+                        "命令.取下高锰酸钾广口瓶盖",
+                        CoreSemanticActionIds.Grab,
+                        "高锰酸钾瓶盖",
+                        null)).IsAccepted,
+                Is.True);
+
+            Assert.That(
+                runtime.Session.Execute(
+                    Request(
                         "命令.药匙伸入试剂瓶",
                         CoreSemanticActionIds.Place,
                         "药匙",
-                        "高锰酸钾试剂瓶")).IsAccepted,
+                        "高锰酸钾广口瓶")).IsAccepted,
                 Is.True);
             Assert.That(
                 runtime.Session.Execute(
@@ -184,7 +193,7 @@ namespace VirtualLab.Engine.Tests.Courses
                         "命令.药匙舀取高锰酸钾",
                         CoreSemanticActionIds.Take,
                         "药匙",
-                        "高锰酸钾试剂瓶")).IsAccepted,
+                        "高锰酸钾广口瓶")).IsAccepted,
                 Is.True);
             var filledSpoonPour = runtime.Session.Execute(
                 Request(
@@ -241,7 +250,7 @@ namespace VirtualLab.Engine.Tests.Courses
             var fixedActions = context.Course.ConfiguredActions
                 .Where(value =>
                     value.ActionId == CoreSemanticActionIds.Connect
-                    && value.SourceEntityId == "铁架台"
+                    && value.SourceEntityId == "铁架台试管夹"
                     && value.TargetEntityId == "大试管")
                 .ToArray();
             Assert.That(
@@ -312,7 +321,7 @@ namespace VirtualLab.Engine.Tests.Courses
         }
 
         [Test]
-        public void 木炭和细铁丝按配置点燃并生成对应产物()
+        public void 木炭和火柴铁丝组合按配置点燃并生成对应产物()
         {
             var context = CreateRuntime();
             var world = context.World;
@@ -348,10 +357,10 @@ namespace VirtualLab.Engine.Tests.Courses
             PrepareIronIgniter(runtime, "产物测试");
             var ironHeating = runtime.Session.Execute(
                     Request(
-                        "命令.预热细铁丝",
+                        "命令.预热火柴铁丝组合",
                         ChemistrySemanticActionIds.BeginHeating,
-                        "细铁丝",
-                        "铁丝引燃火柴"));
+                        "火柴铁丝组合",
+                        "组合引燃火柴"));
             Assert.That(
                 ironHeating.IsAccepted,
                 Is.True,
@@ -362,10 +371,10 @@ namespace VirtualLab.Engine.Tests.Courses
                 events);
             var ironIgnited = runtime.Session.Execute(
                 Request(
-                    "命令.点燃细铁丝",
+                    "命令.点燃火柴铁丝组合",
                     ChemistrySemanticActionIds.Ignite,
-                    "细铁丝",
-                    "铁丝引燃火柴",
+                    "火柴铁丝组合",
+                    "组合引燃火柴",
                     ("空间距离米",
                         StructuredValue.FromNumber(0.1d))));
             runtime.Advance(
@@ -381,16 +390,16 @@ namespace VirtualLab.Engine.Tests.Courses
             Assert.That(
                 runtime.Session.Execute(
                     Request(
-                        "命令.拿起细铁丝",
+                        "命令.拿起火柴铁丝组合",
                         CoreSemanticActionIds.Grab,
-                        "细铁丝",
+                        "火柴铁丝组合",
                         null)).IsAccepted,
                 Is.True);
             var ironPlaced = runtime.Session.Execute(
                 Request(
-                    "命令.放入细铁丝",
+                    "命令.放入火柴铁丝组合",
                     CoreSemanticActionIds.Place,
-                    "细铁丝",
+                    "火柴铁丝组合",
                     "集气瓶二"));
 
             Assert.That(
@@ -431,14 +440,14 @@ namespace VirtualLab.Engine.Tests.Courses
                 Request(
                     "命令.拿起石灰水",
                     CoreSemanticActionIds.Grab,
-                    "澄清石灰水",
+                    "澄清石灰水窄口瓶",
                     null));
             Assert.That(limewater.IsAccepted, Is.True);
             limewater = runtime.Session.Execute(
                 Request(
                     "命令.倾倒石灰水",
                     ChemistrySemanticActionIds.BeginPour,
-                    "澄清石灰水",
+                    "澄清石灰水窄口瓶",
                     "集气瓶一",
                     ("请求流量毫升每秒",
                         StructuredValue.FromNumber(10d))));
@@ -501,14 +510,14 @@ namespace VirtualLab.Engine.Tests.Courses
             PrepareHeatingApparatus(context.Runtime);
             context.World.RemoveRelation(new EntityRelation(
                 RelationKind.位于容器内,
-                new EntityId("棉花"),
+                new EntityId("棉花团"),
                 new EntityId("大试管")));
             var stopperConnection = context.World.Relations.Single(value =>
                 value.Kind == RelationKind.连接对象
-                && (value.Source.Value == "单孔橡皮塞"
+                && (value.Source.Value == "橡胶塞玻璃导管"
                     && value.Target.Value == "大试管"
                     || value.Source.Value == "大试管"
-                    && value.Target.Value == "单孔橡皮塞"));
+                    && value.Target.Value == "橡胶塞玻璃导管"));
             context.World.RemoveRelation(stopperConnection);
             var unsafeHeating = context.Runtime.Session.Execute(
                 Request(
@@ -524,9 +533,9 @@ namespace VirtualLab.Engine.Tests.Courses
             Assert.That(
                 context.Runtime.Session.Execute(
                     Request(
-                        "命令.拿起导气管后过早连接",
+                        "命令.拿起折角导气管后过早连接",
                         CoreSemanticActionIds.Grab,
-                        "导气管",
+                        "折角导气管",
                         null)).IsAccepted,
                 Is.True);
             Assert.That(
@@ -534,13 +543,13 @@ namespace VirtualLab.Engine.Tests.Courses
                     Request(
                         "命令.过早连接集气瓶",
                         CoreSemanticActionIds.Connect,
-                        "导气管",
+                        "折角导气管",
                         "集气瓶一")).IsAccepted,
                 Is.True);
             var earlyCollectionRequest = Request(
                 "命令.过早收集",
                 ChemistrySemanticActionIds.CollectGas,
-                "导气管",
+                "折角导气管",
                 "集气瓶一");
             var earlyCollectionDefinition = context.Course.ConfiguredActions
                 .Single(value => value.Matches(earlyCollectionRequest));
@@ -605,9 +614,9 @@ namespace VirtualLab.Engine.Tests.Courses
             Assert.That(
                 runtime.Session.Execute(
                     Request(
-                        "命令.先将导气管移出水面",
+                        "命令.先将折角导气管移出水面",
                         CoreSemanticActionIds.Disconnect,
-                        "导气管",
+                        "折角导气管",
                         "集气瓶二")).IsAccepted,
                 Is.True);
             Assert.That(
@@ -625,7 +634,7 @@ namespace VirtualLab.Engine.Tests.Courses
                     Request(
                         "命令.完整流程拿起石灰水",
                         CoreSemanticActionIds.Grab,
-                        "澄清石灰水",
+                        "澄清石灰水窄口瓶",
                         null)).IsAccepted,
                 Is.True);
             Assert.That(
@@ -633,7 +642,7 @@ namespace VirtualLab.Engine.Tests.Courses
                     Request(
                         "命令.加入石灰水",
                         ChemistrySemanticActionIds.BeginPour,
-                        "澄清石灰水",
+                        "澄清石灰水窄口瓶",
                         "集气瓶一",
                         ("请求流量毫升每秒",
                             StructuredValue.FromNumber(10d))))
@@ -670,8 +679,8 @@ namespace VirtualLab.Engine.Tests.Courses
                     Request(
                         "命令.预热铁丝",
                         ChemistrySemanticActionIds.BeginHeating,
-                        "细铁丝",
-                        "铁丝引燃火柴")).IsAccepted,
+                        "火柴铁丝组合",
+                        "组合引燃火柴")).IsAccepted,
                 Is.True);
             runtime.Advance(200d, new SimulationTick(12), events);
             Assert.That(
@@ -679,8 +688,8 @@ namespace VirtualLab.Engine.Tests.Courses
                     Request(
                         "命令.点燃铁丝",
                         ChemistrySemanticActionIds.Ignite,
-                        "细铁丝",
-                        "铁丝引燃火柴",
+                        "火柴铁丝组合",
+                        "组合引燃火柴",
                         ("空间距离米",
                             StructuredValue.FromNumber(0.1d))))
                     .IsAccepted,
@@ -691,7 +700,7 @@ namespace VirtualLab.Engine.Tests.Courses
                     Request(
                         "命令.完整流程拿起铁丝",
                         CoreSemanticActionIds.Grab,
-                        "细铁丝",
+                        "火柴铁丝组合",
                         null)).IsAccepted,
                 Is.True);
             Assert.That(
@@ -699,7 +708,7 @@ namespace VirtualLab.Engine.Tests.Courses
                     Request(
                         "命令.放入铁丝",
                         CoreSemanticActionIds.Place,
-                        "细铁丝",
+                        "火柴铁丝组合",
                         "集气瓶二")).IsAccepted,
                 Is.True);
 
@@ -802,9 +811,9 @@ namespace VirtualLab.Engine.Tests.Courses
             Assert.That(
                 runtime.Session.Execute(
                     Request(
-                        "命令.收集前拿起导气管",
+                        "命令.收集前拿起折角导气管",
                         CoreSemanticActionIds.Grab,
-                        "导气管",
+                        "折角导气管",
                         null)).IsAccepted,
                 Is.True);
             Assert.That(
@@ -812,7 +821,7 @@ namespace VirtualLab.Engine.Tests.Courses
                     Request(
                         "命令.连接第一只集气瓶",
                         CoreSemanticActionIds.Connect,
-                        "导气管",
+                        "折角导气管",
                         "集气瓶一")).IsAccepted,
                 Is.True);
             Assert.That(
@@ -820,7 +829,7 @@ namespace VirtualLab.Engine.Tests.Courses
                     Request(
                         "命令.收集第一瓶氧气",
                         ChemistrySemanticActionIds.CollectGas,
-                        "导气管",
+                        "折角导气管",
                         "集气瓶一")).IsAccepted,
                 Is.True);
             Assert.That(
@@ -828,7 +837,7 @@ namespace VirtualLab.Engine.Tests.Courses
                     Request(
                         "命令.断开第一只集气瓶",
                         CoreSemanticActionIds.Disconnect,
-                        "导气管",
+                        "折角导气管",
                         "集气瓶一")).IsAccepted,
                 Is.True);
             Assert.That(
@@ -836,7 +845,7 @@ namespace VirtualLab.Engine.Tests.Courses
                     Request(
                         "命令.连接第二只集气瓶",
                         CoreSemanticActionIds.Connect,
-                        "导气管",
+                        "折角导气管",
                         "集气瓶二")).IsAccepted,
                 Is.True);
             Assert.That(
@@ -844,7 +853,7 @@ namespace VirtualLab.Engine.Tests.Courses
                     Request(
                         "命令.收集第二瓶氧气",
                         ChemistrySemanticActionIds.CollectGas,
-                        "导气管",
+                        "折角导气管",
                         "集气瓶二")).IsAccepted,
                 Is.True);
         }
@@ -853,6 +862,14 @@ namespace VirtualLab.Engine.Tests.Courses
             ChemistryCourseRuntime runtime,
             string commandPrefix)
         {
+            Assert.That(
+                runtime.Session.Execute(
+                    Request(
+                        "命令." + commandPrefix + ".取下高锰酸钾瓶盖",
+                        CoreSemanticActionIds.Grab,
+                        "高锰酸钾瓶盖",
+                        null)).IsAccepted,
+                Is.True);
             Assert.That(
                 runtime.Session.Execute(
                     Request(
@@ -867,7 +884,7 @@ namespace VirtualLab.Engine.Tests.Courses
                         "命令." + commandPrefix + ".药匙伸入试剂瓶",
                         CoreSemanticActionIds.Place,
                         "药匙",
-                        "高锰酸钾试剂瓶")).IsAccepted,
+                        "高锰酸钾广口瓶")).IsAccepted,
                 Is.True);
             Assert.That(
                 runtime.Session.Execute(
@@ -875,7 +892,7 @@ namespace VirtualLab.Engine.Tests.Courses
                         "命令." + commandPrefix + ".药匙舀取药品",
                         CoreSemanticActionIds.Take,
                         "药匙",
-                        "高锰酸钾试剂瓶")).IsAccepted,
+                        "高锰酸钾广口瓶")).IsAccepted,
                 Is.True);
         }
 
@@ -896,10 +913,20 @@ namespace VirtualLab.Engine.Tests.Courses
                 Is.True,
                 string.Join(",", result.RejectionCodes));
             result = runtime.Session.Execute(
+                Request(
+                    "命令.拿起加水烧杯." + bottleId,
+                    CoreSemanticActionIds.Grab,
+                    "加水烧杯",
+                    null));
+            Assert.That(
+                result.IsAccepted,
+                Is.True,
+                string.Join(",", result.RejectionCodes));
+            result = runtime.Session.Execute(
                     Request(
                         "命令.装水." + bottleId,
                         ChemistrySemanticActionIds.BeginPour,
-                        "水源",
+                        "加水烧杯",
                         bottleId,
                         ("请求流量毫升每秒",
                             StructuredValue.FromNumber(100d))));
@@ -913,7 +940,7 @@ namespace VirtualLab.Engine.Tests.Courses
                     Request(
                         "命令.停止装水." + bottleId,
                         ChemistrySemanticActionIds.EndPour,
-                        "水源",
+                        "加水烧杯",
                         bottleId)).IsAccepted,
                 Is.True);
             Assert.That(
@@ -922,6 +949,14 @@ namespace VirtualLab.Engine.Tests.Courses
                         "命令.放下." + bottleId,
                         CoreSemanticActionIds.Release,
                         bottleId,
+                        null)).IsAccepted,
+                Is.True);
+            Assert.That(
+                runtime.Session.Execute(
+                    Request(
+                        "命令.放下加水烧杯." + bottleId,
+                        CoreSemanticActionIds.Release,
+                        "加水烧杯",
                         null)).IsAccepted,
                 Is.True);
         }
@@ -970,6 +1005,14 @@ namespace VirtualLab.Engine.Tests.Courses
             Assert.That(
                 runtime.Session.Execute(
                     Request(
+                        "命令." + commandPrefix + ".取下木炭瓶盖",
+                        CoreSemanticActionIds.Grab,
+                        "木炭瓶盖",
+                        null)).IsAccepted,
+                Is.True);
+            Assert.That(
+                runtime.Session.Execute(
+                    Request(
                         "命令." + commandPrefix + ".拿起坩埚钳",
                         CoreSemanticActionIds.Grab,
                         "坩埚钳",
@@ -991,17 +1034,33 @@ namespace VirtualLab.Engine.Tests.Courses
             Assert.That(
                 runtime.Session.Execute(
                     Request(
-                        "命令.拿起棉花",
+                        "命令.拿起镊子",
                         CoreSemanticActionIds.Grab,
-                        "棉花",
+                        "镊子",
                         null)).IsAccepted,
                 Is.True);
             Assert.That(
                 runtime.Session.Execute(
                     Request(
-                        "命令.放置棉花",
+                        "命令.镊子夹住棉花团",
+                        CoreSemanticActionIds.Connect,
+                        "镊子",
+                        "棉花团")).IsAccepted,
+                Is.True);
+            Assert.That(
+                runtime.Session.Execute(
+                    Request(
+                        "命令.通过镊子拿起棉花团",
+                        CoreSemanticActionIds.Grab,
+                        "棉花团",
+                        null)).IsAccepted,
+                Is.True);
+            Assert.That(
+                runtime.Session.Execute(
+                    Request(
+                        "命令.放置棉花团",
                         CoreSemanticActionIds.Place,
-                        "棉花",
+                        "棉花团",
                         "大试管")).IsAccepted,
                 Is.True);
             Assert.That(
@@ -1009,7 +1068,7 @@ namespace VirtualLab.Engine.Tests.Courses
                     Request(
                         "命令.拿起橡皮塞",
                         CoreSemanticActionIds.Grab,
-                        "单孔橡皮塞",
+                        "橡胶塞玻璃导管",
                         null)).IsAccepted,
                 Is.True);
             Assert.That(
@@ -1017,7 +1076,7 @@ namespace VirtualLab.Engine.Tests.Courses
                     Request(
                         "命令.连接橡皮塞",
                         CoreSemanticActionIds.Connect,
-                        "单孔橡皮塞",
+                        "橡胶塞玻璃导管",
                         "大试管")).IsAccepted,
                 Is.True);
             Assert.That(
@@ -1032,7 +1091,7 @@ namespace VirtualLab.Engine.Tests.Courses
                 Request(
                     "命令.固定试管",
                     CoreSemanticActionIds.Connect,
-                    "铁架台",
+                    "铁架台试管夹",
                     "大试管"));
             Assert.That(
                 fixedTube.IsAccepted,
@@ -1041,17 +1100,41 @@ namespace VirtualLab.Engine.Tests.Courses
             Assert.That(
                 runtime.Session.Execute(
                     Request(
-                        "命令.取下灯帽",
+                        "命令.拿起折角导气管",
                         CoreSemanticActionIds.Grab,
-                        "灯帽",
+                        "折角导气管",
                         null)).IsAccepted,
                 Is.True);
             Assert.That(
                 runtime.Session.Execute(
                     Request(
-                        "命令.放下灯帽",
+                        "命令.连接两段连接件",
+                        CoreSemanticActionIds.Connect,
+                        "折角导气管",
+                        "橡胶塞玻璃导管")).IsAccepted,
+                Is.True);
+            Assert.That(
+                runtime.Session.Execute(
+                    Request(
+                        "命令.放下折角导气管",
                         CoreSemanticActionIds.Release,
-                        "灯帽",
+                        "折角导气管",
+                        null)).IsAccepted,
+                Is.True);
+            Assert.That(
+                runtime.Session.Execute(
+                    Request(
+                        "命令.取下酒精灯帽",
+                        CoreSemanticActionIds.Grab,
+                        "酒精灯帽",
+                        null)).IsAccepted,
+                Is.True);
+            Assert.That(
+                runtime.Session.Execute(
+                    Request(
+                        "命令.放下酒精灯帽",
+                        CoreSemanticActionIds.Release,
+                        "酒精灯帽",
                         null)).IsAccepted,
                 Is.True);
             Assert.That(
@@ -1113,7 +1196,7 @@ namespace VirtualLab.Engine.Tests.Courses
                     Request(
                         "命令." + commandPrefix + ".点燃铁丝底端火柴",
                         ChemistrySemanticActionIds.Ignite,
-                        "铁丝引燃火柴",
+                        "组合引燃火柴",
                         "火柴")).IsAccepted,
                 Is.True);
             Assert.That(

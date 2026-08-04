@@ -67,21 +67,40 @@ namespace VirtualLab.Engine.Tests.Courses
                 Is.EqualTo(new[] { "目标.观察铁丝燃烧" }));
             Assert.That(
                 result.Domain.Entities.Select(value => value.EntityId),
-                Does.Contain("学生")
-                    .And.Contain("大试管")
-                    .And.Contain("单孔橡皮塞")
-                    .And.Contain("导气管")
-                    .And.Contain("水槽")
-                    .And.Contain("集气瓶一")
-                    .And.Contain("集气瓶二")
-                    .And.Contain("酒精灯")
-                    .And.Contain("火柴盒")
-                    .And.Contain("铁丝引燃火柴")
-                    .And.Contain("药匙")
-                    .And.Contain("升降台")
-                    .And.Contain("木炭")
-                    .And.Contain("细铁丝")
-                    .And.Contain("澄清石灰水"));
+                Is.EquivalentTo(new[]
+                {
+                    "学生",
+                    "铁架台",
+                    "铁架台试管夹",
+                    "试管架",
+                    "大试管",
+                    "升降台",
+                    "酒精灯",
+                    "酒精灯帽",
+                    "橡胶塞玻璃导管",
+                    "折角导气管",
+                    "水槽",
+                    "废液缸",
+                    "火柴盒",
+                    "火柴",
+                    "集气瓶一",
+                    "集气瓶二",
+                    "玻璃片一",
+                    "玻璃片二",
+                    "加水烧杯",
+                    "澄清石灰水窄口瓶",
+                    "棉花团",
+                    "镊子",
+                    "高锰酸钾广口瓶",
+                    "高锰酸钾瓶盖",
+                    "木炭广口瓶",
+                    "木炭瓶盖",
+                    "木炭",
+                    "药匙",
+                    "坩埚钳",
+                    "火柴铁丝组合",
+                    "组合引燃火柴"
+                }));
         }
 
         [Test]
@@ -119,24 +138,24 @@ namespace VirtualLab.Engine.Tests.Courses
             Assert.That(
                 policies,
                 Does.Contain("抓取|坩埚钳|")
-                    .And.Contain("连接|导气管|单孔橡皮塞")
-                    .And.Contain("连接|导气管|集气瓶一")
+                    .And.Contain("连接|折角导气管|橡胶塞玻璃导管")
+                    .And.Contain("连接|折角导气管|集气瓶一")
                     .And.Contain(
-                        "开始倾倒|水源|集气瓶一")
+                        "开始倾倒|加水烧杯|集气瓶一")
                     .And.Contain(
-                        "开始倾倒|水源|集气瓶二")
+                        "开始倾倒|加水烧杯|集气瓶二")
                     .And.Contain(
-                        "开始倾倒|澄清石灰水|集气瓶一")
+                        "开始倾倒|澄清石灰水窄口瓶|集气瓶一")
                     .And.Contain(
                         "点燃|酒精灯|火柴")
                     .And.Contain(
                         "点燃|火柴|火柴盒")
                     .And.Contain(
-                        "点燃|铁丝引燃火柴|火柴")
+                        "点燃|组合引燃火柴|火柴")
                     .And.Contain(
                         "开始加热|木炭|酒精灯")
                     .And.Contain(
-                        "点燃|细铁丝|铁丝引燃火柴")
+                        "点燃|火柴铁丝组合|组合引燃火柴")
                     .And.Contain("观察|集气瓶二|"));
 
             var lampIgnition = result.Domain.ConfiguredActions.Single(value =>
@@ -180,7 +199,7 @@ namespace VirtualLab.Engine.Tests.Courses
             Assert.That(
                 result.Presentation.States.Select(value => value.StateId),
                 Does.Contain("状态.大试管被学生持有")
-                    .And.Contain("状态.导气管已连接集气瓶一"));
+                    .And.Contain("状态.折角导气管已连接集气瓶一"));
             Assert.That(
                 result.Presentation.Rules.Select(value =>
                     value.TriggerKind.ToString()),
@@ -265,8 +284,8 @@ namespace VirtualLab.Engine.Tests.Courses
             Assert.That(permanganate.SubjectId, Is.Empty);
             var initial = entries.Single(value =>
                 value.Category == "初始内容物"
-                && value.SubjectId == "高锰酸钾试剂瓶");
-            Assert.That(initial.DisplayName, Is.EqualTo("高锰酸钾试剂瓶中的高锰酸钾"));
+                && value.SubjectId == "高锰酸钾广口瓶");
+            Assert.That(initial.DisplayName, Is.EqualTo("高锰酸钾广口瓶中的高锰酸钾"));
             Assert.That(initial.Fields["数量"], Is.EqualTo("632 克"));
             Assert.That(
                 entries.Where(value => value.Category == "化学反应")
@@ -292,7 +311,7 @@ namespace VirtualLab.Engine.Tests.Courses
                     == CoursePresentationTriggerKind.ActionAccepted
                     && value.TriggerValue == "拿出"
                     && value.SourceEntityId == "药匙"
-                    && value.TargetEntityId == "高锰酸钾试剂瓶"),
+                    && value.TargetEntityId == "高锰酸钾广口瓶"),
                 Is.True);
             Assert.That(
                 result.Presentation.Effects
@@ -312,7 +331,7 @@ namespace VirtualLab.Engine.Tests.Courses
                 "大试管",
                 ("插槽.内容", PresentationSlotKind.Content));
             AssertPrefabSlots(
-                "导气管",
+                "折角导气管",
                 ("插槽.内容", PresentationSlotKind.Content));
             AssertPrefabSlots(
                 "水槽",
@@ -334,7 +353,7 @@ namespace VirtualLab.Engine.Tests.Courses
                 "木炭",
                 ("插槽.燃烧", PresentationSlotKind.Combustion));
             AssertPrefabSlots(
-                "细铁丝",
+                "火柴铁丝组合",
                 ("插槽.燃烧", PresentationSlotKind.Combustion));
         }
 

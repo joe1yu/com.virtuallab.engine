@@ -69,12 +69,12 @@ namespace VirtualLab.Engine.PlayModeTests
             Assert.That(
                 ui.OutputScrollRect.content,
                 Is.EqualTo(ui.OutputText.rectTransform));
-            Assert.That(ui.StepIds.Count, Is.EqualTo(146));
+            Assert.That(ui.StepIds.Count, Is.EqualTo(164));
             Assert.That(ui.StepIds.First(), Is.EqualTo("1.1"));
-            Assert.That(ui.StepIds.Last(), Is.EqualTo("8.12"));
+            Assert.That(ui.StepIds.Last(), Is.EqualTo("8.13"));
             Assert.That(
                 Object.FindObjectsOfType<Button>(true).Length,
-                Is.EqualTo(146));
+                Is.EqualTo(164));
             Assert.That(
                 Object.FindObjectsOfType<CourseEntityView>(true),
                 Is.Not.Empty,
@@ -100,15 +100,15 @@ namespace VirtualLab.Engine.PlayModeTests
 
             var gateway = Object.FindObjectOfType<CourseSemanticInputGateway>();
             Assert.That(gateway, Is.Not.Null);
-            var candidates = gateway.FindCandidates("大试管", "铁架台");
+            var candidates = gateway.FindCandidates("大试管", "铁架台试管夹");
 
             Assert.That(
                 candidates.Any(value =>
                     value.ActionId == CoreSemanticActionIds.Connect
-                    && value.SourceEntityId == "铁架台"
+                    && value.SourceEntityId == "铁架台试管夹"
                     && value.TargetEntityId == "大试管"),
                 Is.True,
-                "拖动大试管接触铁架台时，命令仍应保持课程定义的固定端/被固定端角色。");
+                "拖动大试管接触试管夹时，命令仍应保持课程定义的固定端/被固定端角色。");
         }
 
         [UnityTest]
@@ -283,35 +283,39 @@ namespace VirtualLab.Engine.PlayModeTests
             chemistry.PresentationSignalProduced += processSignals.Add;
             var reagentContent = ContentRenderer(
                 bootstrap,
-                "高锰酸钾试剂瓶");
+                "高锰酸钾广口瓶");
             var spoonContent = ContentRenderer(bootstrap, "药匙");
             var tubeContent = ContentRenderer(bootstrap, "大试管");
             Assert.That(reagentContent.enabled, Is.True);
             Assert.That(spoonContent.enabled, Is.False);
             Assert.That(tubeContent.enabled, Is.False);
 
-            Execute(bootstrap, "命令.拿起棉花",
-                CoreSemanticActionIds.Grab, "棉花", null);
-            Execute(bootstrap, "命令.放置棉花",
-                CoreSemanticActionIds.Place, "棉花", "大试管");
+            Execute(bootstrap, "命令.拿起镊子",
+                CoreSemanticActionIds.Grab, "镊子", null);
+            Execute(bootstrap, "命令.镊子夹住棉花团",
+                CoreSemanticActionIds.Connect, "镊子", "棉花团");
+            Execute(bootstrap, "命令.通过镊子拿起棉花团",
+                CoreSemanticActionIds.Grab, "棉花团", null);
+            Execute(bootstrap, "命令.放置棉花团",
+                CoreSemanticActionIds.Place, "棉花团", "大试管");
             Execute(bootstrap, "命令.拿起橡皮塞",
-                CoreSemanticActionIds.Grab, "单孔橡皮塞", null);
+                CoreSemanticActionIds.Grab, "橡胶塞玻璃导管", null);
             Execute(bootstrap, "命令.连接橡皮塞",
-                CoreSemanticActionIds.Connect, "单孔橡皮塞", "大试管");
+                CoreSemanticActionIds.Connect, "橡胶塞玻璃导管", "大试管");
             Execute(bootstrap, "命令.拿起试管",
                 CoreSemanticActionIds.Grab, "大试管", null);
             Execute(bootstrap, "命令.固定试管",
-                CoreSemanticActionIds.Connect, "铁架台", "大试管");
-            Execute(bootstrap, "命令.拿起导气管并组装气路",
-                CoreSemanticActionIds.Grab, "导气管", null);
-            Execute(bootstrap, "命令.导气管连接橡皮塞",
-                CoreSemanticActionIds.Connect, "导气管", "单孔橡皮塞");
-            Execute(bootstrap, "命令.放下已组装导气管",
-                CoreSemanticActionIds.Release, "导气管", null);
-            Execute(bootstrap, "命令.取下灯帽",
-                CoreSemanticActionIds.Grab, "灯帽", null);
-            Execute(bootstrap, "命令.放下灯帽",
-                CoreSemanticActionIds.Release, "灯帽", null);
+                CoreSemanticActionIds.Connect, "铁架台试管夹", "大试管");
+            Execute(bootstrap, "命令.拿起折角导气管并组装气路",
+                CoreSemanticActionIds.Grab, "折角导气管", null);
+            Execute(bootstrap, "命令.折角导气管连接橡皮塞",
+                CoreSemanticActionIds.Connect, "折角导气管", "橡胶塞玻璃导管");
+            Execute(bootstrap, "命令.放下已组装折角导气管",
+                CoreSemanticActionIds.Release, "折角导气管", null);
+            Execute(bootstrap, "命令.取下酒精灯帽",
+                CoreSemanticActionIds.Grab, "酒精灯帽", null);
+            Execute(bootstrap, "命令.放下酒精灯帽",
+                CoreSemanticActionIds.Release, "酒精灯帽", null);
             Execute(bootstrap, "命令.拿起火柴",
                 CoreSemanticActionIds.Grab, "火柴", null);
             Execute(bootstrap, "命令.划燃火柴",
@@ -324,12 +328,16 @@ namespace VirtualLab.Engine.PlayModeTests
                 igniteLamp.PresentationCommands.Select(value =>
                     value.EffectId),
                 Does.Contain("vfx.play"));
+            Execute(bootstrap, "命令.取下高锰酸钾广口瓶盖",
+                CoreSemanticActionIds.Grab, "高锰酸钾瓶盖", null);
+            Execute(bootstrap, "命令.放下高锰酸钾广口瓶盖",
+                CoreSemanticActionIds.Release, "高锰酸钾瓶盖", null);
             Execute(bootstrap, "命令.拿起药匙",
                 CoreSemanticActionIds.Grab, "药匙", null);
             Execute(bootstrap, "命令.药匙伸入试剂瓶",
-                CoreSemanticActionIds.Place, "药匙", "高锰酸钾试剂瓶");
+                CoreSemanticActionIds.Place, "药匙", "高锰酸钾广口瓶");
             Execute(bootstrap, "命令.药匙舀取高锰酸钾",
-                CoreSemanticActionIds.Take, "药匙", "高锰酸钾试剂瓶");
+                CoreSemanticActionIds.Take, "药匙", "高锰酸钾广口瓶");
             Assert.That(reagentContent.enabled, Is.False);
             Assert.That(spoonContent.enabled, Is.True);
             var pourPermanganate = Execute(
@@ -353,12 +361,12 @@ namespace VirtualLab.Engine.PlayModeTests
 
             FillBottle(bootstrap, chemistry, "集气瓶一");
             FillBottle(bootstrap, chemistry, "集气瓶二");
-            Execute(bootstrap, "命令.拿起导气管一",
-                CoreSemanticActionIds.Grab, "导气管", null);
+            Execute(bootstrap, "命令.拿起折角导气管一",
+                CoreSemanticActionIds.Grab, "折角导气管", null);
             var connectFirst = Execute(bootstrap, "命令.连接第一只集气瓶",
-                CoreSemanticActionIds.Connect, "导气管", "集气瓶一");
-            Execute(bootstrap, "命令.放下导气管一",
-                CoreSemanticActionIds.Release, "导气管", null);
+                CoreSemanticActionIds.Connect, "折角导气管", "集气瓶一");
+            Execute(bootstrap, "命令.放下折角导气管一",
+                CoreSemanticActionIds.Release, "折角导气管", null);
             Assert.That(
                 connectFirst.PresentationCommands.Select(value =>
                     value.EffectId),
@@ -366,37 +374,41 @@ namespace VirtualLab.Engine.PlayModeTests
             Assert.That(
                 bootstrap.Runtime.ExportState().Relations.Count(value =>
                     value.Kind == RelationKind.连接对象
-                    && (value.SourceEntityId == "导气管"
-                        || value.TargetEntityId == "导气管")),
+                    && (value.SourceEntityId == "折角导气管"
+                        || value.TargetEntityId == "折角导气管")),
                 Is.EqualTo(2),
-                "导气管两端应分别连接橡皮塞和集气瓶，形成完整气路。");
+                "折角导气管两端应分别连接橡皮塞和集气瓶，形成完整气路。");
             var collectFirst = Execute(bootstrap, "命令.收集第一瓶氧气",
                 ChemistrySemanticActionIds.CollectGas,
-                "导气管",
+                "折角导气管",
                 "集气瓶一");
             Assert.That(
                 collectFirst.PresentationCommands.Select(value =>
                     value.EffectId),
                 Does.Contain("liquid.set-level"));
-            Execute(bootstrap, "命令.再次拿起导气管",
-                CoreSemanticActionIds.Grab, "导气管", null);
+            Execute(bootstrap, "命令.再次拿起折角导气管",
+                CoreSemanticActionIds.Grab, "折角导气管", null);
             Execute(bootstrap, "命令.断开第一只集气瓶",
-                CoreSemanticActionIds.Disconnect, "导气管", "集气瓶一");
+                CoreSemanticActionIds.Disconnect, "折角导气管", "集气瓶一");
             Execute(bootstrap, "命令.连接第二只集气瓶",
-                CoreSemanticActionIds.Connect, "导气管", "集气瓶二");
-            Execute(bootstrap, "命令.放下导气管二",
-                CoreSemanticActionIds.Release, "导气管", null);
+                CoreSemanticActionIds.Connect, "折角导气管", "集气瓶二");
+            Execute(bootstrap, "命令.放下折角导气管二",
+                CoreSemanticActionIds.Release, "折角导气管", null);
             Execute(bootstrap, "命令.收集第二瓶氧气",
                 ChemistrySemanticActionIds.CollectGas,
-                "导气管",
+                "折角导气管",
                 "集气瓶二");
-            Execute(bootstrap, "命令.第三次拿起导气管",
-                CoreSemanticActionIds.Grab, "导气管", null);
-            Execute(bootstrap, "命令.将导气管移出水面",
-                CoreSemanticActionIds.Disconnect, "导气管", "集气瓶二");
+            Execute(bootstrap, "命令.第三次拿起折角导气管",
+                CoreSemanticActionIds.Grab, "折角导气管", null);
+            Execute(bootstrap, "命令.将折角导气管移出水面",
+                CoreSemanticActionIds.Disconnect, "折角导气管", "集气瓶二");
             Execute(bootstrap, "命令.停止加热",
                 ChemistrySemanticActionIds.EndHeating, "大试管", "酒精灯");
 
+            Execute(bootstrap, "命令.打开木炭瓶",
+                CoreSemanticActionIds.Grab, "木炭瓶盖", null);
+            Execute(bootstrap, "命令.放下木炭瓶盖",
+                CoreSemanticActionIds.Release, "木炭瓶盖", null);
             Execute(bootstrap, "命令.拿起坩埚钳",
                 CoreSemanticActionIds.Grab, "坩埚钳", null);
             Execute(bootstrap, "命令.夹住木炭",
@@ -405,7 +417,7 @@ namespace VirtualLab.Engine.PlayModeTests
                 ChemistrySemanticActionIds.BeginHeating, "木炭", "酒精灯");
             chemistry.Advance(200d);
             Execute(bootstrap, "命令.拿起石灰水",
-                CoreSemanticActionIds.Grab, "澄清石灰水", null);
+                CoreSemanticActionIds.Grab, "澄清石灰水窄口瓶", null);
             Execute(
                 bootstrap,
                 "命令.点燃木炭",
@@ -420,7 +432,7 @@ namespace VirtualLab.Engine.PlayModeTests
                 bootstrap,
                 "命令.加入石灰水",
                 ChemistrySemanticActionIds.BeginPour,
-                "澄清石灰水",
+                "澄清石灰水窄口瓶",
                 "集气瓶一",
                 ("请求流量毫升每秒", StructuredValue.FromNumber(10d)));
             chemistry.Advance(1d);
@@ -444,24 +456,24 @@ namespace VirtualLab.Engine.PlayModeTests
             Execute(bootstrap, "命令.再次划燃火柴",
                 ChemistrySemanticActionIds.Ignite, "火柴", "火柴盒");
             Execute(bootstrap, "命令.点燃铁丝底端火柴",
-                ChemistrySemanticActionIds.Ignite, "铁丝引燃火柴", "火柴");
+                ChemistrySemanticActionIds.Ignite, "组合引燃火柴", "火柴");
             Execute(bootstrap, "命令.再次放下火柴",
                 CoreSemanticActionIds.Release, "火柴", null);
             Execute(bootstrap, "命令.预热铁丝",
-                ChemistrySemanticActionIds.BeginHeating, "细铁丝", "铁丝引燃火柴");
+                ChemistrySemanticActionIds.BeginHeating, "火柴铁丝组合", "组合引燃火柴");
             chemistry.Advance(200d);
             Execute(
                 bootstrap,
                 "命令.点燃铁丝",
                 ChemistrySemanticActionIds.Ignite,
-                "细铁丝",
-                "铁丝引燃火柴",
+                "火柴铁丝组合",
+                "组合引燃火柴",
                 ("空间距离米", StructuredValue.FromNumber(0.1d)));
             chemistry.Advance(1d);
             Execute(bootstrap, "命令.拿起铁丝",
-                CoreSemanticActionIds.Grab, "细铁丝", null);
+                CoreSemanticActionIds.Grab, "火柴铁丝组合", null);
             Execute(bootstrap, "命令.放入铁丝",
-                CoreSemanticActionIds.Place, "细铁丝", "集气瓶二");
+                CoreSemanticActionIds.Place, "火柴铁丝组合", "集气瓶二");
             Execute(bootstrap, "命令.观察铁丝燃烧",
                 CoreSemanticActionIds.Observe, "集气瓶二", null);
 
@@ -534,7 +546,7 @@ namespace VirtualLab.Engine.PlayModeTests
             Assert.That(ui, Is.Not.Null);
 
             var buttons = Object.FindObjectsOfType<Button>(true);
-            Assert.That(buttons.Length, Is.EqualTo(146));
+            Assert.That(buttons.Length, Is.EqualTo(164));
             Assert.That(buttons.All(value => value.interactable), Is.True);
             Assert.That(ui.RecommendedStepId, Is.EqualTo("1.1"));
 
@@ -551,7 +563,7 @@ namespace VirtualLab.Engine.PlayModeTests
                     .And.Contain("当前条件不允许执行该操作")
                     .And.Contain("操作未完成"));
 
-            // 拿起导气管不依赖前序装配，可以在建议步骤 1.1 之前合法执行。
+            // 拿起折角导气管不依赖前序装配，可以在建议步骤 1.1 之前合法执行。
             Assert.That(ui.ClickStep("1.4"), Is.True, ui.OutputText.text);
             Assert.That(ui.CompletedStepCount, Is.EqualTo(1));
             Assert.That(ui.RecommendedStepId, Is.EqualTo("1.1"));
@@ -572,7 +584,7 @@ namespace VirtualLab.Engine.PlayModeTests
             var buttons = Object.FindObjectsOfType<Button>(true)
                 .OrderBy(value => value.name, System.StringComparer.Ordinal)
                 .ToArray();
-            Assert.That(buttons.Length, Is.EqualTo(146));
+            Assert.That(buttons.Length, Is.EqualTo(164));
             Assert.That(buttons.All(value => value.interactable), Is.True);
             for (var index = 0; index < buttons.Length; index++)
             {
@@ -583,7 +595,7 @@ namespace VirtualLab.Engine.PlayModeTests
                     ui.OutputText.text);
             }
 
-            Assert.That(ui.CompletedStepCount, Is.EqualTo(146));
+            Assert.That(ui.CompletedStepCount, Is.EqualTo(164));
             Assert.That(ui.RecommendedStepId, Is.Null);
             Canvas.ForceUpdateCanvases();
             Assert.That(
@@ -600,7 +612,7 @@ namespace VirtualLab.Engine.PlayModeTests
                 Does.Contain("[命令✓]")
                     .And.Contain("[过程事件]")
                     .And.Contain("[课程状态]")
-                    .And.Contain("观察细铁丝在氧气中的燃烧现象")
+                    .And.Contain("观察火柴铁丝组合在氧气中的燃烧现象")
                     .And.Not.Contain("操作未完成")
                     .And.Not.Contain("[脚本✓]"));
         }
@@ -618,9 +630,15 @@ namespace VirtualLab.Engine.PlayModeTests
                 null);
             Execute(
                 bootstrap,
+                "命令.拿起加水烧杯." + bottleId,
+                CoreSemanticActionIds.Grab,
+                "加水烧杯",
+                null);
+            Execute(
+                bootstrap,
                 "命令.装水." + bottleId,
                 ChemistrySemanticActionIds.BeginPour,
-                "水源",
+                "加水烧杯",
                 bottleId,
                 ("请求流量毫升每秒", StructuredValue.FromNumber(100d)));
             chemistry.Advance(1d);
@@ -628,8 +646,14 @@ namespace VirtualLab.Engine.PlayModeTests
                 bootstrap,
                 "命令.停止装水." + bottleId,
                 ChemistrySemanticActionIds.EndPour,
-                "水源",
+                "加水烧杯",
                 bottleId);
+            Execute(
+                bootstrap,
+                "命令.放下加水烧杯." + bottleId,
+                CoreSemanticActionIds.Release,
+                "加水烧杯",
+                null);
             Execute(
                 bootstrap,
                 "命令.放下." + bottleId,

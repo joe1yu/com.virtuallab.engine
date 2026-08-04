@@ -124,6 +124,23 @@ namespace VirtualLab.OxygenCourse.Authoring
             Debug.Log("缺失的氧气实验总预制体已创建；已有美术资源未被覆盖。");
         }
 
+        /// <summary>
+        /// 重建随 Sample 提供的占位总预制体。该入口只供维护示例资源使用，
+        /// 正常课程编译不会覆盖项目已经制作完成的美术预制体。
+        /// </summary>
+        [MenuItem("Virtual Lab/课程/资源/重建氧气实验示例总预制体")]
+        public static void RebuildExampleExperimentPrefab()
+        {
+            EnsureFolder(Path.GetDirectoryName(ExperimentPrefabPath)
+                ?.Replace('\\', '/'));
+            var compilation = CompileCourse();
+            CreateExperimentPrefab(compilation.Domain, true);
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
+            ValidateExperimentPrefab(compilation.Domain);
+            Debug.Log("氧气实验示例总预制体已按当前器材清单重建。");
+        }
+
         [MenuItem("Virtual Lab/课程/场景/生成氧气实验生产场景")]
         public static void BuildProductionScene()
         {
@@ -552,7 +569,7 @@ namespace VirtualLab.OxygenCourse.Authoring
             }
 
             if (entityId.Contains("木炭")
-                || entityId.Contains("棉花"))
+                || entityId.Contains("棉花团"))
             {
                 return PrimitiveType.Sphere;
             }
@@ -562,10 +579,32 @@ namespace VirtualLab.OxygenCourse.Authoring
 
         private static Vector3 ScaleFor(string entityId)
         {
-            if (entityId.Contains("导气管")
+            if (string.Equals(entityId, "铁架台", StringComparison.Ordinal))
+            {
+                return new Vector3(0.18f, 2f, 0.18f);
+            }
+
+            if (entityId.Contains("试管夹"))
+            {
+                return new Vector3(0.9f, 0.12f, 0.12f);
+            }
+
+            if (string.Equals(entityId, "试管架", StringComparison.Ordinal))
+            {
+                return new Vector3(1.4f, 0.35f, 0.8f);
+            }
+
+            if (entityId.Contains("折角导气管")
                 || entityId.Contains("铁丝"))
             {
                 return new Vector3(0.08f, 1.2f, 0.08f);
+            }
+
+            if (entityId.Contains("镊子")
+                || entityId.Contains("坩埚钳")
+                || entityId.Contains("药匙"))
+            {
+                return new Vector3(0.12f, 1f, 0.12f);
             }
 
             if (entityId.Contains("玻璃片"))
@@ -576,6 +615,17 @@ namespace VirtualLab.OxygenCourse.Authoring
             if (entityId.Contains("水槽"))
             {
                 return new Vector3(2f, 0.5f, 1.2f);
+            }
+
+            if (entityId.Contains("瓶盖")
+                || entityId.Contains("酒精灯帽"))
+            {
+                return new Vector3(0.45f, 0.12f, 0.45f);
+            }
+
+            if (entityId.Contains("废液缸"))
+            {
+                return new Vector3(0.8f, 0.8f, 0.8f);
             }
 
             return new Vector3(0.4f, 0.8f, 0.4f);
