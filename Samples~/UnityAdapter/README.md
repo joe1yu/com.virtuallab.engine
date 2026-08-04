@@ -14,6 +14,3 @@
 运行时程序集为 `VirtualLab.UnityAdapters`，课程创作程序集为
 `VirtualLab.Unity.Authoring`。资源只通过路径加载接口解析，具体资源类型由表现使用方声明，
 后续可在不修改课程模型的情况下接入 Addressables。
-
-需要直接接入 ArkFramework 与 Addressables 时，可继续导入“ArkFramework 资源加载”
-Sample；Unity 适配器本身不因此增加 ArkFramework 依赖。
