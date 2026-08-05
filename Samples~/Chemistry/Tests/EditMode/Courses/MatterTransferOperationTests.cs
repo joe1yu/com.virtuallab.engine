@@ -326,7 +326,7 @@ namespace VirtualLab.Chemistry.Tests.Courses
                 {
                     Rule(10, ChemistryStructuredFactFields.倾倒角度, StructuredRuleOperator.大于等于, StructuredValue.FromNumber(45d), "倾角不足"),
                     Rule(20, ChemistryStructuredFactFields.倾倒口已对准, StructuredRuleOperator.等于, StructuredValue.FromBoolean(true), "出口未对准"),
-                    Rule(30, StructuredFactField.来源对象持有者, StructuredRuleOperator.等于, StructuredValue.FromText("学生"), "容器未被当前主体持有"),
+                    Rule(30, InteractionStructuredFactFields.来源对象持有者, StructuredRuleOperator.等于, StructuredValue.FromText("学生"), "容器未被当前主体持有"),
                     Rule(40, ChemistryStructuredFactFields.来源内容单位, StructuredRuleOperator.等于, StructuredValue.FromText("Millilitre"), "来源物质单位不是毫升")
                 },
                 new[]

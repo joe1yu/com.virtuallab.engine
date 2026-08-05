@@ -302,7 +302,7 @@ namespace VirtualLab.Engine.Tests.Courses
                     new StructuredRuleDefinition(
                         "规则.拒绝危险操作",
                         10,
-                        StructuredFactField.来源对象存在,
+                        CoreStructuredFactFields.来源对象存在,
                         StructuredRuleOperator.等于,
                         StructuredValue.FromBoolean(false),
                         "拒绝.危险")
@@ -328,7 +328,7 @@ namespace VirtualLab.Engine.Tests.Courses
                             new StructuredRuleDefinition(
                                 "规则.课程进度完成",
                                 10,
-                                StructuredFactField.来源对象进度,
+                                TeachingStructuredFactFields.来源对象进度,
                                 StructuredRuleOperator.大于等于,
                                 StructuredValue.FromNumber(1d),
                                 "课程尚未完成")

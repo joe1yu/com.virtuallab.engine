@@ -297,12 +297,12 @@ namespace VirtualLab.Engine.Tests.Courses
 
             Assert.That(
                 readers.Single(value =>
-                        value.Field == StructuredFactField.目标对象已被操作者拿起)
+                        value.Field == InteractionStructuredFactFields.目标对象已被操作者拿起)
                     .Read(context).Boolean,
                 Is.True);
             Assert.That(
                 readers.Single(value =>
-                        value.Field == StructuredFactField.目标对象进度)
+                        value.Field == TeachingStructuredFactFields.目标对象进度)
                     .Read(context).Number,
                 Is.EqualTo(2d));
         }
@@ -360,9 +360,9 @@ namespace VirtualLab.Engine.Tests.Courses
                 CoreSemanticActionIds.Grab,
                 new[]
                 {
-                    Rule(10, StructuredFactField.来源对象存在, StructuredRuleOperator.等于, StructuredValue.FromBoolean(true), "来源实体不存在"),
-                    Rule(20, StructuredFactField.来源对象能力, StructuredRuleOperator.包含, StructuredValue.FromText("可抓取"), "器材不可抓取"),
-                    Rule(30, StructuredFactField.来源对象持有者, StructuredRuleOperator.为空, StructuredValue.Null(), "器材已被持有")
+                    Rule(10, CoreStructuredFactFields.来源对象存在, StructuredRuleOperator.等于, StructuredValue.FromBoolean(true), "来源实体不存在"),
+                    Rule(20, CoreStructuredFactFields.来源对象能力, StructuredRuleOperator.包含, StructuredValue.FromText("可抓取"), "器材不可抓取"),
+                    Rule(30, InteractionStructuredFactFields.来源对象持有者, StructuredRuleOperator.为空, StructuredValue.Null(), "器材已被持有")
                 },
                 Mutation(
                     "建立持有关系",
@@ -377,7 +377,7 @@ namespace VirtualLab.Engine.Tests.Courses
                 CoreSemanticActionIds.Release,
                 new[]
                 {
-                    Rule(10, StructuredFactField.来源对象已被操作者拿起, StructuredRuleOperator.等于, StructuredValue.FromBoolean(true), "器材不是当前主体持有")
+                    Rule(10, InteractionStructuredFactFields.来源对象已被操作者拿起, StructuredRuleOperator.等于, StructuredValue.FromBoolean(true), "器材不是当前主体持有")
                 },
                 Mutation(
                     "移除持有关系",
@@ -392,10 +392,10 @@ namespace VirtualLab.Engine.Tests.Courses
                 CoreSemanticActionIds.Connect,
                 new[]
                 {
-                    Rule(10, StructuredFactField.来源连接点占用状态, StructuredRuleOperator.为空, StructuredValue.Null(), "来源端口已占用"),
-                    Rule(20, StructuredFactField.目标连接点占用状态, StructuredRuleOperator.为空, StructuredValue.Null(), "目标端口已占用"),
-                    Rule(30, StructuredFactField.连接标签相匹配, StructuredRuleOperator.等于, StructuredValue.FromBoolean(true), "端口不兼容"),
-                    Rule(40, StructuredFactField.对象间距离, StructuredRuleOperator.小于等于, StructuredValue.FromNumber(0.1d), "连接距离过远")
+                    Rule(10, InteractionStructuredFactFields.来源连接点占用状态, StructuredRuleOperator.为空, StructuredValue.Null(), "来源端口已占用"),
+                    Rule(20, InteractionStructuredFactFields.目标连接点占用状态, StructuredRuleOperator.为空, StructuredValue.Null(), "目标端口已占用"),
+                    Rule(30, InteractionStructuredFactFields.连接标签相匹配, StructuredRuleOperator.等于, StructuredValue.FromBoolean(true), "端口不兼容"),
+                    Rule(40, SpatialStructuredFactFields.对象间距离, StructuredRuleOperator.小于等于, StructuredValue.FromNumber(0.1d), "连接距离过远")
                 },
                 Mutation("建立端口连接", ConfiguredStateOperationIds.RelationSet, ("关系类型", StructuredValue.FromText("连接对象"))));
         }
@@ -414,7 +414,7 @@ namespace VirtualLab.Engine.Tests.Courses
                 CoreSemanticActionIds.Place,
                 new[]
                 {
-                    Rule(10, StructuredFactField.对象正在接触, StructuredRuleOperator.等于, StructuredValue.FromBoolean(true), "未接触放置位置")
+                    Rule(10, SpatialStructuredFactFields.对象正在接触, StructuredRuleOperator.等于, StructuredValue.FromBoolean(true), "未接触放置位置")
                 },
                 Mutation("建立放置关系", ConfiguredStateOperationIds.RelationSet, ("关系类型", StructuredValue.FromText("位于容器内"))));
         }
@@ -425,7 +425,7 @@ namespace VirtualLab.Engine.Tests.Courses
                 CoreSemanticActionIds.Cover,
                 new[]
                 {
-                    Rule(10, StructuredFactField.对象正在接触, StructuredRuleOperator.等于, StructuredValue.FromBoolean(true), "未接触覆盖位置")
+                    Rule(10, SpatialStructuredFactFields.对象正在接触, StructuredRuleOperator.等于, StructuredValue.FromBoolean(true), "未接触覆盖位置")
                 },
                 Mutation("建立覆盖关系", ConfiguredStateOperationIds.RelationSet, ("关系类型", StructuredValue.FromText("覆盖对象"))));
         }

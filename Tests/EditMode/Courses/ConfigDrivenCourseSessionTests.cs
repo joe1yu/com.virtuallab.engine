@@ -71,7 +71,7 @@ namespace VirtualLab.Engine.Tests.Courses
             var rule = new StructuredRuleDefinition(
                 "规则.允许抓取",
                 10,
-                StructuredFactField.来源对象存在,
+                CoreStructuredFactFields.来源对象存在,
                 StructuredRuleOperator.等于,
                 StructuredValue.FromBoolean(true),
                 "器材正在受热");
@@ -80,7 +80,7 @@ namespace VirtualLab.Engine.Tests.Courses
                 new StructuredRuleEvaluator(new IStructuredFactReader[]
                 {
                     new FixedFactReader(
-                        StructuredFactField.来源对象存在,
+                        CoreStructuredFactFields.来源对象存在,
                         StructuredValue.FromBoolean(false))
                 }),
                 new ConfiguredStateOperationRegistry(),
@@ -134,7 +134,7 @@ namespace VirtualLab.Engine.Tests.Courses
                 new IStructuredFactReader[]
                 {
                     new FixedFactReader(
-                        StructuredFactField.来源对象存在,
+                        CoreStructuredFactFields.来源对象存在,
                         StructuredValue.FromBoolean(false))
                 });
             var firstRule = RejectedRule(20, "条件.乙");
@@ -579,7 +579,7 @@ namespace VirtualLab.Engine.Tests.Courses
             return new StructuredRuleDefinition(
                 "规则." + order + "." + rejectionCode,
                 order,
-                StructuredFactField.来源对象存在,
+                CoreStructuredFactFields.来源对象存在,
                 StructuredRuleOperator.等于,
                 StructuredValue.FromBoolean(true),
                 rejectionCode);

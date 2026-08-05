@@ -115,6 +115,34 @@ namespace VirtualLab.Engine.Tests.Courses
         }
 
         [Test]
+        public void 通用事实字段值对象不再持有具体模块协议()
+        {
+            const System.Reflection.BindingFlags publicStatic =
+                System.Reflection.BindingFlags.Public
+                | System.Reflection.BindingFlags.Static;
+            Assert.That(
+                typeof(StructuredFactField).GetFields(publicStatic),
+                Is.Empty);
+            Assert.That(
+                typeof(StructuredFactField).GetProperties(publicStatic),
+                Is.Empty);
+
+            var fields = new[]
+                {
+                    CoreStructuredFactFields.All,
+                    InteractionStructuredFactFields.All,
+                    SpatialStructuredFactFields.All,
+                    TeachingStructuredFactFields.All
+                }
+                .SelectMany(value => value)
+                .ToArray();
+            Assert.That(
+                fields.Select(value => value.Id).Distinct().Count(),
+                Is.EqualTo(fields.Length),
+                "不同模块不能拥有相同的事实字段标识。");
+        }
+
+        [Test]
         public void 课程所需模块必须全部安装()
         {
             var scope = CourseRuntimeModuleScope.Create(

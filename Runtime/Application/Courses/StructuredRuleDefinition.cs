@@ -20,32 +20,6 @@ namespace VirtualLab.Application.Courses
 
         public string Id { get; }
 
-        public static StructuredFactField 操作者存在 => New("操作者存在");
-        public static StructuredFactField 来源对象存在 => New("来源对象存在");
-        public static StructuredFactField 目标对象存在 => New("目标对象存在");
-        public static StructuredFactField 操作者能力 => New("操作者能力");
-        public static StructuredFactField 来源对象能力 => New("来源对象能力");
-        public static StructuredFactField 目标对象能力 => New("目标对象能力");
-        public static StructuredFactField 来源对象持有者 => New("来源对象持有者");
-        public static StructuredFactField 来源对象已被操作者拿起 =>
-            New("来源对象已被操作者拿起");
-        public static StructuredFactField 目标对象已被操作者拿起 =>
-            New("目标对象已被操作者拿起");
-        public static StructuredFactField 来源对象进度 => New("来源对象进度");
-        public static StructuredFactField 目标对象进度 => New("目标对象进度");
-        public static StructuredFactField 来源连接点占用状态 =>
-            New("来源连接点占用状态");
-        public static StructuredFactField 目标连接点占用状态 =>
-            New("目标连接点占用状态");
-        public static StructuredFactField 来源连接标签 =>
-            New("来源连接标签");
-        public static StructuredFactField 目标连接标签 =>
-            New("目标连接标签");
-        public static StructuredFactField 连接标签相匹配 =>
-            New("连接标签相匹配");
-        public static StructuredFactField 对象正在接触 => New("对象正在接触");
-        public static StructuredFactField 对象间距离 => New("对象间距离");
-
         public bool Equals(StructuredFactField other) =>
             string.Equals(Id, other.Id, StringComparison.Ordinal);
 
@@ -64,9 +38,6 @@ namespace VirtualLab.Application.Courses
         public static bool operator !=(
             StructuredFactField left,
             StructuredFactField right) => !left.Equals(right);
-
-        private static StructuredFactField New(string id) =>
-            new StructuredFactField(id);
     }
 
     public enum StructuredRuleOperator

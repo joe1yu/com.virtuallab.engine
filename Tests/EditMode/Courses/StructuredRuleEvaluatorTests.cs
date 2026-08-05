@@ -9,7 +9,7 @@ namespace VirtualLab.Engine.Tests.Courses
     public sealed class StructuredRuleEvaluatorTests
     {
         private static readonly StructuredFactField ProgressField =
-            StructuredFactField.来源对象进度;
+            TeachingStructuredFactFields.来源对象进度;
 
         [Test]
         public void 规则收集全部失败原因并选择首个主要原因()
@@ -18,10 +18,10 @@ namespace VirtualLab.Engine.Tests.Courses
                 new IStructuredFactReader[]
                 {
                     new StubFactReader(
-                        StructuredFactField.来源对象能力,
+                        CoreStructuredFactFields.来源对象能力,
                         StructuredValue.FromTextList(new[] { "可倾倒" })),
                     new StubFactReader(
-                        StructuredFactField.来源对象持有者,
+                        InteractionStructuredFactFields.来源对象持有者,
                         StructuredValue.FromText("学生"))
                 });
             var decision = evaluator.Evaluate(
@@ -29,13 +29,13 @@ namespace VirtualLab.Engine.Tests.Courses
                 {
                     Requirement(
                         20,
-                        StructuredFactField.来源对象持有者,
+                        InteractionStructuredFactFields.来源对象持有者,
                         StructuredRuleOperator.为空,
                         StructuredValue.Null(),
                         "实体已被持有"),
                     Requirement(
                         10,
-                        StructuredFactField.来源对象能力,
+                        CoreStructuredFactFields.来源对象能力,
                         StructuredRuleOperator.包含,
                         StructuredValue.FromText("可抓取"),
                         "实体不可抓取")
@@ -61,7 +61,7 @@ namespace VirtualLab.Engine.Tests.Courses
                         ProgressField,
                         StructuredValue.FromNumber(25d)),
                     new StubFactReader(
-                        StructuredFactField.对象间距离,
+                        SpatialStructuredFactFields.对象间距离,
                         StructuredValue.FromNumber(0.05d))
                 });
 
@@ -76,7 +76,7 @@ namespace VirtualLab.Engine.Tests.Courses
                         "温度过高"),
                     Requirement(
                         20,
-                        StructuredFactField.对象间距离,
+                        SpatialStructuredFactFields.对象间距离,
                         StructuredRuleOperator.小于,
                         StructuredValue.FromNumber(0.1d),
                         "距离过远")

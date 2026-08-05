@@ -383,7 +383,7 @@ namespace VirtualLab.Engine.Tests.Courses
                 {
                     Rule(
                         10,
-                        StructuredFactField.来源对象已被操作者拿起,
+                        InteractionStructuredFactFields.来源对象已被操作者拿起,
                         StructuredRuleOperator.等于,
                         StructuredValue.FromBoolean(true),
                         "尚未由当前主体持有")

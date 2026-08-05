@@ -172,9 +172,9 @@ namespace VirtualLab.Engine.Tests.Courses
                 && value.TargetEntityId == "火柴");
             Assert.That(
                 lampIgnition.Rules.Select(value => value.Field.Id),
-                Does.Contain(StructuredFactField.来源对象进度.Id)
-                    .And.Contain(StructuredFactField.目标对象进度.Id)
-                    .And.Contain(StructuredFactField.目标对象已被操作者拿起.Id));
+                Does.Contain(TeachingStructuredFactFields.来源对象进度.Id)
+                    .And.Contain(TeachingStructuredFactFields.目标对象进度.Id)
+                    .And.Contain(InteractionStructuredFactFields.目标对象已被操作者拿起.Id));
         }
 
         [Test]

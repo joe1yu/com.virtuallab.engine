@@ -115,53 +115,53 @@ namespace VirtualLab.Application.Courses
             return new IStructuredFactReader[]
             {
                 new EntityExistsFactReader(
-                    StructuredFactField.操作者存在,
+                    CoreStructuredFactFields.操作者存在,
                     context => context.Request.ActorEntityId),
                 new EntityExistsFactReader(
-                    StructuredFactField.来源对象存在,
+                    CoreStructuredFactFields.来源对象存在,
                     context => context.Request.SourceEntityId),
                 new EntityExistsFactReader(
-                    StructuredFactField.目标对象存在,
+                    CoreStructuredFactFields.目标对象存在,
                     context => context.Request.TargetEntityId),
                 new CapabilityFactReader(
-                    StructuredFactField.操作者能力,
+                    CoreStructuredFactFields.操作者能力,
                     context => context.Request.ActorEntityId),
                 new CapabilityFactReader(
-                    StructuredFactField.来源对象能力,
+                    CoreStructuredFactFields.来源对象能力,
                     context => context.Request.SourceEntityId),
                 new CapabilityFactReader(
-                    StructuredFactField.目标对象能力,
+                    CoreStructuredFactFields.目标对象能力,
                     context => context.Request.TargetEntityId),
                 new 来源对象持有者FactReader(),
                 new 来源对象已被操作者拿起FactReader(),
                 new HeldByActorFactReader(
-                    StructuredFactField.目标对象已被操作者拿起,
+                    InteractionStructuredFactFields.目标对象已被操作者拿起,
                     context => context.Request.TargetEntityId),
                 new ProgressFactReader(
-                    StructuredFactField.来源对象进度,
+                    TeachingStructuredFactFields.来源对象进度,
                     context => context.Request.SourceEntityId),
                 new ProgressFactReader(
-                    StructuredFactField.目标对象进度,
+                    TeachingStructuredFactFields.目标对象进度,
                     context => context.Request.TargetEntityId),
                 new PortOccupancyFactReader(
-                    StructuredFactField.来源连接点占用状态,
+                    InteractionStructuredFactFields.来源连接点占用状态,
                     true),
                 new PortOccupancyFactReader(
-                    StructuredFactField.目标连接点占用状态,
+                    InteractionStructuredFactFields.目标连接点占用状态,
                     false),
                 new PortCompatibilityGroupFactReader(
-                    StructuredFactField.来源连接标签,
+                    InteractionStructuredFactFields.来源连接标签,
                     true),
                 new PortCompatibilityGroupFactReader(
-                    StructuredFactField.目标连接标签,
+                    InteractionStructuredFactFields.目标连接标签,
                     false),
                 new 连接标签相匹配FactReader(),
                 new RequestParameterFactReader(
-                    StructuredFactField.对象正在接触,
+                    SpatialStructuredFactFields.对象正在接触,
                     对象正在接触Parameter,
                     StructuredValue.FromBoolean(false)),
                 new RequestParameterFactReader(
-                    StructuredFactField.对象间距离,
+                    SpatialStructuredFactFields.对象间距离,
                     对象间距离Parameter,
                     StructuredValue.FromNumber(double.MaxValue))
             };
@@ -262,7 +262,7 @@ namespace VirtualLab.Application.Courses
             IStructuredFactReader
         {
             public StructuredFactField Field =>
-                StructuredFactField.来源对象持有者;
+                InteractionStructuredFactFields.来源对象持有者;
 
             public StructuredValue Read(StructuredRuleContext context)
             {
@@ -280,7 +280,7 @@ namespace VirtualLab.Application.Courses
             IStructuredFactReader
         {
             public StructuredFactField Field =>
-                StructuredFactField.来源对象已被操作者拿起;
+                InteractionStructuredFactFields.来源对象已被操作者拿起;
 
             public StructuredValue Read(StructuredRuleContext context)
             {
@@ -442,7 +442,7 @@ namespace VirtualLab.Application.Courses
             IStructuredFactReader
         {
             public StructuredFactField Field =>
-                StructuredFactField.连接标签相匹配;
+                InteractionStructuredFactFields.连接标签相匹配;
 
             public StructuredValue Read(StructuredRuleContext context)
             {

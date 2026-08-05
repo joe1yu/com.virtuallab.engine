@@ -310,7 +310,7 @@ namespace VirtualLab.Engine.Tests.Courses
                     new StructuredRuleDefinition(
                         "条件.外部进展",
                         0,
-                        StructuredFactField.来源对象进度,
+                        TeachingStructuredFactFields.来源对象进度,
                         StructuredRuleOperator.大于等于,
                         StructuredValue.FromNumber(1),
                         "过程尚未推进")
@@ -407,7 +407,7 @@ namespace VirtualLab.Engine.Tests.Courses
                     new StructuredRuleDefinition(
                         "条件.已持有",
                         0,
-                        StructuredFactField.来源对象持有者,
+                        InteractionStructuredFactFields.来源对象持有者,
                         StructuredRuleOperator.等于,
                         StructuredValue.FromText("学生"),
                         "尚未持有")
@@ -594,7 +594,7 @@ namespace VirtualLab.Engine.Tests.Courses
         private sealed class 来源对象持有者FactReader : IStructuredFactReader
         {
             public StructuredFactField Field =>
-                StructuredFactField.来源对象持有者;
+                InteractionStructuredFactFields.来源对象持有者;
 
             public StructuredValue Read(StructuredRuleContext context)
             {
@@ -611,7 +611,7 @@ namespace VirtualLab.Engine.Tests.Courses
         private sealed class 来源对象进度FactReader : IStructuredFactReader
         {
             public StructuredFactField Field =>
-                StructuredFactField.来源对象进度;
+                TeachingStructuredFactFields.来源对象进度;
 
             public StructuredValue Read(StructuredRuleContext context)
             {
