@@ -192,17 +192,50 @@ namespace VirtualLab.Engine.Tests.Courses
         }
 
         [Test]
-        public void 氧气课程只保留七张聚焦职责的高层蓝图表()
+        public void 固定设施不可抓取且任意玻璃片可覆盖任意集气瓶()
+        {
+            var result = Compile();
+            Assert.That(result.IsSuccess, Is.True);
+            var fixedFacilities = new HashSet<string>(new[]
+            {
+                "铁架台", "试管架", "升降台", "水槽", "废液缸"
+            }, StringComparer.Ordinal);
+            Assert.That(result.Domain.ConfiguredActions.Any(value =>
+                value.ActionId == "抓取"
+                && fixedFacilities.Contains(value.SourceEntityId)), Is.False);
+
+            var glassSlides = new HashSet<string>(
+                new[] { "玻璃片一", "玻璃片二" }, StringComparer.Ordinal);
+            var gasBottles = new HashSet<string>(
+                new[] { "集气瓶一", "集气瓶二" }, StringComparer.Ordinal);
+            Assert.That(
+                result.Domain.ConfiguredActions
+                    .Where(value => value.ActionId == "覆盖"
+                                    && glassSlides.Contains(value.SourceEntityId)
+                                    && gasBottles.Contains(value.TargetEntityId))
+                    .Select(value => value.SourceEntityId + ">" + value.TargetEntityId),
+                Is.EquivalentTo(new[]
+                {
+                    "玻璃片一>集气瓶一", "玻璃片一>集气瓶二",
+                    "玻璃片二>集气瓶一", "玻璃片二>集气瓶二"
+                }));
+        }
+
+        [Test]
+        public void 氧气课程只保留十张面向课程作者的配置表()
         {
             var expected = new[]
             {
                 "课程.csv",
                 "实验对象.csv",
+                "组件.csv",
                 "初始关系.csv",
-                "交互规则.csv",
-                "学科过程.csv",
-                "表现覆盖.csv",
-                "实验流程.csv"
+                "操作特例.csv",
+                "过程.csv",
+                "教学.csv",
+                "教学条件.csv",
+                "表现.csv",
+                "验收场景.csv"
             };
             Assert.That(
                 Directory.GetFiles(CourseDirectory, "*.csv")
@@ -518,13 +551,7 @@ namespace VirtualLab.Engine.Tests.Courses
         }
 
         private static CourseBlueprintCompilationResult Compile() =>
-            new CourseBlueprintCompiler().Compile(
-                CourseBlueprintSource.FromDirectory(CourseDirectory),
-                new CoreRecipePackageProvider(),
-                new IRecipePackageProvider[]
-                {
-                    new ChemistryRecipePackageProvider()
-                });
+            OxygenCourseTestCompiler.Compile(CourseDirectory);
 
         private static void AssertPrefabSlots(
             string entityId,

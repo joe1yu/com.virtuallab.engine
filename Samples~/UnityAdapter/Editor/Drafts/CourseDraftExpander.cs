@@ -299,7 +299,7 @@ namespace VirtualLab.Unity.Authoring.Drafts
                 StringComparer.Ordinal);
             foreach (var item in draft.OperationOverrides)
             {
-                if (!catalog.TryGetOperation(item.OperationId, out _))
+                if (!catalog.TryGetOperation(item.OperationId, out var operation))
                 {
                     diagnostics.Add(Diagnostic(
                         "draft.operation.unknown",
@@ -361,7 +361,7 @@ namespace VirtualLab.Unity.Authoring.Drafts
                             subject?.Draft.EntityId ?? string.Empty
                         }.Where(value => value.Length > 0)),
                         item.Handling,
-                        item.OperationId,
+                        DefaultActionCommand(operation),
                         source.Draft.EntityId,
                         target?.Draft.EntityId ?? string.Empty,
                         item.Order,
@@ -376,6 +376,31 @@ namespace VirtualLab.Unity.Authoring.Drafts
                 }
             }
         }
+
+        /// <summary>
+        /// 课程特例约束一次操作的进入条件：持续和操纵操作约束开始阶段，
+        /// 即时操作约束唯一的完成阶段。作者无需填写阶段协议。
+        /// </summary>
+        private static string DefaultActionCommand(
+            AuthoringOperationDescriptor operation)
+        {
+            if (operation.Lifecycle == AuthoringOperationLifecycle.Instant)
+            {
+                return First(
+                    operation.CompletionActionId,
+                    operation.StartActionId,
+                    operation.ObservationActionId);
+            }
+
+            return First(
+                operation.StartActionId,
+                operation.ObservationActionId,
+                operation.CompletionActionId);
+        }
+
+        private static string First(params string[] values) =>
+            values.FirstOrDefault(value => !string.IsNullOrWhiteSpace(value))
+            ?? string.Empty;
 
         private static IEnumerable<CourseDisciplineProcessBlueprint>
             BuildProcesses(
@@ -433,9 +458,12 @@ namespace VirtualLab.Unity.Authoring.Drafts
                         Pair("停止交互", string.Empty));
                     var parameters = CourseBlueprint.ReadOnlyValues(
                         ParseParameters(item.Parameters, item.Source, diagnostics)
-                            .Select(pair => new KeyValuePair<string, BlueprintValue>(
-                                pair.Key,
-                                new BlueprintValue(pair.Key, pair.Value, item.Source))));
+                             .Select(pair => new KeyValuePair<string, BlueprintValue>(
+                                 "参数." + pair.Key,
+                                 new BlueprintValue(
+                                     "参数." + pair.Key,
+                                     pair.Value,
+                                     item.Source))));
                     yield return new CourseDisciplineProcessBlueprint(
                         values,
                         item.Source,
@@ -471,10 +499,12 @@ namespace VirtualLab.Unity.Authoring.Drafts
                     foreach (var subject in subjects)
                     {
                         var subjectId = subject?.Draft.EntityId ?? string.Empty;
+                        var recordSource = condition?.Source ?? item.Source;
                         yield return new CourseTeachingEvaluationBlueprint(
-                            Values(item.Source,
-                            Pair("评价ID", item.TeachingItemId
-                                + (subjectId.Length > 0 ? "." + subjectId : string.Empty)),
+                            Values(recordSource,
+                            // 同一教学项的多条条件必须汇聚到同一目标或风险，
+                            // 不能把条件主体拼进标识，否则“两个集气瓶均完成”会被拆成两个目标。
+                            Pair("评价ID", TeachingDefinitionId(item)),
                             Pair("类型", item.Type),
                             Pair("显示名称", item.DisplayName),
                             Pair("触发类型", item.TriggerType),
@@ -492,12 +522,25 @@ namespace VirtualLab.Unity.Authoring.Drafts
                             Pair("提示文案", item.Prompt),
                             Pair("后果严重度", item.ErrorSeverity),
                             Pair("发生后如何继续", item.Continuation),
-                            Pair("受影响目标", item.AffectedGoals)),
-                            item.Source);
+                            Pair("受影响目标", AffectedGoalIds(item.AffectedGoals))),
+                            recordSource);
                     }
                 }
             }
         }
+
+        private static string TeachingDefinitionId(CourseDraftTeachingItem item) =>
+            (item.Type == "目标" ? "目标." : item.Type == "风险" ? "风险." : string.Empty)
+            + item.TeachingItemId;
+
+        private static string AffectedGoalIds(string configured) =>
+            string.Join(
+                "|",
+                (configured ?? string.Empty)
+                    .Split(new[] { ';', '|' }, StringSplitOptions.RemoveEmptyEntries)
+                    .Select(value => value.Trim())
+                    .Where(value => value.Length > 0)
+                    .Select(value => value == "整个实验" ? value : "目标." + value));
 
         private static IEnumerable<CoursePresentationOverrideBlueprint>
             BuildPresentations(
@@ -515,8 +558,17 @@ namespace VirtualLab.Unity.Authoring.Drafts
 
                 foreach (var subject in subjects)
                 {
-                    yield return new CoursePresentationOverrideBlueprint(
-                        Values(item.Source,
+                    var parameters = ParseParameters(
+                            item.Parameters,
+                            item.Source,
+                            diagnostics)
+                        .DefaultIfEmpty(new KeyValuePair<string, string>(
+                            string.Empty,
+                            string.Empty));
+                    foreach (var parameter in parameters)
+                    {
+                        yield return new CoursePresentationOverrideBlueprint(
+                            Values(item.Source,
                             Pair("覆盖ID", item.PresentationId + "." + subject.Draft.EntityId),
                             Pair("触发类型", item.TriggerType),
                             Pair("触发值", item.TriggerValue),
@@ -526,12 +578,31 @@ namespace VirtualLab.Unity.Authoring.Drafts
                             Pair("表现原语", item.Signal),
                             Pair("作用位置", item.Location),
                             Pair("位置ID", item.LocationId),
-                            Pair("参数名", string.Empty),
-                            Pair("参数类型", string.Empty),
-                            Pair("参数值", item.Parameters)),
-                        item.Source);
+                            Pair("参数名", parameter.Key),
+                            Pair("参数类型", ParameterType(parameter.Value)),
+                            Pair("参数值", parameter.Value)),
+                            item.Source);
+                    }
                 }
             }
+        }
+
+        private static string ParameterType(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value)) return string.Empty;
+            if (string.Equals(value, "是", StringComparison.Ordinal)
+                || string.Equals(value, "否", StringComparison.Ordinal))
+            {
+                return "布尔";
+            }
+
+            return double.TryParse(
+                value,
+                NumberStyles.Float,
+                CultureInfo.InvariantCulture,
+                out _)
+                ? "数值"
+                : "文本";
         }
 
         private static IEnumerable<CourseAcceptanceRecordBlueprint>

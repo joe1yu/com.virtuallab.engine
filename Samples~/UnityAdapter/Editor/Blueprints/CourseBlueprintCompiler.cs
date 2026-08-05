@@ -134,15 +134,11 @@ namespace VirtualLab.Unity.Authoring.Blueprints
         };
 
         public CourseBlueprintCompilationResult Compile(
-            CourseBlueprintSource source,
+            CourseBlueprint blueprint,
             IRecipePackageProvider platform,
-            IReadOnlyList<IRecipePackageProvider> disciplines)
+            IReadOnlyList<IRecipePackageProvider> disciplines,
+            IEnumerable<CourseCompilationDiagnostic> inputDiagnostics = null)
         {
-            if (source == null)
-            {
-                throw new ArgumentNullException(nameof(source));
-            }
-
             if (platform == null)
             {
                 throw new ArgumentNullException(nameof(platform));
@@ -154,18 +150,27 @@ namespace VirtualLab.Unity.Authoring.Blueprints
             }
 
             var stages = new List<CourseBlueprintCompilationStage>();
-            var diagnostics = new List<CourseCompilationDiagnostic>();
-            CourseBlueprint blueprint = null;
+            var diagnostics = (inputDiagnostics
+                               ?? Array.Empty<CourseCompilationDiagnostic>())
+                .ToList();
             RecipeCatalog catalog = null;
             NormalizedCourseModel normalized = null;
             CompiledCourseDefinition domain = null;
             CoursePresentationDefinition presentation = null;
 
-            var read = new CourseBlueprintReader().Read(source);
+            // 草稿读取与模块展开已经由工作台完成；编译器只接收内存蓝图。
             stages.Add(CourseBlueprintCompilationStage.Read);
-            diagnostics.AddRange(read.Diagnostics);
-            blueprint = read.Blueprint;
-            if (HasErrors(diagnostics))
+            if (blueprint == null && !HasErrors(diagnostics))
+            {
+                diagnostics.Add(Diagnostic(
+                    "blueprint.input.missing",
+                    null,
+                    string.Empty,
+                    "没有可编译的课程蓝图。",
+                    "先修复课程草稿读取或展开错误。"));
+            }
+
+            if (blueprint == null || HasErrors(diagnostics))
             {
                 return Result();
             }
@@ -189,22 +194,54 @@ namespace VirtualLab.Unity.Authoring.Blueprints
                 return Result();
             }
 
-            var expansion = new RecipeExpander().Expand(blueprint, catalog);
+            RecipeExpansionResult expansion = null;
+            try
+            {
+                expansion = new RecipeExpander().Expand(blueprint, catalog);
+            }
+            catch (Exception exception)
+            {
+                diagnostics.Add(Diagnostic(
+                    "blueprint.expansion.failed",
+                    blueprint.Course.Source,
+                    blueprint.Course.CourseId,
+                    $"课程配方展开失败：{exception.Message}",
+                    "检查课程对象、过程、教学、表现和验收配置。"));
+            }
             stages.Add(CourseBlueprintCompilationStage.Expansion);
-            diagnostics.AddRange(expansion.Diagnostics);
-            normalized = expansion.Model;
+            if (expansion != null)
+            {
+                diagnostics.AddRange(expansion.Diagnostics);
+                normalized = expansion.Model;
+            }
             if (HasErrors(diagnostics))
             {
                 return Result();
             }
 
-            var overridden = new CourseOverrideApplier().Apply(
-                blueprint,
-                catalog,
-                normalized);
+            CourseOverrideResult overridden = null;
+            try
+            {
+                overridden = new CourseOverrideApplier().Apply(
+                    blueprint,
+                    catalog,
+                    normalized);
+            }
+            catch (Exception exception)
+            {
+                diagnostics.Add(Diagnostic(
+                    "blueprint.override.failed",
+                    blueprint.Course.Source,
+                    blueprint.Course.CourseId,
+                    $"课程特例或表现编译失败：{exception.Message}",
+                    "检查操作特例和表现配置是否使用模块已注册的中文选项。"));
+            }
             stages.Add(CourseBlueprintCompilationStage.Override);
-            diagnostics.AddRange(overridden.Diagnostics);
-            normalized = overridden.Model;
+            if (overridden != null)
+            {
+                diagnostics.AddRange(overridden.Diagnostics);
+                normalized = overridden.Model;
+            }
             if (HasErrors(diagnostics))
             {
                 return Result();
@@ -695,7 +732,7 @@ namespace VirtualLab.Unity.Authoring.Blueprints
                             value.Definition.RiskId,
                             $"风险“{value.Definition.RiskId}”的动作拒绝触发值"
                             + "必须是“动作|拒绝原因”。",
-                            "在实验流程.csv 的风险记录中填写语义动作和拒绝原因。"));
+                            "在教学.csv 的风险项中填写“语义动作|拒绝原因”。"));
                         return null;
                     }
 

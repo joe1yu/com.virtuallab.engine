@@ -4,7 +4,9 @@ using System.Linq;
 using NUnit.Framework;
 using VirtualLab.Unity.Authoring.Blueprints;
 using VirtualLab.Unity.Authoring.Diagnostics;
+using VirtualLab.Unity.Authoring.Drafts;
 using VirtualLab.Unity.Authoring.Recipes;
+using VirtualLab.Unity.Authoring.Workbench;
 
 namespace VirtualLab.Engine.Tests.Courses
 {
@@ -68,16 +70,13 @@ namespace VirtualLab.Engine.Tests.Courses
         [Test]
         public void 读取作者目录时忽略嵌套诊断目录()
         {
-            var authoring = Path.Combine(_directory, "Authoring");
-            Directory.CreateDirectory(authoring);
-            File.WriteAllText(
-                Path.Combine(authoring, "课程.csv"),
-                "课程ID,显示名称,学科配方包,实验Prefab\n"
-                + "诊断读取测试,诊断读取测试,,环境.prefab\n");
-            File.WriteAllText(
-                Path.Combine(authoring, "实验对象.csv"),
-                "实体ID,显示名称,特征列表,初始位置,初始旋转\n"
-                + "试管,试管,可夹持,0|0|0,0|0|0\n");
+            var created = new CourseAuthoringDraftCreator().Create(
+                _directory,
+                "诊断读取测试",
+                "诊断读取测试",
+                string.Empty,
+                "环境.prefab");
+            var authoring = created.AuthoringDirectory;
             var nested = Path.Combine(
                 authoring,
                 "Generated",
@@ -87,28 +86,20 @@ namespace VirtualLab.Engine.Tests.Courses
                 Path.Combine(nested, "旧动作策略.csv"),
                 "不应被读取\n");
 
-            var result = new CourseBlueprintReader().Read(
+            var result = new CourseAuthoringDraftReader().Read(
                 CourseBlueprintSource.FromDirectory(authoring));
 
             Assert.That(result.IsSuccess, Is.True);
-            Assert.That(result.Blueprint.Course.CourseId,
+            Assert.That(result.Draft.Course.CourseId,
                 Is.EqualTo("诊断读取测试"));
         }
 
         private static CourseBlueprintCompilationResult Compile()
         {
             var result = new CourseBlueprintCompiler().Compile(
-                new CourseBlueprintSource(new[]
-                {
-                    new CourseBlueprintFile(
-                        "课程.csv",
-                        "课程ID,显示名称,学科配方包,实验Prefab\n"
-                        + "诊断导出测试,诊断导出测试,,环境.prefab\n"),
-                    new CourseBlueprintFile(
-                        "实验对象.csv",
-                        "实体ID,显示名称,特征列表,初始位置,初始旋转\n"
-                        + "试管,试管,可夹持,0|0|0,0|0|0\n")
-                }),
+                CourseBlueprintTestFactory.Blueprint(
+                    CourseBlueprintTestFactory.Object(
+                        "试管", new[] { "可夹持" })),
                 new CoreRecipePackageProvider(),
                 Array.Empty<IRecipePackageProvider>());
             Assert.That(result.IsSuccess, Is.True);

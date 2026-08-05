@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -7,6 +9,7 @@ using VirtualLab.Chemistry.Authoring;
 using VirtualLab.Chemistry.Configuration;
 using VirtualLab.Chemistry.Courses;
 using VirtualLab.Unity.Authoring.Blueprints;
+using VirtualLab.Unity.Authoring.Diagnostics;
 using VirtualLab.Unity.Authoring.Recipes;
 
 namespace VirtualLab.Chemistry.Tests.Authoring
@@ -120,22 +123,10 @@ namespace VirtualLab.Chemistry.Tests.Authoring
         [Test]
         public void 倾倒和振荡按特征与作用组展开且不伪造端口()
         {
-            var read = new CourseBlueprintReader().Read(
-                new CourseBlueprintSource(new[]
-                {
-                    new CourseBlueprintFile(
-                        "课程.csv",
-                        "课程ID,显示名称,学科配方包,实验Prefab\n"
-                        + "化学动作测试,化学动作测试,化学基础,环境.prefab\n"),
-                    new CourseBlueprintFile(
-                        "实验对象.csv",
-                        "实体ID,显示名称,特征列表,初始位置,初始旋转,"
-                        + "参数.作用组.倾倒\n"
-                        + "量筒,量筒,可倾倒,0|0|0,0|0|0,组.液体\n"
-                        + "烧杯,烧杯,容器,0|0|0,0|0|0,组.液体\n"
-                        + "锥形瓶,锥形瓶,可振荡,0|0|0,0|0|0,\n")
-                }));
-            Assert.That(read.IsSuccess, Is.True);
+            var blueprint = Blueprint(
+                Object("量筒", "可倾倒", "参数.作用组.倾倒", "组.液体"),
+                Object("烧杯", "容器", "参数.作用组.倾倒", "组.液体"),
+                Object("锥形瓶", "可振荡"));
             var catalog = RecipeCatalog.Create(
                 new CoreRecipePackageProvider(),
                 new IRecipePackageProvider[]
@@ -144,7 +135,7 @@ namespace VirtualLab.Chemistry.Tests.Authoring
                 });
 
             var result = new RecipeExpander().Expand(
-                read.Blueprint,
+                blueprint,
                 catalog);
 
             Assert.That(result.IsSuccess, Is.True);
@@ -163,28 +154,23 @@ namespace VirtualLab.Chemistry.Tests.Authoring
         [Test]
         public void 紧凑过程配置按配方实体覆盖参数并追加操作()
         {
-            var read = new CourseBlueprintReader().Read(
-                new CourseBlueprintSource(new[]
+            var blueprint = Blueprint(
+                new[]
                 {
-                    new CourseBlueprintFile(
-                        "课程.csv",
-                        "课程ID,显示名称,学科配方包,实验Prefab\n"
-                        + "过程参数测试,过程参数测试,化学基础,环境.prefab\n"),
-                    new CourseBlueprintFile(
-                        "实验对象.csv",
-                        "实体ID,显示名称,特征列表,初始位置,初始旋转,"
-                        + "参数.作用组.倾倒\n"
-                        + "试剂瓶,试剂瓶,可倾倒,0|0|0,0|0|0,组.液体\n"
-                        + "烧杯,烧杯,容器,0|0|0,0|0|0,组.液体\n"),
-                    new CourseBlueprintFile(
-                        "学科过程.csv",
-                        "配置ID,类型,配方,主体,来源,目标,操作名称,协议,参数\n"
-                        + "过程.倾倒,过程,化学.倾倒,开始倾倒,试剂瓶,烧杯,,,"
-                        + "物质标识=water;计量单位=毫升\n"
-                        + "过程.附加转移,附加操作,化学.倾倒,开始倾倒,试剂瓶,烧杯,"
-                        + "转移溶质,转移物质,物质标识=solute;数量=1\n")
-                }));
-            Assert.That(read.IsSuccess, Is.True);
+                    Object("试剂瓶", "可倾倒", "参数.作用组.倾倒", "组.液体"),
+                    Object("烧杯", "容器", "参数.作用组.倾倒", "组.液体")
+                },
+                new[]
+                {
+                    Process("过程.倾倒", "过程参数", "化学.倾倒", "开始倾倒",
+                        "试剂瓶", "烧杯", parameters: new[]
+                        {
+                            Pair("物质标识", "water"), Pair("计量单位", "毫升")
+                        }),
+                    Process("过程.附加转移", "过程操作", "化学.倾倒", "开始倾倒",
+                        "试剂瓶", "烧杯", "转移溶质", "转移物质",
+                        new[] { Pair("物质标识", "solute"), Pair("数量", "1") })
+                });
             var catalog = RecipeCatalog.Create(
                 new CoreRecipePackageProvider(),
                 new IRecipePackageProvider[]
@@ -193,7 +179,7 @@ namespace VirtualLab.Chemistry.Tests.Authoring
                 });
 
             var result = new RecipeExpander().Expand(
-                read.Blueprint,
+                blueprint,
                 catalog);
 
             Assert.That(
@@ -216,7 +202,7 @@ namespace VirtualLab.Chemistry.Tests.Authoring
                 Is.EqualTo("毫升"));
             Assert.That(
                 mutation.Provenance.Sources.Select(value => value.FileName),
-                Does.Contain("学科过程.csv"));
+                Does.Contain("过程编译测试"));
             var addedMutation = result.Model.StateChanges.Single(value =>
                 value.Identity.RecipeId == "化学.倾倒"
                 && value.Identity.SourceEntityId == "试剂瓶"
@@ -237,40 +223,101 @@ namespace VirtualLab.Chemistry.Tests.Authoring
 
         private static CourseBlueprint ReadChemistryBlueprint()
         {
-            var header =
-                "配置ID,类型,配方,主体,来源,目标,操作名称,协议,参数\n";
-            var rows = string.Join("\n", new[]
+            var rows = new[]
             {
-                "物质.课程水,物质,化学.运行配置,water,,,,,"
-                + "显示名称=课程专用水;物态=液体;摩尔质量=99",
-                "物质.反应物,物质,化学.运行配置,source,,,,,"
-                + "显示名称=反应物;物态=固体;摩尔质量=1",
-                "物质.产物,物质,化学.运行配置,product,,,,,"
-                + "显示名称=产物;物态=固体;摩尔质量=1",
-                "反应.测试,反应,化学.运行配置,reaction.test,,,,,"
-                + "过程类型=热分解;最低温度=0;每刻反应量=1;需要点燃=否",
-                "反应项.反应物,反应物,化学.运行配置,reaction.test,source,,,,"
-                + "物态=固体;数量=1;单位=克;每单位克数=1",
-                "反应项.产物,产物,化学.运行配置,reaction.test,product,,,,"
-                + "物态=固体;数量=1;单位=克;每单位克数=1",
-                "初始.反应物,初始物质,化学.运行配置,反应容器,source,,,,"
-                + "物态=固体;数量=1;单位=克;温度=20"
-            }) + "\n";
-            var read = new CourseBlueprintReader().Read(
-                new CourseBlueprintSource(new[]
-                {
-                    new CourseBlueprintFile(
-                        "课程.csv",
-                        "课程ID,显示名称,学科配方包,实验Prefab\n"
-                        + "化学测试,化学测试,化学基础,环境.prefab\n"),
-                    new CourseBlueprintFile(
-                        "实验对象.csv",
-                        "实体ID,显示名称,特征列表,初始位置,初始旋转\n"
-                        + "反应容器,反应容器,容器,0|0|0,0|0|0\n"),
-                    new CourseBlueprintFile("学科过程.csv", header + rows)
-                }));
-            Assert.That(read.IsSuccess, Is.True);
-            return read.Blueprint;
+                Process("物质.课程水", "物质", "化学.运行配置", "water",
+                    parameters: new[] { Pair("显示名称", "课程专用水"), Pair("物态", "液体"), Pair("摩尔质量", "99") }),
+                Process("物质.反应物", "物质", "化学.运行配置", "source",
+                    parameters: new[] { Pair("显示名称", "反应物"), Pair("物态", "固体"), Pair("摩尔质量", "1") }),
+                Process("物质.产物", "物质", "化学.运行配置", "product",
+                    parameters: new[] { Pair("显示名称", "产物"), Pair("物态", "固体"), Pair("摩尔质量", "1") }),
+                Process("反应.测试", "反应", "化学.运行配置", "reaction.test",
+                    parameters: new[] { Pair("过程类型", "热分解"), Pair("最低温度", "0"), Pair("每刻反应量", "1"), Pair("需要点燃", "否") }),
+                Process("反应项.反应物", "反应项", "化学.运行配置", "reaction.test", "source", "反应物",
+                    parameters: new[] { Pair("物态", "固体"), Pair("数量", "1"), Pair("单位", "克"), Pair("每单位克数", "1") }),
+                Process("反应项.产物", "反应项", "化学.运行配置", "reaction.test", "product", "产物",
+                    parameters: new[] { Pair("物态", "固体"), Pair("数量", "1"), Pair("单位", "克"), Pair("每单位克数", "1") }),
+                Process("初始.反应物", "初始物质", "化学.运行配置", "反应容器", "source",
+                    parameters: new[] { Pair("物态", "固体"), Pair("数量", "1"), Pair("单位", "克"), Pair("温度", "20") })
+            };
+            return Blueprint(
+                new[] { Object("反应容器", "容器") },
+                rows);
         }
+
+        private static CourseBlueprint Blueprint(params CourseObjectBlueprint[] objects) =>
+            Blueprint(objects, Array.Empty<CourseDisciplineProcessBlueprint>());
+
+        private static CourseBlueprint Blueprint(
+            CourseObjectBlueprint[] objects,
+            CourseDisciplineProcessBlueprint[] processes) =>
+            new CourseBlueprint(
+                new CourseBlueprintCourse(
+                    "化学测试", "化学测试", new[] { "化学基础" }, "学生",
+                    "环境.prefab", Source("课程.csv", 2, "化学测试")),
+                objects,
+                Array.Empty<CourseInitialRelationBlueprint>(),
+                Array.Empty<CourseInteractionRuleBlueprint>(),
+                processes,
+                Array.Empty<CourseTeachingEvaluationBlueprint>(),
+                Array.Empty<CoursePresentationOverrideBlueprint>(),
+                Array.Empty<CourseAcceptanceRecordBlueprint>(),
+                Array.Empty<CourseAdvancedOverrideBlueprint>());
+
+        private static CourseObjectBlueprint Object(
+            string id,
+            string feature,
+            string parameter = null,
+            string value = null)
+        {
+            var origin = Source("实验对象.csv", 2, id);
+            var extensions = string.IsNullOrEmpty(parameter)
+                ? Array.Empty<KeyValuePair<string, string>>()
+                : new[] { Pair(parameter, value) };
+            return new CourseObjectBlueprint(
+                id, id, new[] { feature }, new BlueprintVector3(0, 0, 0),
+                new BlueprintVector3(0, 0, 0), Values(origin, extensions), origin);
+        }
+
+        private static CourseDisciplineProcessBlueprint Process(
+            string id,
+            string type,
+            string recipe,
+            string subject,
+            string source = "",
+            string target = "",
+            string operation = "",
+            string protocol = "",
+            KeyValuePair<string, string>[] parameters = null)
+        {
+            var origin = Source("过程编译测试", 2, id);
+            return new CourseDisciplineProcessBlueprint(
+                Values(origin,
+                    Pair("定义ID", id), Pair("记录类型", type),
+                    Pair("学科配方", recipe), Pair("主体", subject),
+                    Pair("来源", source), Pair("目标", target),
+                    Pair("启动交互", operation), Pair("停止交互", protocol)),
+                origin,
+                Values(
+                    origin,
+                    (parameters ?? Array.Empty<KeyValuePair<string, string>>())
+                    .Select(pair => Pair("参数." + pair.Key, pair.Value))
+                    .ToArray()));
+        }
+
+        private static IReadOnlyDictionary<string, BlueprintValue> Values(
+            ConfigurationSource source,
+            params KeyValuePair<string, string>[] pairs) =>
+            new ReadOnlyDictionary<string, BlueprintValue>(pairs.ToDictionary(
+                pair => pair.Key,
+                pair => new BlueprintValue(pair.Key, pair.Value, source),
+                StringComparer.Ordinal));
+
+        private static ConfigurationSource Source(string file, int line, string id) =>
+            new ConfigurationSource(
+                ConfigurationLayer.Course, "化学测试", file, line, 1, id);
+
+        private static KeyValuePair<string, string> Pair(string key, string value) =>
+            new KeyValuePair<string, string>(key, value);
     }
 }

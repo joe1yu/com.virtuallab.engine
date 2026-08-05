@@ -940,13 +940,7 @@ namespace VirtualLab.Engine.Tests.Courses
                 .Evaluate(context.World, context.Course.GoalRules);
 
         private static CourseBlueprintCompilationResult Compile() =>
-            new CourseBlueprintCompiler().Compile(
-                CourseBlueprintSource.FromDirectory(CourseDirectory),
-                new CoreRecipePackageProvider(),
-                new IRecipePackageProvider[]
-                {
-                    new ChemistryRecipePackageProvider()
-                });
+            OxygenCourseTestCompiler.Compile(CourseDirectory);
 
         private static string Diagnostics(
             CourseBlueprintCompilationResult result) =>

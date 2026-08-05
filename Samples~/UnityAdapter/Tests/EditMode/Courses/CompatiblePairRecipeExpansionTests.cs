@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
 using VirtualLab.Application.Courses;
@@ -118,27 +119,15 @@ namespace VirtualLab.Engine.Tests.Courses
         [Test]
         public void 没有反馈配方的双实体动作不生成空表现组()
         {
-            var source = new CourseBlueprintSource(new[]
-            {
-                new CourseBlueprintFile(
-                    "课程.csv",
-                    "课程ID,显示名称,学科配方包,实验Prefab\n"
-                    + "放置测试,放置测试,,环境.prefab\n"),
-                new CourseBlueprintFile(
-                    "实验对象.csv",
-                    "实体ID,显示名称,特征列表,初始位置,初始旋转,"
-                    + "参数.作用组.放置\n"
-                    + "集气瓶,集气瓶,可放置源,0|0|0,0|0|0,水槽\n"
-                    + "水槽,水槽,可放置目标,0|0|0,0|0|0,水槽\n")
-            });
-            var read = new CourseBlueprintReader().Read(source);
-            Assert.That(read.IsSuccess, Is.True);
+            var blueprint = CourseBlueprintTestFactory.Blueprint(
+                Object("集气瓶", "可放置来源", "参数.作用组.放置", "水槽"),
+                Object("水槽", "可放置目标", "参数.作用组.放置", "水槽"));
             var catalog = RecipeCatalog.Create(
                 new CoreRecipePackageProvider(),
                 Array.Empty<IRecipePackageProvider>());
 
             var result = new RecipeExpander().Expand(
-                read.Blueprint,
+                blueprint,
                 catalog);
 
             Assert.That(result.IsSuccess, Is.True);
@@ -156,26 +145,14 @@ namespace VirtualLab.Engine.Tests.Courses
         [Test]
         public void 固定连接自动要求操作者持有目标对象()
         {
-            var source = new CourseBlueprintSource(new[]
-            {
-                new CourseBlueprintFile(
-                    "课程.csv",
-                    "课程ID,显示名称,学科配方包,实验Prefab\n"
-                    + "固定连接测试,固定连接测试,,环境.prefab\n"),
-                new CourseBlueprintFile(
-                    "实验对象.csv",
-                    "实体ID,显示名称,特征列表,初始位置,初始旋转,"
-                    + "参数.端口.出口.兼容组,参数.端口.入口.兼容组\n"
-                    + "铁架台,铁架台,可夹持,0|0|0,0|0|0,组.夹持,\n"
-                    + "试管,试管,可连接,0|0|0,0|0|0,,组.夹持\n")
-            });
-            var read = new CourseBlueprintReader().Read(source);
-            Assert.That(read.IsSuccess, Is.True);
+            var blueprint = CourseBlueprintTestFactory.Blueprint(
+                Object("铁架台", "可夹持", "参数.端口.出口.兼容组", "组.夹持"),
+                Object("试管", "可连接", "参数.端口.入口.兼容组", "组.夹持"));
             var catalog = RecipeCatalog.Create(
                 new CoreRecipePackageProvider(),
                 Array.Empty<IRecipePackageProvider>());
 
-            var result = new RecipeExpander().Expand(read.Blueprint, catalog);
+            var result = new RecipeExpander().Expand(blueprint, catalog);
 
             Assert.That(result.IsSuccess, Is.True);
             Assert.That(
@@ -185,25 +162,23 @@ namespace VirtualLab.Engine.Tests.Courses
 
         private static CourseBlueprint ReadConnectionBlueprint(
             bool includeTargetGroup = true)
-        {
-            var source = new CourseBlueprintSource(new[]
-            {
-                new CourseBlueprintFile(
-                    "课程.csv",
-                    "课程ID,显示名称,学科配方包,实验Prefab\n"
-                    + "连接测试,连接测试,,环境.prefab\n"),
-                new CourseBlueprintFile(
-                    "实验对象.csv",
-                    "实体ID,显示名称,特征列表,初始位置,初始旋转,"
-                    + "参数.端口.出口.兼容组,参数.端口.入口.兼容组\n"
-                    + "导气管,导气管,可连接,0|0|0,0|0|0,组.导气,\n"
-                    + "集气瓶,集气瓶,可连接,0|0|0,0|0|0,,"
-                    + (includeTargetGroup ? "组.导气\n" : "\n")
-                    + "铁架台,铁架台,可连接,0|0|0,0|0|0,,组.夹持\n")
-            });
-            var read = new CourseBlueprintReader().Read(source);
-            Assert.That(read.IsSuccess, Is.True);
-            return read.Blueprint;
-        }
+            => CourseBlueprintTestFactory.Blueprint(
+                Object("导气管", "可连接", "参数.端口.出口.兼容组", "组.导气"),
+                includeTargetGroup
+                    ? Object("集气瓶", "可连接", "参数.端口.入口.兼容组", "组.导气")
+                    : Object("集气瓶", "可连接"),
+                Object("铁架台", "可连接", "参数.端口.入口.兼容组", "组.夹持"));
+
+        private static CourseObjectBlueprint Object(
+            string id,
+            string feature,
+            string parameter = null,
+            string value = null) =>
+            CourseBlueprintTestFactory.Object(
+                id,
+                new[] { feature },
+                string.IsNullOrEmpty(parameter)
+                    ? Array.Empty<KeyValuePair<string, string>>()
+                    : new[] { new KeyValuePair<string, string>(parameter, value) });
     }
 }

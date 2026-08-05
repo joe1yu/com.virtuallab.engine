@@ -240,13 +240,13 @@ namespace VirtualLab.Unity.Authoring.Recipes
                 {
                     diagnostics.Add(new CourseCompilationDiagnostic(
                         "recipe.discipline-record.compile-failed",
-                        "学科过程.csv",
+                        "过程.csv",
                         1,
                         1,
                         string.Empty,
                         package.PackageId,
                         $"学科记录编译失败：{exception.Message}",
-                        "检查学科过程记录类型、参数、引用和单位。"));
+                        "检查过程类型、参数、对象选择和单位。"));
                 }
             }
 

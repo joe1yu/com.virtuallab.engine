@@ -278,11 +278,76 @@ namespace VirtualLab.Engine.Tests.Courses
                 }));
         }
 
+        [Test]
+        public void 教学条件汇聚为同一目标且风险引用转换为内部目标标识()
+        {
+            var catalog = Catalog(
+                components: Array.Empty<AuthoringComponentDescriptor>(),
+                templates: new[]
+                {
+                    Template("操作者", Array.Empty<string>()),
+                    Template("集气瓶", Array.Empty<string>())
+                });
+            var draft = Draft(
+                new[]
+                {
+                    Object("学生", "操作者"),
+                    Object("集气瓶一", "集气瓶"),
+                    Object("集气瓶二", "集气瓶")
+                },
+                teachingItems: new[]
+                {
+                    new CourseDraftTeachingItem(
+                        "收集两瓶氧气", "目标", "收集两瓶氧气", "状态满足",
+                        string.Empty, 0, string.Empty, string.Empty,
+                        string.Empty, string.Empty,
+                        Source("教学.csv", 2, "收集两瓶氧气")),
+                    new CourseDraftTeachingItem(
+                        "氧气不纯", "风险", "氧气不纯", "领域事件",
+                        "实验风险.氧气不纯", -10, "氧气纯度不足", "现象偏差",
+                        "更换样品或器材后继续", "收集两瓶氧气",
+                        Source("教学.csv", 3, "氧气不纯"))
+                },
+                teachingConditions: new[]
+                {
+                    new CourseDraftTeachingCondition(
+                        "收集两瓶氧气", 10, "实体", "集气瓶一",
+                        "来源内容体积", "大于", "0", "毫升",
+                        Source("教学条件.csv", 2, "收集两瓶氧气")),
+                    new CourseDraftTeachingCondition(
+                        "收集两瓶氧气", 10, "实体", "集气瓶二",
+                        "来源内容体积", "大于", "0", "毫升",
+                        Source("教学条件.csv", 3, "收集两瓶氧气")),
+                    new CourseDraftTeachingCondition(
+                        "氧气不纯", 20, "实体", "学生",
+                        "操作者存在", "等于", "是", string.Empty,
+                        Source("教学条件.csv", 4, "氧气不纯"))
+                });
+
+            var result = Expand(draft, catalog);
+
+            Assert.That(result.IsSuccess, Is.True, Diagnostics(result));
+            var goals = result.Blueprint.TeachingEvaluations.Where(value =>
+                value.EvaluationType == "目标").ToArray();
+            Assert.That(goals, Has.Length.EqualTo(2));
+            Assert.That(goals.Select(value => value.EvaluationId).Distinct(),
+                Is.EqualTo(new[] { "目标.收集两瓶氧气" }));
+            Assert.That(goals.Select(value => value.Source.Line),
+                Is.EqualTo(new[] { 2, 3 }));
+            var risk = result.Blueprint.TeachingEvaluations.Single(value =>
+                value.EvaluationType == "风险");
+            Assert.That(risk.EvaluationId, Is.EqualTo("风险.氧气不纯"));
+            Assert.That(risk.AffectedTargetIds,
+                Is.EqualTo("目标.收集两瓶氧气"));
+        }
+
         private static CourseAuthoringDraft Draft(
             IEnumerable<CourseDraftObject> objects,
             IEnumerable<CourseDraftComponent> components = null,
             IEnumerable<CourseDraftOperationOverride> operationOverrides = null,
-            IEnumerable<CourseDraftProcess> processes = null) =>
+            IEnumerable<CourseDraftProcess> processes = null,
+            IEnumerable<CourseDraftTeachingItem> teachingItems = null,
+            IEnumerable<CourseDraftTeachingCondition> teachingConditions = null) =>
             new CourseAuthoringDraft(
                 new CourseDraftCourse(
                     "测试课程", "测试课程", "化学基础", "学生", "实验.prefab",
@@ -292,8 +357,8 @@ namespace VirtualLab.Engine.Tests.Courses
                 Array.Empty<CourseDraftInitialRelation>(),
                 operationOverrides ?? Array.Empty<CourseDraftOperationOverride>(),
                 processes ?? Array.Empty<CourseDraftProcess>(),
-                Array.Empty<CourseDraftTeachingItem>(),
-                Array.Empty<CourseDraftTeachingCondition>(),
+                teachingItems ?? Array.Empty<CourseDraftTeachingItem>(),
+                teachingConditions ?? Array.Empty<CourseDraftTeachingCondition>(),
                 Array.Empty<CourseDraftPresentation>(),
                 Array.Empty<CourseDraftAcceptanceRecord>());
 

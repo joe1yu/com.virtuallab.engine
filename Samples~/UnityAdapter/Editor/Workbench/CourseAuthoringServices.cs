@@ -4,7 +4,9 @@ using System.IO;
 using System.Linq;
 using UnityEditor;
 using VirtualLab.Unity.Authoring.Blueprints;
+using VirtualLab.Unity.Authoring.Catalogs;
 using VirtualLab.Unity.Authoring.Diagnostics;
+using VirtualLab.Unity.Authoring.Drafts;
 using VirtualLab.Unity.Authoring.Generation;
 using VirtualLab.Unity.Authoring.Recipes;
 using VirtualLab.UnityAdapters.Courses;
@@ -15,12 +17,12 @@ namespace VirtualLab.Unity.Authoring.Workbench
     {
         internal CourseWorkbenchCompilation(
             CourseBlueprintCompilationResult compilation,
-            CourseFeatureCatalog featureCatalog,
+            CourseAuthoringCatalog authoringCatalog,
             IEnumerable<string> messages,
             IEnumerable<string> availableDisciplinePackageIds)
         {
             Compilation = compilation;
-            FeatureCatalog = featureCatalog;
+            AuthoringCatalog = authoringCatalog;
             Messages = (messages ?? Array.Empty<string>()).ToArray();
             AvailableDisciplinePackageIds = (
                     availableDisciplinePackageIds ?? Array.Empty<string>())
@@ -30,7 +32,7 @@ namespace VirtualLab.Unity.Authoring.Workbench
         }
 
         public CourseBlueprintCompilationResult Compilation { get; }
-        public CourseFeatureCatalog FeatureCatalog { get; }
+        public CourseAuthoringCatalog AuthoringCatalog { get; }
         public IReadOnlyList<string> Messages { get; }
         public IReadOnlyList<string> AvailableDisciplinePackageIds { get; }
     }
@@ -49,9 +51,11 @@ namespace VirtualLab.Unity.Authoring.Workbench
             }
 
             var messages = new List<string>();
-            var read = new CourseBlueprintReader().Read(source);
-            var selectedPackageIds = read.Blueprint?.Course
-                ?.DisciplinePackageIds
+            var read = new CourseAuthoringDraftReader().Read(source);
+            var selectedPackageIds = read.Draft?.Course
+                ?.DisciplinePackageId
+                ?.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries)
+                .Select(value => value.Trim())
                 ?? Array.Empty<string>();
             var providers = DiscoverDisciplineProviders(messages);
             var selectedProviders = providers
@@ -61,15 +65,35 @@ namespace VirtualLab.Unity.Authoring.Workbench
                 .ToArray();
 
             var platform = new CoreRecipePackageProvider();
+            var recipeCatalog = RecipeCatalog.Create(platform, selectedProviders);
+            var authoringDiscovery =
+                CourseAuthoringCatalogProviderDiscovery.Discover();
+            var authoringCatalog = CourseAuthoringCatalog.Create(
+                authoringDiscovery.Providers);
+            var inputDiagnostics = read.Diagnostics
+                .Concat(authoringDiscovery.Diagnostics)
+                .Concat(authoringCatalog.Diagnostics)
+                .ToList();
+            CourseDraftExpansionResult expansion = null;
+            if (read.Draft != null
+                && inputDiagnostics.All(value =>
+                    value.Severity != CourseDiagnosticSeverity.Error))
+            {
+                expansion = new CourseDraftExpander().Expand(
+                    read.Draft,
+                    authoringCatalog,
+                    recipeCatalog);
+                inputDiagnostics.AddRange(expansion.Diagnostics);
+            }
+
             var compilation = new CourseBlueprintCompiler().Compile(
-                source,
+                expansion?.Blueprint,
                 platform,
-                selectedProviders);
-            var catalog = compilation.Catalog
-                          ?? RecipeCatalog.Create(platform, selectedProviders);
+                selectedProviders,
+                inputDiagnostics);
             return new CourseWorkbenchCompilation(
                 compilation,
-                CourseFeatureCatalog.Create(catalog),
+                authoringCatalog,
                 messages,
                 providers.Select(value => value.PackageId));
         }

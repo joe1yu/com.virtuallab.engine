@@ -116,9 +116,11 @@ namespace VirtualLab.Chemistry.Authoring
         public DisciplineRecordCompilationResult Compile(
             CourseBlueprint blueprint)
         {
-            var mutationOverrides = CompileMutationOverrides(blueprint);
-            var mutationAdditions = CompileMutationAdditions(blueprint);
-            var courseRecords = blueprint.DisciplineProcesses
+            var projectedRecords = new ChemistryAuthoringProcessProjector()
+                .Project(blueprint.DisciplineProcesses);
+            var mutationOverrides = CompileMutationOverrides(projectedRecords);
+            var mutationAdditions = CompileMutationAdditions(projectedRecords);
+            var courseRecords = projectedRecords
                 .Where(value => value.DisciplineRecipeId == "化学.运行配置")
                 .ToArray();
             var records = MergeKnowledge(
@@ -381,9 +383,10 @@ namespace VirtualLab.Chemistry.Authoring
                 value.TargetEntityId);
 
         private static IReadOnlyList<DisciplineMutationAddition>
-            CompileMutationAdditions(CourseBlueprint blueprint)
+            CompileMutationAdditions(
+                IEnumerable<CourseDisciplineProcessBlueprint> records)
         {
-            return blueprint.DisciplineProcesses
+            return records
                 .Where(value => value.RecordType == "过程操作")
                 .GroupBy(
                     value => string.Join(
@@ -419,9 +422,10 @@ namespace VirtualLab.Chemistry.Authoring
         }
 
         private static IReadOnlyList<DisciplineMutationOverride>
-            CompileMutationOverrides(CourseBlueprint blueprint)
+            CompileMutationOverrides(
+                IEnumerable<CourseDisciplineProcessBlueprint> records)
         {
-            return blueprint.DisciplineProcesses
+            return records
                 .Where(value => value.RecordType == "过程参数")
                 .GroupBy(
                     value => string.Join(

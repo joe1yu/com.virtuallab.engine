@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
 using VirtualLab.Presentation;
@@ -33,7 +34,7 @@ namespace VirtualLab.Engine.Tests.Courses
                 result.Diagnostics.Single(value =>
                     value.Code == "blueprint.presentation.primitive-unknown")
                     .FileName,
-                Is.EqualTo("表现覆盖.csv"));
+                Is.EqualTo("表现.csv"));
         }
 
         [Test]
@@ -78,7 +79,7 @@ namespace VirtualLab.Engine.Tests.Courses
             var diagnostic = result.Diagnostics.Single(value =>
                 value.Code
                 == "blueprint.presentation.parameter-value-invalid");
-            Assert.That(diagnostic.FileName, Is.EqualTo("表现覆盖.csv"));
+            Assert.That(diagnostic.FileName, Is.EqualTo("表现.csv"));
             Assert.That(diagnostic.Line, Is.EqualTo(2));
             StringAssert.Contains("允许值集合", diagnostic.Reason);
         }
@@ -92,35 +93,49 @@ namespace VirtualLab.Engine.Tests.Courses
                 string parameterType,
                 string parameterValue)
         {
-            var source = new CourseBlueprintSource(new[]
-            {
-                new CourseBlueprintFile(
-                    "课程.csv",
-                    "课程ID,显示名称,学科配方包,实验Prefab\n"
-                    + "目录集成,目录集成,,环境.prefab\n"),
-                new CourseBlueprintFile(
-                    "实验对象.csv",
-                    "实体ID,显示名称,特征列表,初始位置,初始旋转\n"
-                    + "试管,试管,可夹持,0|0|0,0|0|0\n"),
-                new CourseBlueprintFile(
-                    "表现覆盖.csv",
-                    "覆盖ID,对象或状态,表现原语,作用位置,位置ID,参数名,参数类型,参数值\n"
-                    + $"测试闪光覆盖,试管,{primitive},全局接收器,,"
-                    + $"{parameterName},{parameterType},{parameterValue}\n")
-            });
-            var read = new CourseBlueprintReader().Read(source);
-            Assert.That(
-                read.Diagnostics.Select(value => value.Reason),
-                Is.Empty);
+            var origin = CourseBlueprintTestFactory.Source(
+                "表现.csv", 2, "测试闪光覆盖");
+            var presentation = new CoursePresentationOverrideBlueprint(
+                CourseBlueprintTestFactory.Values(origin,
+                    Pair("覆盖ID", "测试闪光覆盖"),
+                    Pair("触发类型", "课程初始化"),
+                    Pair("触发值", string.Empty),
+                    Pair("触发来源", string.Empty),
+                    Pair("触发目标", string.Empty),
+                    Pair("对象或状态", "试管"),
+                    Pair("表现原语", primitive),
+                    Pair("作用位置", "全局接收器"),
+                    Pair("位置ID", string.Empty),
+                    Pair("参数名", parameterName),
+                    Pair("参数类型", parameterType),
+                    Pair("参数值", parameterValue)),
+                origin);
+            var baseBlueprint = CourseBlueprintTestFactory.Blueprint(
+                CourseBlueprintTestFactory.Object(
+                    "试管", new[] { "可夹持" }));
+            var blueprint = new CourseBlueprint(
+                baseBlueprint.Course,
+                baseBlueprint.Objects,
+                baseBlueprint.InitialRelations,
+                baseBlueprint.InteractionRules,
+                baseBlueprint.DisciplineProcesses,
+                baseBlueprint.TeachingEvaluations,
+                new[] { presentation },
+                baseBlueprint.AcceptanceRecords,
+                baseBlueprint.AdvancedOverrides);
             var catalog = RecipeCatalog.Create(
                 new CoreRecipePackageProvider(),
                 Array.Empty<IRecipePackageProvider>());
             var expanded = new RecipeExpander().Expand(
-                read.Blueprint,
+                blueprint,
                 catalog);
             Assert.That(expanded.IsSuccess, Is.True);
-            return (read.Blueprint, catalog, expanded);
+            return (blueprint, catalog, expanded);
         }
+
+        private static KeyValuePair<string, string> Pair(
+            string key,
+            string value) => new KeyValuePair<string, string>(key, value);
 
         private static PresentationEffectCatalog TestFlashCatalog(
             bool withMode = false) =>

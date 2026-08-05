@@ -10,12 +10,15 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using VirtualLab.Application.Courses;
 using VirtualLab.Chemistry.Authoring;
+using VirtualLab.Chemistry.Authoring.Catalogs;
 using VirtualLab.Chemistry.Configuration;
 using VirtualLab.Chemistry.UnityAdapters;
 using VirtualLab.Domain.Capabilities;
 using VirtualLab.Interaction.Capabilities;
 using VirtualLab.Unity.Authoring.Blueprints;
+using VirtualLab.Unity.Authoring.Catalogs;
 using VirtualLab.Unity.Authoring.Diagnostics;
+using VirtualLab.Unity.Authoring.Drafts;
 using VirtualLab.Unity.Authoring.Generation;
 using VirtualLab.Unity.Authoring.Normalized;
 using VirtualLab.Unity.Authoring.Recipes;
@@ -212,13 +215,29 @@ namespace VirtualLab.OxygenCourse.Authoring
         {
             var source = CourseBlueprintSource.FromDirectory(
                 Path.GetFullPath(AuthoringDirectory));
+            var read = new CourseAuthoringDraftReader().Read(source);
+            var platform = new CoreRecipePackageProvider();
+            var chemistry = new ChemistryRecipePackageProvider();
+            var authoringCatalog = CourseAuthoringCatalog.Create(new[]
+            {
+                new ChemistryCourseAuthoringProvider()
+            });
+            var recipeCatalog = RecipeCatalog.Create(
+                platform,
+                new IRecipePackageProvider[] { chemistry });
+            var expansion = read.Draft == null
+                ? null
+                : new CourseDraftExpander().Expand(
+                    read.Draft,
+                    authoringCatalog,
+                    recipeCatalog);
             var compilation = new CourseBlueprintCompiler().Compile(
-                source,
-                new CoreRecipePackageProvider(),
-                new IRecipePackageProvider[]
-                {
-                    new ChemistryRecipePackageProvider()
-                });
+                expansion?.Blueprint,
+                platform,
+                new IRecipePackageProvider[] { chemistry },
+                read.Diagnostics.Concat(
+                    expansion?.Diagnostics
+                    ?? Array.Empty<CourseCompilationDiagnostic>()));
             if (!compilation.IsSuccess)
             {
                 throw new InvalidOperationException(

@@ -15,18 +15,18 @@ namespace VirtualLab.Engine.Tests.Courses
         {
             "课程.csv",
             "实验对象.csv",
+            "组件.csv",
             "初始关系.csv",
-            "交互规则.csv",
-            "学科过程.csv",
-            "教学评价.csv",
-            "表现覆盖.csv",
-            "验收场景.csv",
-            "实验流程.csv",
-            "高级覆盖.csv"
+            "操作特例.csv",
+            "过程.csv",
+            "教学.csv",
+            "教学条件.csv",
+            "表现.csv",
+            "验收场景.csv"
         };
 
         [Test]
-        public void 课程作者目录只允许受支持的高层表且新旧流程表不能混用()
+        public void 课程作者目录只允许且必须包含十张职责表()
         {
             var errors = new List<string>();
             foreach (var directory in CourseAuthoringDirectories())
@@ -41,20 +41,9 @@ namespace VirtualLab.Engine.Tests.Courses
                 errors.AddRange(unknown.Select(name =>
                     $"{Relative(directory)} 包含旧表或未知表：{name}"));
 
-                if (!csvNames.Contains("课程.csv")
-                    || !csvNames.Contains("实验对象.csv"))
-                {
-                    errors.Add(
-                        $"{Relative(directory)} 缺少必需表：课程.csv 或 实验对象.csv");
-                }
-
-                if (csvNames.Contains("实验流程.csv")
-                    && (csvNames.Contains("教学评价.csv")
-                        || csvNames.Contains("验收场景.csv")))
-                {
-                    errors.Add(
-                        $"{Relative(directory)} 同时包含实验流程表和旧教学/验收表。");
-                }
+                errors.AddRange(AllowedCourseTables
+                    .Except(csvNames, StringComparer.Ordinal)
+                    .Select(name => $"{Relative(directory)} 缺少职责表：{name}"));
             }
 
             Assert.That(
@@ -64,14 +53,14 @@ namespace VirtualLab.Engine.Tests.Courses
         }
 
         [Test]
-        public void 生产课程学科过程使用一行一配置简表()
+        public void 生产课程过程表使用面向作者的选择器结构()
         {
             const string expectedHeader =
-                "配置标识,类型,配方,主体,来源,目标,操作名称,协议,参数";
+                "过程标识,过程类型,主体选择方式,主体选择值,来源选择方式,来源选择值,目标选择方式,目标选择值,参数";
             var errors = new List<string>();
             foreach (var directory in CourseAuthoringDirectories())
             {
-                var path = Path.Combine(directory, "学科过程.csv");
+                var path = Path.Combine(directory, "过程.csv");
                 if (!File.Exists(path))
                 {
                     continue;
@@ -85,17 +74,16 @@ namespace VirtualLab.Engine.Tests.Courses
                         StringComparison.Ordinal))
                 {
                     errors.Add(
-                        $"{Relative(path)} 未使用固定九列学科过程简表。");
+                        $"{Relative(path)} 未使用固定九列过程职责表。");
                 }
 
                 var content = File.ReadAllText(path);
-                if (content.Contains("参数.参数名")
-                    || content.Contains("参数.参数值")
+                if (content.Contains("学科配方")
                     || content.Contains("启动交互")
                     || content.Contains("停止交互"))
                 {
                     errors.Add(
-                        $"{Relative(path)} 仍包含旧的逐参数或内部交互列。");
+                        $"{Relative(path)} 仍包含内部配方或交互列。");
                 }
             }
 

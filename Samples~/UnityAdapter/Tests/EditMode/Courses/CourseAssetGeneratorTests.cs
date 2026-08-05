@@ -327,19 +327,32 @@ namespace VirtualLab.Engine.Tests.Courses
             UnityEngine.Object.DestroyImmediate(root);
         }
 
-        private static CourseBlueprintSource BlueprintSource(
-            string experimentPath) =>
-            new CourseBlueprintSource(new[]
-            {
-                new CourseBlueprintFile(
-                    "课程.csv",
-                    "课程ID,显示名称,学科配方包,实验Prefab\n"
-                    + $"蓝图生成测试,蓝图生成测试,测试学科,{experimentPath}\n"),
-                new CourseBlueprintFile(
-                    "实验对象.csv",
-                    "实体ID,显示名称,特征列表,初始位置,初始旋转\n"
-                    + "试管,试管,可夹持,0|0|0,0|0|0\n")
-            });
+        private static CourseBlueprint BlueprintSource(
+            string experimentPath)
+        {
+            var origin = CourseBlueprintTestFactory.Source(
+                "课程.csv", 2, "蓝图生成测试");
+            return new CourseBlueprint(
+                new CourseBlueprintCourse(
+                    "蓝图生成测试",
+                    "蓝图生成测试",
+                    new[] { "测试学科" },
+                    "学生",
+                    experimentPath,
+                    origin),
+                new[]
+                {
+                    CourseBlueprintTestFactory.Object(
+                        "试管", new[] { "可夹持" })
+                },
+                Array.Empty<CourseInitialRelationBlueprint>(),
+                Array.Empty<CourseInteractionRuleBlueprint>(),
+                Array.Empty<CourseDisciplineProcessBlueprint>(),
+                Array.Empty<CourseTeachingEvaluationBlueprint>(),
+                Array.Empty<CoursePresentationOverrideBlueprint>(),
+                Array.Empty<CourseAcceptanceRecordBlueprint>(),
+                Array.Empty<CourseAdvancedOverrideBlueprint>());
+        }
 
         private sealed class TestDisciplineProvider :
             IRecipePackageProvider

@@ -206,22 +206,10 @@ namespace VirtualLab.Engine.Tests.Courses
 
         private static CourseBlueprint ReadBlueprint(
             string entityId,
-            string features)
-        {
-            var source = new CourseBlueprintSource(new[]
-            {
-                new CourseBlueprintFile(
-                    "课程.csv",
-                    "课程ID,显示名称,学科配方包,实验Prefab\n"
-                    + "配方测试,配方测试,,环境.prefab\n"),
-                new CourseBlueprintFile(
-                    "实验对象.csv",
-                    "实体ID,显示名称,特征列表,初始位置,初始旋转\n"
-                    + $"{entityId},{entityId},{features},0|0|0,0|0|0\n")
-            });
-            var read = new CourseBlueprintReader().Read(source);
-            Assert.That(read.IsSuccess, Is.True);
-            return read.Blueprint;
-        }
+            string features) =>
+            CourseBlueprintTestFactory.Blueprint(
+                CourseBlueprintTestFactory.Object(
+                    entityId,
+                    features.Split('|')));
     }
 }
