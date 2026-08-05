@@ -38,12 +38,59 @@ namespace VirtualLab.Unity.Authoring.Workbench
         public IReadOnlyList<CoursePairingOperationSummary> Operations { get; }
     }
 
+    public sealed class CourseAuthoringReviewSummary
+    {
+        public CourseAuthoringReviewSummary(
+            int objectCount,
+            int actionCount,
+            int processCount,
+            bool? goalsReachable,
+            bool? prefabBindingsValid,
+            bool? executionModesRegistered)
+        {
+            ObjectCount = objectCount;
+            ActionCount = actionCount;
+            ProcessCount = processCount;
+            GoalsReachable = goalsReachable;
+            PrefabBindingsValid = prefabBindingsValid;
+            ExecutionModesRegistered = executionModesRegistered;
+        }
+
+        public int ObjectCount { get; }
+        public int ActionCount { get; }
+        public int ProcessCount { get; }
+        public bool? GoalsReachable { get; }
+        public bool? PrefabBindingsValid { get; }
+        public bool? ExecutionModesRegistered { get; }
+    }
+
     /// <summary>
     /// 从编译后的真实动作反推对象配对关系，避免工作台复制配方匹配规则。
     /// 新增配方、学科操作或课程覆盖后，总览会自动反映最终生成结果。
     /// </summary>
     public static class CoursePairingOverview
     {
+        public static CourseAuthoringReviewSummary BuildReview(
+            NormalizedCourseModel model,
+            int processCount,
+            bool goalsReachable,
+            bool prefabBindingsValid,
+            bool executionModesRegistered)
+        {
+            if (model == null)
+            {
+                throw new ArgumentNullException(nameof(model));
+            }
+
+            return new CourseAuthoringReviewSummary(
+                model.Entities.Count,
+                model.Actions.Count,
+                processCount,
+                goalsReachable,
+                prefabBindingsValid,
+                executionModesRegistered);
+        }
+
         public static IReadOnlyList<CoursePairingSummary> Build(
             IEnumerable<NormalizedItem<NormalizedActionDefinition>> actions,
             string selectedEntityId)
@@ -106,8 +153,7 @@ namespace VirtualLab.Unity.Authoring.Workbench
                 return new PairingCandidate(
                     definition.TargetEntityId,
                     true,
-                    CourseWorkbenchDisplayNames.ConfiguredItem(
-                        action.Identity.LocalKey),
+                    ConfiguredItem(action.Identity.LocalKey),
                     definition.PolicyEffect);
             }
 
@@ -119,12 +165,20 @@ namespace VirtualLab.Unity.Authoring.Workbench
                 return new PairingCandidate(
                     definition.SourceEntityId,
                     false,
-                    CourseWorkbenchDisplayNames.ConfiguredItem(
-                        action.Identity.LocalKey),
+                    ConfiguredItem(action.Identity.LocalKey),
                     definition.PolicyEffect);
             }
 
             return null;
+        }
+
+        private static string ConfiguredItem(string localKey)
+        {
+            var value = (localKey ?? string.Empty).Trim();
+            var separator = value.LastIndexOf('.');
+            return separator >= 0 && separator + 1 < value.Length
+                ? value.Substring(separator + 1)
+                : value;
         }
 
         private sealed class PairingCandidate

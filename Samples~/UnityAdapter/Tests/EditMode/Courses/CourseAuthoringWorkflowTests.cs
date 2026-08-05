@@ -78,6 +78,31 @@ namespace VirtualLab.Engine.Tests.Courses
                 Is.EqualTo("交互.关系.覆盖"));
         }
 
+        [Test]
+        public void 风险表单分别保存严重度继续方式和受影响目标()
+        {
+            _workflow.SetRisk(new RiskFormValue(
+                "风险.冷凝水倒吸",
+                "安全事故",
+                "重新开始",
+                new[] { "整个实验" }));
+
+            var risk = _workflow.Session.Draft.TeachingItems.Single();
+            Assert.That(risk.ErrorSeverity, Is.EqualTo("安全事故"));
+            Assert.That(risk.Continuation, Is.EqualTo("重新开始"));
+            Assert.That(risk.AffectedGoals.Split(';'),
+                Is.EqualTo(new[] { "整个实验" }));
+        }
+
+        [Test]
+        public void 普通操作表单不暴露状态操作协议()
+        {
+            Assert.That(_workflow.VisibleOperationFields,
+                Does.Not.Contain("协议操作"));
+            Assert.That(_workflow.VisibleOperationFields,
+                Does.Not.Contain("操作指令"));
+        }
+
         private static CourseAuthoringCatalog Catalog() =>
             CourseAuthoringCatalog.Create(new[]
             {
