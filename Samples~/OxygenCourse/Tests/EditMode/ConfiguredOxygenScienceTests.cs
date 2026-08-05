@@ -47,6 +47,70 @@ namespace VirtualLab.Engine.Tests.Courses
         }
 
         [Test]
+        public void 固定器材不可移动且试管夹和玻璃片保持自由配对能力()
+        {
+            var context = CreateRuntime();
+            var runtime = context.Runtime;
+
+            foreach (var fixedEntityId in new[]
+                     {
+                         "铁架台",
+                         "试管架",
+                         "升降台",
+                         "水槽",
+                         "废液缸"
+                     })
+            {
+                var grabFixedEntity = runtime.Session.Execute(Request(
+                    "命令.尝试移动." + fixedEntityId,
+                    CoreSemanticActionIds.Grab,
+                    fixedEntityId,
+                    null));
+                Assert.That(
+                    grabFixedEntity.IsAccepted,
+                    Is.False,
+                    fixedEntityId + "不应允许被操作者移动。");
+            }
+
+            Assert.That(
+                runtime.Session.Execute(Request(
+                    "命令.握住试管夹调节部位",
+                    CoreSemanticActionIds.Grab,
+                    "铁架台试管夹",
+                    null)).IsAccepted,
+                Is.True);
+            Assert.That(
+                runtime.Session.Execute(Request(
+                    "命令.上下移动并旋转试管夹",
+                    CoreSemanticActionIds.Position,
+                    "铁架台试管夹",
+                    "大试管",
+                    ("高度说明", StructuredValue.FromText("沿铁架台上下调节")),
+                    ("倾斜说明", StructuredValue.FromText("试管口略向下倾斜"))))
+                    .IsAccepted,
+                Is.True);
+            Assert.That(
+                runtime.Session.Execute(Request(
+                    "命令.松开试管夹调节部位",
+                    CoreSemanticActionIds.Release,
+                    "铁架台试管夹",
+                    null)).IsAccepted,
+                Is.True);
+
+            AssertCrossBottleCover(runtime, "玻璃片一", "集气瓶二");
+            AssertCrossBottleCover(runtime, "玻璃片二", "集气瓶一");
+
+            Assert.That(
+                context.World.Relations.Count(value =>
+                    value.Kind == RelationKind.覆盖对象
+                    && ((value.Source == new EntityId("玻璃片一")
+                         && value.Target == new EntityId("集气瓶二"))
+                        || (value.Source == new EntityId("玻璃片二")
+                            && value.Target == new EntityId("集气瓶一")))),
+                Is.EqualTo(2));
+        }
+
+        [Test]
         public void 酒精灯必须取帽划燃并持有火柴后才能点燃()
         {
             var runtime = CreateRuntime().Runtime;
@@ -726,6 +790,37 @@ namespace VirtualLab.Engine.Tests.Courses
                     context.Course.GoalRules.Select(
                         value => value.GoalId)));
             Assert.That(completed.CompletedGoalIds, Has.Count.EqualTo(8));
+        }
+
+        private static void AssertCrossBottleCover(
+            ChemistryCourseRuntime runtime,
+            string glassId,
+            string bottleId)
+        {
+            Assert.That(
+                runtime.Session.Execute(Request(
+                    "命令.拿起." + glassId,
+                    CoreSemanticActionIds.Grab,
+                    glassId,
+                    null)).IsAccepted,
+                Is.True);
+            var cover = runtime.Session.Execute(Request(
+                "命令.交叉覆盖." + glassId + "." + bottleId,
+                CoreSemanticActionIds.Cover,
+                glassId,
+                bottleId));
+            Assert.That(
+                cover.IsAccepted,
+                Is.True,
+                glassId + "应当可以覆盖" + bottleId + "："
+                + string.Join(",", cover.RejectionCodes));
+            Assert.That(
+                runtime.Session.Execute(Request(
+                    "命令.放下." + glassId,
+                    CoreSemanticActionIds.Release,
+                    glassId,
+                    null)).IsAccepted,
+                Is.True);
         }
 
         private static RuntimeContext CreateRuntime()
