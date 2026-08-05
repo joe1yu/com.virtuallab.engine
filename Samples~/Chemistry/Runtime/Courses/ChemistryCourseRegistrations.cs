@@ -71,6 +71,14 @@ namespace VirtualLab.Chemistry.Courses
             context.RegisterEventProjector(
                 "化学.事件投影.课程",
                 new ChemistryCourseEventProjector());
+            context.RegisterProcessAdvancer(
+                "化学.持续过程.课程",
+                world => new ChemistryCourseProcessAdvancer(
+                    world,
+                    _matterTransferOperations,
+                    _heatingOperations,
+                    _combustionOperations,
+                    _shakingOperations));
         }
     }
 
@@ -110,14 +118,17 @@ namespace VirtualLab.Chemistry.Courses
                 throw new ArgumentNullException(nameof(course));
             }
 
-            return CreateRuntimeDefinition(
-                course.ConfiguredActions,
-                course.ActionAssessments,
-                course.Assessments.Sum(value => value.MaximumScore),
+            var modules = CreateModuleScope(
                 matterTransferOperations,
                 combustionOperations,
                 heatingOperations,
                 shakingOperations);
+            modules.ValidateRequiredModules(course.RequiredModuleIds);
+            return new CourseRuntimeDefinition(
+                modules,
+                course.ConfiguredActions,
+                course.ActionAssessments,
+                course.Assessments.Sum(value => value.MaximumScore));
         }
 
         public static CourseRuntimeDefinition CreateRuntimeDefinition(

@@ -3,7 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
 using VirtualLab.Application.Courses;
+using VirtualLab.Application.Events;
 using VirtualLab.Domain;
+using VirtualLab.Domain.Processes;
+using VirtualLab.Kernel;
 
 namespace VirtualLab.Engine.Tests.Courses
 {
@@ -111,6 +114,56 @@ namespace VirtualLab.Engine.Tests.Courses
                 registry.Register(new Operation("另一个操作")));
         }
 
+        [Test]
+        public void 课程所需模块必须全部安装()
+        {
+            var scope = CourseRuntimeModuleScope.Create(
+                Module("基础", "基础模块", new Version(1, 0, 0)));
+
+            Assert.DoesNotThrow(() =>
+                scope.ValidateRequiredModules(new[] { "基础" }));
+            var exception = Assert.Throws<InvalidOperationException>(() =>
+                scope.ValidateRequiredModules(new[] { "基础", "化学" }));
+            Assert.That(exception.Message, Does.Contain("化学"));
+        }
+
+        [Test]
+        public void 多个模块的持续过程按照依赖顺序推进()
+        {
+            var calls = new List<string>();
+            var core = Module(
+                "基础",
+                "基础模块",
+                new Version(1, 0, 0),
+                context => context.RegisterProcessAdvancer(
+                    "基础.持续过程",
+                    _ => new RecordingProcessAdvancer(calls, "基础")));
+            var extension = new TestModule(
+                new CourseModuleManifest(
+                    "扩展",
+                    "扩展模块",
+                    new Version(1, 0, 0),
+                    new[]
+                    {
+                        new CourseModuleDependency(
+                            "基础",
+                            new Version(1, 0, 0))
+                    }),
+                context => context.RegisterProcessAdvancer(
+                    "扩展.持续过程",
+                    _ => new RecordingProcessAdvancer(calls, "扩展")));
+
+            var advancer = CourseRuntimeModuleScope
+                .Create(extension, core)
+                .CreateProcessAdvancer(new ExperimentWorld());
+            advancer.AdvanceProcesses(
+                0.1d,
+                new SimulationTick(1),
+                new EventCollector());
+
+            Assert.That(calls, Is.EqualTo(new[] { "基础", "扩展" }));
+        }
+
         private static ICourseRuntimeModule Module(
             string id,
             string displayName,
@@ -182,6 +235,29 @@ namespace VirtualLab.Engine.Tests.Courses
                 ExperimentWorld world,
                 ConfiguredMutationDefinition mutation)
             {
+            }
+        }
+
+        private sealed class RecordingProcessAdvancer :
+            ICourseProcessAdvancer
+        {
+            private readonly ICollection<string> _calls;
+            private readonly string _moduleId;
+
+            public RecordingProcessAdvancer(
+                ICollection<string> calls,
+                string moduleId)
+            {
+                _calls = calls;
+                _moduleId = moduleId;
+            }
+
+            public void AdvanceProcesses(
+                double elapsedSeconds,
+                SimulationTick tick,
+                IProcessEventCollector events)
+            {
+                _calls.Add(_moduleId);
             }
         }
     }

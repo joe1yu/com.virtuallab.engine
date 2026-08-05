@@ -65,8 +65,10 @@ namespace VirtualLab.Application.Courses
                 throw new ArgumentNullException(nameof(course));
             }
 
+            var modules = CreateModuleScope();
+            modules.ValidateRequiredModules(course.RequiredModuleIds);
             return new CourseRuntimeDefinition(
-                    CreateModuleScope(),
+                    modules,
                     course.ConfiguredActions,
                     course.ActionAssessments,
                     course.Assessments.Sum(value => value.MaximumScore))
@@ -88,6 +90,7 @@ namespace VirtualLab.Application.Courses
             }
 
             var modules = CreateModuleScope();
+            modules.ValidateRequiredModules(course.RequiredModuleIds);
             var session = new CourseRuntimeDefinition(
                     modules,
                     course.ConfiguredActions,

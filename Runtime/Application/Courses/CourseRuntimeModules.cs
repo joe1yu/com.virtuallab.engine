@@ -2,7 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using VirtualLab.Domain;
 using VirtualLab.Domain.Processes;
+using VirtualLab.Kernel;
 
 namespace VirtualLab.Application.Courses
 {
@@ -135,11 +137,11 @@ namespace VirtualLab.Application.Courses
                 projector);
         }
 
-        public void RegisterProcessHandler(
+        public void RegisterProcessAdvancer(
             string registrationId,
-            Func<IProcessHandler> factory)
+            Func<ExperimentWorld, ICourseProcessAdvancer> factory)
         {
-            _builder.RegisterProcessHandler(
+            _builder.RegisterProcessAdvancer(
                 ModuleId,
                 registrationId,
                 factory);
@@ -154,14 +156,17 @@ namespace VirtualLab.Application.Courses
     {
         private readonly IReadOnlyList<
             Action<ConfiguredStateOperationRegistry>> _stateRegistrations;
-        private readonly IReadOnlyList<Func<IProcessHandler>> _processFactories;
+        private readonly IReadOnlyList<
+            Func<ExperimentWorld, ICourseProcessAdvancer>>
+            _processFactories;
 
         internal CourseRuntimeModuleScope(
             IEnumerable<CourseModuleManifest> manifests,
             IEnumerable<IStructuredFactReader> factReaders,
             IEnumerable<Action<ConfiguredStateOperationRegistry>> stateRegistrations,
             IEnumerable<ICourseEventProjector> eventProjectors,
-            IEnumerable<Func<IProcessHandler>> processFactories)
+            IEnumerable<Func<ExperimentWorld, ICourseProcessAdvancer>>
+                processFactories)
         {
             Manifests = new ReadOnlyCollection<CourseModuleManifest>(
                 manifests.ToArray());
@@ -172,7 +177,8 @@ namespace VirtualLab.Application.Courses
             _stateRegistrations = new ReadOnlyCollection<
                 Action<ConfiguredStateOperationRegistry>>(
                 stateRegistrations.ToArray());
-            _processFactories = new ReadOnlyCollection<Func<IProcessHandler>>(
+            _processFactories = new ReadOnlyCollection<
+                Func<ExperimentWorld, ICourseProcessAdvancer>>(
                 processFactories.ToArray());
         }
 
@@ -200,14 +206,70 @@ namespace VirtualLab.Application.Courses
             return registry;
         }
 
-        public IReadOnlyList<IProcessHandler> CreateProcessHandlers()
+        public ICourseProcessAdvancer CreateProcessAdvancer(
+            ExperimentWorld world)
         {
-            var handlers = _processFactories
-                .Select(factory => factory()
+            if (world == null)
+            {
+                throw new ArgumentNullException(nameof(world));
+            }
+
+            var advancers = _processFactories
+                .Select(factory => factory(world)
                     ?? throw new InvalidOperationException(
-                        "过程处理器工厂返回了空值。"))
+                        "过程推进器工厂返回了空值。"))
                 .ToArray();
-            return new ReadOnlyCollection<IProcessHandler>(handlers);
+            return advancers.Length == 0
+                ? null
+                : new CompositeCourseProcessAdvancer(advancers);
+        }
+
+        public void ValidateRequiredModules(IEnumerable<string> requiredModuleIds)
+        {
+            var required = CourseContractGuard.CopyStrings(
+                requiredModuleIds,
+                "课程所需模块");
+            if (required.Count == 0)
+            {
+                throw new InvalidOperationException("课程没有声明所需模块。");
+            }
+
+            var installed = new HashSet<string>(
+                Manifests.Select(value => value.ModuleId),
+                StringComparer.Ordinal);
+            var missing = required
+                .Where(value => !installed.Contains(value))
+                .OrderBy(value => value, StringComparer.Ordinal)
+                .ToArray();
+            if (missing.Length > 0)
+            {
+                throw new InvalidOperationException(
+                    $"课程缺少运行时模块：{string.Join("、", missing)}。");
+            }
+        }
+
+        private sealed class CompositeCourseProcessAdvancer :
+            ICourseProcessAdvancer
+        {
+            private readonly IReadOnlyList<ICourseProcessAdvancer> _advancers;
+
+            public CompositeCourseProcessAdvancer(
+                IEnumerable<ICourseProcessAdvancer> advancers)
+            {
+                _advancers = new ReadOnlyCollection<ICourseProcessAdvancer>(
+                    advancers.ToArray());
+            }
+
+            public void AdvanceProcesses(
+                double elapsedSeconds,
+                SimulationTick tick,
+                IProcessEventCollector events)
+            {
+                foreach (var advancer in _advancers)
+                {
+                    advancer.AdvanceProcesses(elapsedSeconds, tick, events);
+                }
+            }
         }
     }
 
@@ -221,8 +283,10 @@ namespace VirtualLab.Application.Courses
         private readonly Dictionary<string, OwnedEventProjector>
             _eventProjectors = new Dictionary<string, OwnedEventProjector>(
                 StringComparer.Ordinal);
-        private readonly Dictionary<string, OwnedProcessFactory>
-            _processFactories = new Dictionary<string, OwnedProcessFactory>(
+        private readonly Dictionary<string, OwnedProcessAdvancerFactory>
+            _processFactories = new Dictionary<
+                string,
+                OwnedProcessAdvancerFactory>(
                 StringComparer.Ordinal);
         private bool _isFrozen;
 
@@ -344,10 +408,10 @@ namespace VirtualLab.Application.Courses
                 "事件投影器");
         }
 
-        public void RegisterProcessHandler(
+        public void RegisterProcessAdvancer(
             string moduleId,
             string registrationId,
-            Func<IProcessHandler> factory)
+            Func<ExperimentWorld, ICourseProcessAdvancer> factory)
         {
             EnsureMutable();
             if (factory == null)
@@ -359,8 +423,8 @@ namespace VirtualLab.Application.Courses
                 _processFactories,
                 moduleId,
                 registrationId,
-                new OwnedProcessFactory(moduleId, factory),
-                "过程处理器");
+                new OwnedProcessAdvancerFactory(moduleId, factory),
+                "过程推进器");
         }
 
         private void EnsureMutable()
@@ -499,9 +563,11 @@ namespace VirtualLab.Application.Courses
             public ICourseEventProjector Projector { get; }
         }
 
-        private sealed class OwnedProcessFactory : IOwnedRegistration
+        private sealed class OwnedProcessAdvancerFactory : IOwnedRegistration
         {
-            public OwnedProcessFactory(string moduleId, Func<IProcessHandler> factory)
+            public OwnedProcessAdvancerFactory(
+                string moduleId,
+                Func<ExperimentWorld, ICourseProcessAdvancer> factory)
             {
                 ModuleId = moduleId;
                 Factory = factory;
@@ -509,7 +575,10 @@ namespace VirtualLab.Application.Courses
 
             public string ModuleId { get; }
 
-            public Func<IProcessHandler> Factory { get; }
+            public Func<ExperimentWorld, ICourseProcessAdvancer> Factory
+            {
+                get;
+            }
         }
     }
 }

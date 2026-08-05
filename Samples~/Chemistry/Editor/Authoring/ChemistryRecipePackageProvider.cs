@@ -60,6 +60,9 @@ namespace VirtualLab.Chemistry.Authoring
 
         public string PackageId => Id;
 
+        public IReadOnlyList<string> RequiredRuntimeModuleIds { get; } =
+            new[] { ChemistryModuleIds.Chemistry };
+
         public RecipePackage Load()
         {
             var authoringRoot = Path.Combine(

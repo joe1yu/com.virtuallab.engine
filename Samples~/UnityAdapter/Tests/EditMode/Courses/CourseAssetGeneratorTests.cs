@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using NUnit.Framework;
@@ -351,6 +352,9 @@ namespace VirtualLab.Engine.Tests.Courses
             }
 
             public string PackageId => "测试学科";
+
+            public IReadOnlyList<string> RequiredRuntimeModuleIds { get; } =
+                new[] { CourseModuleIds.Core };
 
             public RecipePackage Load() =>
                 new RecipePackage(

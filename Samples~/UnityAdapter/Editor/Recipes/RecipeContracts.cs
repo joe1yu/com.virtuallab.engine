@@ -211,6 +211,7 @@ namespace VirtualLab.Unity.Authoring.Recipes
     public interface IRecipePackageProvider
     {
         string PackageId { get; }
+        IReadOnlyList<string> RequiredRuntimeModuleIds { get; }
         RecipePackage Load();
     }
 

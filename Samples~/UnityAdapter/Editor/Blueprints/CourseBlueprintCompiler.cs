@@ -169,7 +169,11 @@ namespace VirtualLab.Unity.Authoring.Blueprints
                 return Result();
             }
 
-            ValidateBlueprintPackages(blueprint, disciplines, diagnostics);
+            ValidateBlueprintPackages(
+                blueprint,
+                platform,
+                disciplines,
+                diagnostics);
             stages.Add(CourseBlueprintCompilationStage.BlueprintValidation);
             if (HasErrors(diagnostics))
             {
@@ -223,7 +227,11 @@ namespace VirtualLab.Unity.Authoring.Blueprints
 
             try
             {
-                domain = BuildDomain(blueprint, normalized, diagnostics);
+                domain = BuildDomain(
+                    blueprint,
+                    normalized,
+                    RuntimeModuleIds(platform, disciplines),
+                    diagnostics);
                 presentation = BuildPresentation(normalized, diagnostics);
             }
             catch (Exception exception)
@@ -268,6 +276,7 @@ namespace VirtualLab.Unity.Authoring.Blueprints
 
         private static void ValidateBlueprintPackages(
             CourseBlueprint blueprint,
+            IRecipePackageProvider platform,
             IReadOnlyList<IRecipePackageProvider> disciplines,
             ICollection<CourseCompilationDiagnostic> diagnostics)
         {
@@ -312,6 +321,34 @@ namespace VirtualLab.Unity.Authoring.Blueprints
                     $"传入的学科配方包“{extra}”未被课程选择。",
                     "在课程.csv 声明该学科包，或从编译参数移除。"));
             }
+
+            foreach (var provider in new[] { platform }.Concat(disciplines))
+            {
+                if (provider?.RequiredRuntimeModuleIds == null
+                    || provider.RequiredRuntimeModuleIds.Count == 0
+                    || provider.RequiredRuntimeModuleIds.Any(
+                        string.IsNullOrWhiteSpace))
+                {
+                    diagnostics.Add(Diagnostic(
+                        "blueprint.runtime-module.missing",
+                        blueprint.Course.Source,
+                        provider?.PackageId ?? string.Empty,
+                        $"配方包“{provider?.PackageId}”没有声明所需运行时模块。",
+                        "由配方包提供者声明至少一个稳定的运行时模块标识。"));
+                }
+            }
+        }
+
+        private static IReadOnlyList<string> RuntimeModuleIds(
+            IRecipePackageProvider platform,
+            IEnumerable<IRecipePackageProvider> disciplines)
+        {
+            return new[] { platform }
+                .Concat(disciplines)
+                .SelectMany(value => value.RequiredRuntimeModuleIds)
+                .Distinct(StringComparer.Ordinal)
+                .OrderBy(value => value, StringComparer.Ordinal)
+                .ToArray();
         }
 
         private static void ValidatePrefabContracts(
@@ -337,6 +374,7 @@ namespace VirtualLab.Unity.Authoring.Blueprints
         private static CompiledCourseDefinition BuildDomain(
             CourseBlueprint blueprint,
             NormalizedCourseModel model,
+            IEnumerable<string> requiredModuleIds,
             ICollection<CourseCompilationDiagnostic> diagnostics)
         {
             var runtimeRules = BuildRules(model.Rules, diagnostics);
@@ -647,6 +685,7 @@ namespace VirtualLab.Unity.Authoring.Blueprints
                 blueprint.Course.CourseId,
                 blueprint.Course.ActorEntityId,
                 blueprint.Course.DisciplinePackageIds,
+                requiredModuleIds,
                 CourseResourceIds.ExperimentPrefab,
                 entities,
                 actionPolicies,

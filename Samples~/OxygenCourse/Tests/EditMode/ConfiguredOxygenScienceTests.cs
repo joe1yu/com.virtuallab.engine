@@ -339,7 +339,7 @@ namespace VirtualLab.Engine.Tests.Courses
                     "大试管",
                     ("请求流量克每秒",
                         StructuredValue.FromNumber(632d))));
-            runtime.Advance(
+            runtime.ProcessAdvancer.AdvanceProcesses(
                 1d,
                 new SimulationTick(1),
                 events);
@@ -349,7 +349,7 @@ namespace VirtualLab.Engine.Tests.Courses
                     ChemistrySemanticActionIds.BeginHeating,
                     "大试管",
                     "酒精灯"));
-            runtime.Advance(
+            runtime.ProcessAdvancer.AdvanceProcesses(
                 600d,
                 new SimulationTick(2),
                 events);
@@ -402,7 +402,7 @@ namespace VirtualLab.Engine.Tests.Courses
                         "木炭",
                         "酒精灯")).IsAccepted,
                 Is.True);
-            runtime.Advance(
+            runtime.ProcessAdvancer.AdvanceProcesses(
                 200d,
                 new SimulationTick(6),
                 events);
@@ -414,7 +414,7 @@ namespace VirtualLab.Engine.Tests.Courses
                     "酒精灯",
                     ("空间距离米",
                         StructuredValue.FromNumber(0.1d))));
-            runtime.Advance(
+            runtime.ProcessAdvancer.AdvanceProcesses(
                 1d,
                 new SimulationTick(7),
                 events);
@@ -429,7 +429,7 @@ namespace VirtualLab.Engine.Tests.Courses
                 ironHeating.IsAccepted,
                 Is.True,
                 string.Join(",", ironHeating.RejectionCodes));
-            runtime.Advance(
+            runtime.ProcessAdvancer.AdvanceProcesses(
                 200d,
                 new SimulationTick(8),
                 events);
@@ -441,7 +441,7 @@ namespace VirtualLab.Engine.Tests.Courses
                     "组合引燃火柴",
                     ("空间距离米",
                         StructuredValue.FromNumber(0.1d))));
-            runtime.Advance(
+            runtime.ProcessAdvancer.AdvanceProcesses(
                 1d,
                 new SimulationTick(9),
                 events);
@@ -515,7 +515,7 @@ namespace VirtualLab.Engine.Tests.Courses
                     "集气瓶一",
                     ("请求流量毫升每秒",
                         StructuredValue.FromNumber(10d))));
-            runtime.Advance(
+            runtime.ProcessAdvancer.AdvanceProcesses(
                 1d,
                 new SimulationTick(10),
                 events);
@@ -534,7 +534,7 @@ namespace VirtualLab.Engine.Tests.Courses
                     null,
                     ("强度", StructuredValue.FromNumber(1d)),
                     ("持续秒数", StructuredValue.FromNumber(1d))));
-            runtime.Advance(
+            runtime.ProcessAdvancer.AdvanceProcesses(
                 1d,
                 new SimulationTick(11),
                 events);
@@ -712,7 +712,10 @@ namespace VirtualLab.Engine.Tests.Courses
                             StructuredValue.FromNumber(10d))))
                     .IsAccepted,
                 Is.True);
-            runtime.Advance(1d, new SimulationTick(10), events);
+            runtime.ProcessAdvancer.AdvanceProcesses(
+                1d,
+                new SimulationTick(10),
+                events);
             var heldBottle = runtime.Session.Execute(
                 Request(
                     "命令.握持集气瓶一",
@@ -736,7 +739,10 @@ namespace VirtualLab.Engine.Tests.Courses
                             StructuredValue.FromNumber(1d))))
                     .IsAccepted,
                 Is.True);
-            runtime.Advance(1d, new SimulationTick(11), events);
+            runtime.ProcessAdvancer.AdvanceProcesses(
+                1d,
+                new SimulationTick(11),
+                events);
 
             Assert.That(
                 runtime.Session.Execute(
@@ -746,7 +752,10 @@ namespace VirtualLab.Engine.Tests.Courses
                         "火柴铁丝组合",
                         "组合引燃火柴")).IsAccepted,
                 Is.True);
-            runtime.Advance(200d, new SimulationTick(12), events);
+            runtime.ProcessAdvancer.AdvanceProcesses(
+                200d,
+                new SimulationTick(12),
+                events);
             Assert.That(
                 runtime.Session.Execute(
                     Request(
@@ -758,7 +767,10 @@ namespace VirtualLab.Engine.Tests.Courses
                             StructuredValue.FromNumber(0.1d))))
                     .IsAccepted,
                 Is.True);
-            runtime.Advance(1d, new SimulationTick(13), events);
+            runtime.ProcessAdvancer.AdvanceProcesses(
+                1d,
+                new SimulationTick(13),
+                events);
             Assert.That(
                 runtime.Session.Execute(
                     Request(
@@ -888,7 +900,10 @@ namespace VirtualLab.Engine.Tests.Courses
                             StructuredValue.FromNumber(632d))))
                     .IsAccepted,
                 Is.True);
-            runtime.Advance(1d, new SimulationTick(1), events);
+            runtime.ProcessAdvancer.AdvanceProcesses(
+                1d,
+                new SimulationTick(1),
+                events);
             Assert.That(
                 runtime.Session.Execute(
                     Request(
@@ -897,8 +912,14 @@ namespace VirtualLab.Engine.Tests.Courses
                         "大试管",
                         "酒精灯")).IsAccepted,
                 Is.True);
-            runtime.Advance(600d, new SimulationTick(2), events);
-            runtime.Advance(1d, new SimulationTick(3), events);
+            runtime.ProcessAdvancer.AdvanceProcesses(
+                600d,
+                new SimulationTick(2),
+                events);
+            runtime.ProcessAdvancer.AdvanceProcesses(
+                1d,
+                new SimulationTick(3),
+                events);
 
             FillBottle(runtime, events, "集气瓶一", 4);
             FillBottle(runtime, events, "集气瓶二", 5);
@@ -1029,7 +1050,10 @@ namespace VirtualLab.Engine.Tests.Courses
                 result.IsAccepted,
                 Is.True,
                 string.Join(",", result.RejectionCodes));
-            runtime.Advance(1d, new SimulationTick(tick), events);
+            runtime.ProcessAdvancer.AdvanceProcesses(
+                1d,
+                new SimulationTick(tick),
+                events);
             Assert.That(
                 runtime.Session.Execute(
                     Request(
@@ -1070,7 +1094,10 @@ namespace VirtualLab.Engine.Tests.Courses
                         "木炭",
                         "酒精灯")).IsAccepted,
                 Is.True);
-            runtime.Advance(200d, new SimulationTick(6), events);
+            runtime.ProcessAdvancer.AdvanceProcesses(
+                200d,
+                new SimulationTick(6),
+                events);
             Assert.That(
                 runtime.Session.Execute(
                     Request(
@@ -1082,7 +1109,10 @@ namespace VirtualLab.Engine.Tests.Courses
                             StructuredValue.FromNumber(0.1d))))
                     .IsAccepted,
                 Is.True);
-            runtime.Advance(1d, new SimulationTick(7), events);
+            runtime.ProcessAdvancer.AdvanceProcesses(
+                1d,
+                new SimulationTick(7),
+                events);
             Assert.That(
                 runtime.Session.Execute(
                     Request(

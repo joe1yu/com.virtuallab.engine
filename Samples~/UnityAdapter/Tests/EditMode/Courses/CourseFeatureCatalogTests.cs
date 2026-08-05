@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
+using VirtualLab.Application.Courses;
 using VirtualLab.Unity.Authoring.Recipes;
 using VirtualLab.Unity.Authoring.Workbench;
 
@@ -113,6 +115,8 @@ namespace VirtualLab.Engine.Tests.Courses
             }
 
             public string PackageId => _package.PackageId;
+            public IReadOnlyList<string> RequiredRuntimeModuleIds { get; } =
+                new[] { CourseModuleIds.Core };
             public RecipePackage Load() => _package;
         }
     }

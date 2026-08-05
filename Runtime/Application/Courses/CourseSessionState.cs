@@ -33,6 +33,8 @@ namespace VirtualLab.Application.Courses
         private readonly int _maximumScore;
         private readonly Func<ConfiguredStateOperationRegistry> _registryFactory;
         private readonly IReadOnlyList<ICourseEventProjector> _eventProjectors;
+        private readonly Func<ExperimentWorld, ICourseProcessAdvancer>
+            _processAdvancerFactory;
 
         public CourseRuntimeDefinition(
             CourseRuntimeModuleScope modules,
@@ -46,7 +48,8 @@ namespace VirtualLab.Application.Courses
                 actionAssessments,
                 maximumScore,
                 modules.CreateStateOperationRegistry,
-                modules.EventProjectors)
+                modules.EventProjectors,
+                modules.CreateProcessAdvancer)
         {
         }
 
@@ -83,7 +86,9 @@ namespace VirtualLab.Application.Courses
             IEnumerable<CourseActionAssessmentDefinition> actionAssessments,
             int maximumScore,
             Func<ConfiguredStateOperationRegistry> registryFactory,
-            IEnumerable<ICourseEventProjector> eventProjectors = null)
+            IEnumerable<ICourseEventProjector> eventProjectors = null,
+            Func<ExperimentWorld, ICourseProcessAdvancer>
+                processAdvancerFactory = null)
         {
             _readers = (readers
                 ?? throw new ArgumentNullException(nameof(readers))).ToArray();
@@ -102,6 +107,7 @@ namespace VirtualLab.Application.Courses
                 ?? throw new ArgumentNullException(nameof(registryFactory));
             _eventProjectors = (eventProjectors
                 ?? Array.Empty<ICourseEventProjector>()).ToArray();
+            _processAdvancerFactory = processAdvancerFactory;
         }
 
         public ConfigDrivenCourseSession CreateSession(ExperimentWorld world)
@@ -110,6 +116,17 @@ namespace VirtualLab.Application.Courses
         }
 
         public IReadOnlyList<IStructuredFactReader> FactReaders => _readers;
+
+        public ICourseProcessAdvancer CreateProcessAdvancer(
+            ExperimentWorld world)
+        {
+            if (world == null)
+            {
+                throw new ArgumentNullException(nameof(world));
+            }
+
+            return _processAdvancerFactory?.Invoke(world);
+        }
 
         internal ConfigDrivenCourseSession CreateSession(
             ExperimentWorld world,

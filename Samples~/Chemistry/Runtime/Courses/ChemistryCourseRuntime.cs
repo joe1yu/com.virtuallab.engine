@@ -13,10 +13,10 @@ using VirtualLab.Kernel;
 namespace VirtualLab.Chemistry.Courses
 {
     /// <summary>
-    /// 将通用课程会话与化学配置组合起来，并统一推进化学持续过程。
-    /// 课程 ID、实体组合和实验阈值全部来自传入配置。
+    /// 按课程时钟顺序推进化学模块拥有的持续过程。
     /// </summary>
-    public sealed class ChemistryCourseRuntime : ICourseProcessAdvancer
+    internal sealed class ChemistryCourseProcessAdvancer :
+        ICourseProcessAdvancer
     {
         private readonly ExperimentWorld _world;
         private readonly MatterTransferOperations _matterTransfer;
@@ -24,23 +24,58 @@ namespace VirtualLab.Chemistry.Courses
         private readonly CombustionOperations _combustion;
         private readonly ShakingOperations _shaking;
 
-        private ChemistryCourseRuntime(
+        public ChemistryCourseProcessAdvancer(
             ExperimentWorld world,
-            ConfigDrivenCourseSession session,
             MatterTransferOperations matterTransfer,
             HeatingProcessOperations heating,
             CombustionOperations combustion,
             ShakingOperations shaking)
         {
-            _world = world;
-            Session = session;
+            _world = world ?? throw new ArgumentNullException(nameof(world));
             _matterTransfer = matterTransfer;
             _heating = heating;
             _combustion = combustion;
             _shaking = shaking;
         }
 
+        public void AdvanceProcesses(
+            double elapsedSeconds,
+            SimulationTick tick,
+            IProcessEventCollector events)
+        {
+            if (events == null)
+            {
+                throw new ArgumentNullException(nameof(events));
+            }
+
+            _matterTransfer?.Advance(_world, elapsedSeconds, tick, events);
+            _heating?.Advance(_world, elapsedSeconds, tick, events);
+            _combustion?.Advance(_world, elapsedSeconds, tick, events);
+            _shaking?.Advance(_world, tick, events);
+        }
+    }
+
+    /// <summary>
+    /// 将通用课程会话与化学配置组合起来，并统一推进化学持续过程。
+    /// 课程 ID、实体组合和实验阈值全部来自传入配置。
+    /// </summary>
+    public sealed class ChemistryCourseRuntime
+    {
+        private ChemistryCourseRuntime(
+            ConfigDrivenCourseSession session,
+            ICourseProcessAdvancer processAdvancer)
+        {
+            Session = session;
+            ProcessAdvancer = processAdvancer;
+        }
+
         public ConfigDrivenCourseSession Session { get; }
+
+        /// <summary>
+        /// 暴露模块组合后的持续过程推进器，供自行管理模拟时钟的独立宿主调用。
+        /// 正式运行平台应通过 <see cref="Facade"/> 推进课程时间。
+        /// </summary>
+        public ICourseProcessAdvancer ProcessAdvancer { get; }
 
         public CourseRuntimeFacade Facade { get; private set; }
 
@@ -84,44 +119,15 @@ namespace VirtualLab.Chemistry.Courses
                     heating,
                     shaking);
             var session = runtimeDefinition.CreateSession(world);
-            var runtime = new ChemistryCourseRuntime(
-                world,
-                session,
-                matterTransfer,
-                heating,
-                combustion,
-                shaking);
+            var processAdvancer = runtimeDefinition.CreateProcessAdvancer(world);
+            var runtime = new ChemistryCourseRuntime(session, processAdvancer);
             runtime.Facade = new CourseRuntimeFacade(
                 world,
                 session,
                 runtimeDefinition.FactReaders,
                 course.GoalRules,
-                runtime);
+                processAdvancer);
             return runtime;
-        }
-
-        public void Advance(
-            double elapsedSeconds,
-            SimulationTick tick,
-            IProcessEventCollector events)
-        {
-            AdvanceProcesses(elapsedSeconds, tick, events);
-        }
-
-        public void AdvanceProcesses(
-            double elapsedSeconds,
-            SimulationTick tick,
-            IProcessEventCollector events)
-        {
-            if (events == null)
-            {
-                throw new ArgumentNullException(nameof(events));
-            }
-
-            _matterTransfer.Advance(_world, elapsedSeconds, tick, events);
-            _heating.Advance(_world, elapsedSeconds, tick, events);
-            _combustion.Advance(_world, elapsedSeconds, tick, events);
-            _shaking.Advance(_world, tick, events);
         }
 
         private static void ApplyConfiguration(

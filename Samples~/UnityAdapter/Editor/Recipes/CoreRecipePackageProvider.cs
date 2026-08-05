@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
+using VirtualLab.Application.Courses;
 using UnityEditor.Compilation;
 
 namespace VirtualLab.Unity.Authoring.Recipes
@@ -12,6 +14,9 @@ namespace VirtualLab.Unity.Authoring.Recipes
         private const string Id = "平台通用";
 
         public string PackageId => Id;
+
+        public IReadOnlyList<string> RequiredRuntimeModuleIds { get; } =
+            new[] { CourseModuleIds.Core };
 
         public RecipePackage Load()
         {

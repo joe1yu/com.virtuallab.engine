@@ -23,6 +23,7 @@ namespace VirtualLab.Application.Courses
                 courseId,
                 "学生",
                 Array.Empty<string>(),
+                new[] { CourseModuleIds.Core },
                 experimentPrefabResourceId,
                 entities,
                 actionPolicies,
@@ -47,6 +48,7 @@ namespace VirtualLab.Application.Courses
             string courseId,
             string actorEntityId,
             IEnumerable<string> disciplinePackageIds,
+            IEnumerable<string> requiredModuleIds,
             string experimentPrefabResourceId,
             IEnumerable<CourseEntityDefinition> entities,
             IEnumerable<ActionPolicyDefinition> actionPolicies,
@@ -79,6 +81,19 @@ namespace VirtualLab.Application.Courses
                 .Distinct(StringComparer.Ordinal)
                 .OrderBy(value => value, StringComparer.Ordinal)
                 .ToArray());
+            RequiredModuleIds = new ReadOnlyCollection<string>(
+                CourseContractGuard.CopyStrings(
+                        requiredModuleIds,
+                        "课程所需模块")
+                    .Distinct(StringComparer.Ordinal)
+                    .OrderBy(value => value, StringComparer.Ordinal)
+                    .ToArray());
+            if (RequiredModuleIds.Count == 0)
+            {
+                throw new ArgumentException("课程至少需要声明一个运行时模块。",
+                    nameof(requiredModuleIds));
+            }
+
             ExperimentPrefabResourceId = CourseContractGuard.Optional(
                 experimentPrefabResourceId);
             Entities = CourseContractGuard.CopyUnique(
@@ -156,6 +171,8 @@ namespace VirtualLab.Application.Courses
         public string ActorEntityId { get; }
 
         public IReadOnlyList<string> DisciplinePackageIds { get; }
+
+        public IReadOnlyList<string> RequiredModuleIds { get; }
 
         public string ExperimentPrefabResourceId { get; }
 

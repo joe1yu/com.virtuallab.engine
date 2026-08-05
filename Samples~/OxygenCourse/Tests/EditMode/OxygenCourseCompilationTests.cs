@@ -7,6 +7,7 @@ using UnityEditor;
 using UnityEngine;
 using VirtualLab.Application.Courses;
 using VirtualLab.Chemistry.Authoring;
+using VirtualLab.Chemistry.Courses;
 using VirtualLab.OxygenCourse.Authoring;
 using VirtualLab.UnityAdapters.Courses;
 using VirtualLab.UnityAdapters.Authoring;
@@ -43,6 +44,13 @@ namespace VirtualLab.Engine.Tests.Courses
                         + value.Definition.SourceEntityId + "|"
                         + value.Definition.TargetEntityId)));
             Assert.That(result.IsSuccess, Is.True);
+            Assert.That(
+                result.Domain.RequiredModuleIds,
+                Is.EquivalentTo(new[]
+                {
+                    CourseModuleIds.Core,
+                    ChemistryModuleIds.Chemistry
+                }));
             var suckBack = result.Domain.ActionAssessments.Single(value =>
                 value.RiskId == "风险.冷凝水倒吸");
             Assert.That(
