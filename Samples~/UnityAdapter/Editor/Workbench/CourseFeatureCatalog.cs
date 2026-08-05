@@ -168,7 +168,7 @@ namespace VirtualLab.Unity.Authoring.Workbench
 
             // “容器”等基础能力不会单独生成动作，因此不会作为配方匹配特征出现。
             // 它们仍是合法课程特征，必须进入工作台目录，不能被误报成未知标签。
-            foreach (var capabilityName in CoreCapabilityIds.All)
+            foreach (var capabilityName in InteractionCapabilityIds.All)
             {
                 Builder(builders, capabilityName).MarkRegisteredCapability();
             }

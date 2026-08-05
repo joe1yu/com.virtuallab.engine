@@ -403,7 +403,7 @@ namespace VirtualLab.OxygenCourse.Authoring
                     SemanticAnchorKind.ConnectionPort);
             }
 
-            if (capabilities.Contains(CoreCapabilityIds.Connector)
+            if (capabilities.Contains(InteractionCapabilityIds.Connector)
                 && contract.PortIds.Count == 0)
             {
                 AddAnchor(
@@ -436,7 +436,7 @@ namespace VirtualLab.OxygenCourse.Authoring
                     SemanticAnchorKind.IgnitionPoint);
             }
 
-            if (capabilities.Contains(CoreCapabilityIds.Observable))
+            if (capabilities.Contains(InteractionCapabilityIds.Observable))
             {
                 AddAnchor(
                     root,
@@ -454,8 +454,8 @@ namespace VirtualLab.OxygenCourse.Authoring
                 contract.CapabilityIds,
                 StringComparer.Ordinal);
             var needsContent =
-                capabilities.Contains(CoreCapabilityIds.Container) ||
-                capabilities.Contains(CoreCapabilityIds.Observable);
+                capabilities.Contains(InteractionCapabilityIds.Container) ||
+                capabilities.Contains(InteractionCapabilityIds.Observable);
             if (needsContent)
             {
                 EnsureSlot(

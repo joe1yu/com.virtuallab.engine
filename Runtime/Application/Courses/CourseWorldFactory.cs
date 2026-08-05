@@ -69,14 +69,14 @@ namespace VirtualLab.Application.Courses
         {
             return capabilityId switch
             {
-                CoreCapabilityIds.Grabbable => new GrabbableCapability(),
-                CoreCapabilityIds.Container => new ContainerCapability(0m),
-                CoreCapabilityIds.Connector =>
+                InteractionCapabilityIds.Grabbable => new GrabbableCapability(),
+                InteractionCapabilityIds.Container => new ContainerCapability(0m),
+                InteractionCapabilityIds.Connector =>
                     new ConnectorCapability(ports),
-                CoreCapabilityIds.Observable => new ObservableCapability(),
-                CoreCapabilityIds.Clampable => new ClampableCapability(),
-                CoreCapabilityIds.Coverable => new CoverableCapability(),
-                CoreCapabilityIds.Breakable => new BreakableCapability(),
+                InteractionCapabilityIds.Observable => new ObservableCapability(),
+                InteractionCapabilityIds.Clampable => new ClampableCapability(),
+                InteractionCapabilityIds.Coverable => new CoverableCapability(),
+                InteractionCapabilityIds.Breakable => new BreakableCapability(),
                 _ => new ConfiguredCapability(capabilityId)
             };
         }

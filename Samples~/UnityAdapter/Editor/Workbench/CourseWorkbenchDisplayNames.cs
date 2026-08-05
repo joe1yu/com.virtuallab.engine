@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using VirtualLab.Domain.Capabilities;
 using VirtualLab.Unity.Authoring.Recipes;
 
 namespace VirtualLab.Unity.Authoring.Workbench
@@ -30,16 +31,16 @@ namespace VirtualLab.Unity.Authoring.Workbench
         private static readonly IReadOnlyDictionary<string, string> Features =
             new Dictionary<string, string>(StringComparer.Ordinal)
             {
-                ["容器"] = "可容纳物质",
-                ["可夹持"] = "固定不移动",
-                ["可连接"] = "可作为连接发起端",
-                ["可连接"] = "可作为连接接收端",
+                [InteractionCapabilityIds.Container] = "可容纳物质",
+                [InteractionCapabilityIds.Clampable] = "固定不移动",
+                [InteractionCapabilityIds.Connector] = "可作为连接发起端",
+                [InteractionCapabilityIds.Connector] = "可作为连接接收端",
                 ["可放置源"] = "可被放置",
                 ["可放置目标"] = "可承放对象",
-                ["可覆盖"] = "可用于覆盖",
-                ["可覆盖"] = "可被覆盖",
-                ["可定位源"] = "可调整位置",
-                ["可定位目标"] = "可作为定位参照",
+                [InteractionCapabilityIds.Coverable] = "可用于覆盖",
+                [InteractionCapabilityIds.Coverable] = "可被覆盖",
+                [InteractionCapabilityIds.PositionableSource] = "可调整位置",
+                [InteractionCapabilityIds.PositionableTarget] = "可作为定位参照",
                 ["反应产物来源"] = "可放入反应产物",
                 ["反应产物容器"] = "可接收反应产物",
                 ["气体来源"] = "可提供气体",

@@ -6,45 +6,24 @@ using System.Linq;
 namespace VirtualLab.Domain.Capabilities
 {
     /// <summary>
-    /// 平台内置能力使用的中文唯一协议。能力类型和课程配置均引用这些值。
+    /// 实体可以被操作者抓取。
     /// </summary>
-    public static class CoreCapabilityIds
-    {
-        public const string Grabbable = "可抓取";
-        public const string Container = "容器";
-        public const string Connector = "可连接";
-        public const string Observable = "可观察";
-        public const string Clampable = "可夹持";
-        public const string Coverable = "可覆盖";
-        public const string Breakable = "可破损";
-        public const string PositionableSource = "可定位源";
-        public const string PositionableTarget = "可定位目标";
-
-        public static readonly IReadOnlyList<string> All = new[]
-        {
-            Grabbable,
-            Container,
-            Connector,
-            Observable,
-            Clampable,
-            Coverable,
-            Breakable,
-            PositionableSource,
-            PositionableTarget
-        };
-    }
-
     public sealed class GrabbableCapability : ICapability
     {
     }
 
+    /// <summary>
+    /// 实体可以容纳其他对象或定量内容。
+    /// </summary>
     public sealed class ContainerCapability : ICapability
     {
         public ContainerCapability(decimal capacityMillilitres)
         {
             if (capacityMillilitres < 0m)
             {
-                throw new ArgumentOutOfRangeException(nameof(capacityMillilitres), "Container capacity cannot be negative.");
+                throw new ArgumentOutOfRangeException(
+                    nameof(capacityMillilitres),
+                    "容器容量不能为负数。");
             }
 
             CapacityMillilitres = capacityMillilitres;
@@ -54,8 +33,8 @@ namespace VirtualLab.Domain.Capabilities
     }
 
     /// <summary>
-    /// 连接端口是实体内部可独立占用的稳定端点。端口 ID 对应实验预制体实体节点中的语义锚点，
-    /// 兼容组只负责判断两个端口能否建立连接。
+    /// 连接端口是实体内部可独立占用的稳定端点。端口 ID 对应实验预制体
+    /// 实体节点中的语义锚点，兼容组只负责判断两个端口能否建立连接。
     /// </summary>
     public sealed class ConnectionPortDefinition
     {
@@ -65,7 +44,9 @@ namespace VirtualLab.Domain.Capabilities
         {
             if (string.IsNullOrWhiteSpace(portId))
             {
-                throw new ArgumentException("连接端口 ID 不能为空。", nameof(portId));
+                throw new ArgumentException(
+                    "连接端口 ID 不能为空。",
+                    nameof(portId));
             }
 
             PortId = portId.Trim();
@@ -79,6 +60,9 @@ namespace VirtualLab.Domain.Capabilities
         public string CompatibilityGroup { get; }
     }
 
+    /// <summary>
+    /// 实体通过一个或多个独立端口参与连接。
+    /// </summary>
     public sealed class ConnectorCapability : ICapability
     {
         public ConnectorCapability()
@@ -128,7 +112,8 @@ namespace VirtualLab.Domain.Capabilities
         }
 
         /// <summary>
-        /// 兼容旧的单端口调用。多端口实体必须通过 Ports 读取每个端口的兼容组。
+        /// 单端口能力的兼容组；多端口能力必须从 <see cref="Ports"/>
+        /// 读取各端口的兼容组。
         /// </summary>
         public string CompatibilityGroup =>
             Ports.Count == 1 ? Ports[0].CompatibilityGroup : null;
@@ -162,5 +147,4 @@ namespace VirtualLab.Domain.Capabilities
     public sealed class BreakableCapability : ICapability
     {
     }
-
 }

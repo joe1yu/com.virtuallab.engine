@@ -856,19 +856,26 @@ namespace VirtualLab.Application.Courses
         private static CourseCapabilityState CaptureCapability(ICapability value) =>
             value switch
             {
-                ContainerCapability x => new CourseCapabilityState("容器", x.CapacityMillilitres),
+                ContainerCapability x => new CourseCapabilityState(
+                    InteractionCapabilityIds.Container,
+                    x.CapacityMillilitres),
                 ConnectorCapability x => new CourseCapabilityState(
-                    "可连接",
+                    InteractionCapabilityIds.Connector,
                     0m,
                     x.CompatibilityGroup,
                     x.Ports.Select(port => new CourseConnectorPortState(
                         port.PortId,
                         port.CompatibilityGroup))),
-                GrabbableCapability _ => new CourseCapabilityState("可抓取"),
-                ObservableCapability _ => new CourseCapabilityState("可观察"),
-                ClampableCapability _ => new CourseCapabilityState("可夹持"),
-                CoverableCapability _ => new CourseCapabilityState("可覆盖"),
-                BreakableCapability _ => new CourseCapabilityState("可破损"),
+                GrabbableCapability _ => new CourseCapabilityState(
+                    InteractionCapabilityIds.Grabbable),
+                ObservableCapability _ => new CourseCapabilityState(
+                    InteractionCapabilityIds.Observable),
+                ClampableCapability _ => new CourseCapabilityState(
+                    InteractionCapabilityIds.Clampable),
+                CoverableCapability _ => new CourseCapabilityState(
+                    InteractionCapabilityIds.Coverable),
+                BreakableCapability _ => new CourseCapabilityState(
+                    InteractionCapabilityIds.Breakable),
                 IConfiguredCapability configured =>
                     new CourseCapabilityState(
                         configured.CapabilityId,
@@ -881,18 +888,20 @@ namespace VirtualLab.Application.Courses
         private static ICapability RestoreCapability(CourseCapabilityState value) =>
             value.CapabilityId switch
             {
-                "容器" => new ContainerCapability((decimal)value.NumberValue),
-                "可连接" => value.ConnectorPorts.Count > 0
-                    ? new ConnectorCapability(value.ConnectorPorts.Select(port =>
-                        new ConnectionPortDefinition(
-                            port.PortId,
-                            port.CompatibilityGroup)))
-                    : new ConnectorCapability(value.TextValue),
-                "可抓取" => new GrabbableCapability(),
-                "可观察" => new ObservableCapability(),
-                "可夹持" => new ClampableCapability(),
-                "可覆盖" => new CoverableCapability(),
-                "可破损" => new BreakableCapability(),
+                InteractionCapabilityIds.Container =>
+                    new ContainerCapability((decimal)value.NumberValue),
+                InteractionCapabilityIds.Connector =>
+                    value.ConnectorPorts.Count > 0
+                        ? new ConnectorCapability(value.ConnectorPorts.Select(port =>
+                            new ConnectionPortDefinition(
+                                port.PortId,
+                                port.CompatibilityGroup)))
+                        : new ConnectorCapability(value.TextValue),
+                InteractionCapabilityIds.Grabbable => new GrabbableCapability(),
+                InteractionCapabilityIds.Observable => new ObservableCapability(),
+                InteractionCapabilityIds.Clampable => new ClampableCapability(),
+                InteractionCapabilityIds.Coverable => new CoverableCapability(),
+                InteractionCapabilityIds.Breakable => new BreakableCapability(),
                 _ => new ConfiguredCapability(
                     value.CapabilityId,
                     value.NumberValue,

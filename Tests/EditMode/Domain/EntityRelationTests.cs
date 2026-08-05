@@ -10,6 +10,30 @@ namespace VirtualLab.Engine.Tests.Domain
     public sealed class EntityRelationTests
     {
         [Test]
+        public void 交互能力由交互目录集中拥有且不保留核心入口()
+        {
+            CollectionAssert.AreEqual(
+                new[]
+                {
+                    "可抓取",
+                    "容器",
+                    "可连接",
+                    "可观察",
+                    "可夹持",
+                    "可覆盖",
+                    "可破损",
+                    "可定位源",
+                    "可定位目标"
+                },
+                InteractionCapabilityIds.All);
+            Assert.That(
+                typeof(ICapability).Assembly.GetType(
+                    "VirtualLab.Domain.Capabilities.CoreCapabilityIds"),
+                Is.Null,
+                "迁移后不能保留旧核心能力目录。");
+        }
+
+        [Test]
         public void Entity_exposes_registered_capability()
         {
             var tube = new ExperimentEntity(new EntityId("tube-1"));
