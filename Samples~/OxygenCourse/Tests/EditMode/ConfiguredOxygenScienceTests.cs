@@ -487,7 +487,10 @@ namespace VirtualLab.Engine.Tests.Courses
                 ironIgnited.IsAccepted,
                 Is.True,
                 string.Join(",", ironIgnited.RejectionCodes));
-            Assert.That(carbonPlaced.IsAccepted, Is.True);
+            Assert.That(
+                carbonPlaced.IsAccepted,
+                Is.True,
+                string.Join(",", carbonPlaced.RejectionCodes));
             Assert.That(ironPlaced.IsAccepted, Is.True);
             Assert.That(
                 world.RequireMatterInventory().Total(
@@ -650,7 +653,10 @@ namespace VirtualLab.Engine.Tests.Courses
                 .Assessment;
 
             Assert.That(initialGoals.CompletedGoalIds, Is.Empty);
-            Assert.That(unsafeHeating.IsAccepted, Is.True);
+            Assert.That(
+                unsafeHeating.IsAccepted,
+                Is.True,
+                string.Join(",", unsafeHeating.RejectionCodes));
             Assert.That(
                 unsafeHeating.Events.Select(value => value.EventType),
                 Does.Contain("实验风险.粉末污染")
@@ -751,14 +757,6 @@ namespace VirtualLab.Engine.Tests.Courses
             var events = new EventCollector();
             PrepareTwoOxygenBottles(context, events);
 
-            Assert.That(
-                runtime.Session.Execute(
-                    Request(
-                        "命令.先将折角导气管移出水面",
-                        InteractionSemanticActionIds.Disconnect,
-                        "折角导气管",
-                        "集气瓶二")).IsAccepted,
-                Is.True);
             Assert.That(
                 runtime.Session.Execute(
                     Request(
@@ -1057,6 +1055,14 @@ namespace VirtualLab.Engine.Tests.Courses
             Assert.That(
                 EvaluateGoals(context).CompletedGoalIds,
                 Does.Contain("目标.收集两瓶氧气"));
+            Assert.That(
+                runtime.Session.Execute(
+                    Request(
+                        "命令.收集完成后将折角导气管移出水面",
+                        InteractionSemanticActionIds.Disconnect,
+                        "折角导气管",
+                        "集气瓶一")).IsAccepted,
+                Is.True);
         }
 
         private static void PreparePermanganateSpoon(
@@ -1198,14 +1204,16 @@ namespace VirtualLab.Engine.Tests.Courses
                 1d,
                 new SimulationTick(7),
                 events);
+            var placed = runtime.Session.Execute(
+                Request(
+                    "命令.放入木炭",
+                    InteractionSemanticActionIds.Place,
+                    "木炭",
+                    "集气瓶一"));
             Assert.That(
-                runtime.Session.Execute(
-                    Request(
-                        "命令.放入木炭",
-                        InteractionSemanticActionIds.Place,
-                        "木炭",
-                        "集气瓶一")).IsAccepted,
-                Is.True);
+                placed.IsAccepted,
+                Is.True,
+                string.Join(",", placed.RejectionCodes));
         }
 
         private static void PrepareCarbonHolder(
@@ -1235,6 +1243,14 @@ namespace VirtualLab.Engine.Tests.Courses
                         InteractionSemanticActionIds.Connect,
                         "坩埚钳",
                         "木炭")).IsAccepted,
+                Is.True);
+            Assert.That(
+                runtime.Session.Execute(
+                    Request(
+                        "命令." + commandPrefix + ".通过坩埚钳取出木炭",
+                        InteractionSemanticActionIds.Grab,
+                        "木炭",
+                        null)).IsAccepted,
                 Is.True);
         }
 
