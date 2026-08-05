@@ -1014,6 +1014,33 @@ namespace VirtualLab.Engine.Tests.Courses
             Assert.That(
                 runtime.Session.Execute(
                     Request(
+                        "命令.连接第二只集气瓶",
+                        InteractionSemanticActionIds.Connect,
+                        "折角导气管",
+                        "集气瓶二")).IsAccepted,
+                Is.True);
+            Assert.That(
+                runtime.Session.Execute(
+                    Request(
+                        "命令.收集第二瓶氧气",
+                        ChemistrySemanticActionIds.CollectGas,
+                        "折角导气管",
+                        "集气瓶二")).IsAccepted,
+                Is.True);
+            Assert.That(
+                EvaluateGoals(context).CompletedGoalIds,
+                Does.Not.Contain("目标.收集两瓶氧气"));
+            Assert.That(
+                runtime.Session.Execute(
+                    Request(
+                        "命令.断开第二只集气瓶",
+                        InteractionSemanticActionIds.Disconnect,
+                        "折角导气管",
+                        "集气瓶二")).IsAccepted,
+                Is.True);
+            Assert.That(
+                runtime.Session.Execute(
+                    Request(
                         "命令.连接第一只集气瓶",
                         InteractionSemanticActionIds.Connect,
                         "折角导气管",
@@ -1028,29 +1055,8 @@ namespace VirtualLab.Engine.Tests.Courses
                         "集气瓶一")).IsAccepted,
                 Is.True);
             Assert.That(
-                runtime.Session.Execute(
-                    Request(
-                        "命令.断开第一只集气瓶",
-                        InteractionSemanticActionIds.Disconnect,
-                        "折角导气管",
-                        "集气瓶一")).IsAccepted,
-                Is.True);
-            Assert.That(
-                runtime.Session.Execute(
-                    Request(
-                        "命令.连接第二只集气瓶",
-                        InteractionSemanticActionIds.Connect,
-                        "折角导气管",
-                        "集气瓶二")).IsAccepted,
-                Is.True);
-            Assert.That(
-                runtime.Session.Execute(
-                    Request(
-                        "命令.收集第二瓶氧气",
-                        ChemistrySemanticActionIds.CollectGas,
-                        "折角导气管",
-                        "集气瓶二")).IsAccepted,
-                Is.True);
+                EvaluateGoals(context).CompletedGoalIds,
+                Does.Contain("目标.收集两瓶氧气"));
         }
 
         private static void PreparePermanganateSpoon(
