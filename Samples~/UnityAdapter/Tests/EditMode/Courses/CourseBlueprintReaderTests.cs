@@ -147,11 +147,56 @@ namespace VirtualLab.Engine.Tests.Courses
                 tube.ExtensionValues["参数.容量毫升"].Source.Line,
                 Is.EqualTo(2));
             Assert.That(result.Blueprint.InteractionRules, Is.Empty);
+            Assert.That(result.Blueprint.InitialRelations, Is.Empty);
             Assert.That(result.Blueprint.DisciplineProcesses, Is.Empty);
             Assert.That(result.Blueprint.TeachingEvaluations, Is.Empty);
             Assert.That(result.Blueprint.PresentationOverrides, Is.Empty);
             Assert.That(result.Blueprint.AcceptanceRecords, Is.Empty);
             Assert.That(result.Blueprint.AdvancedOverrides, Is.Empty);
+        }
+
+        [Test]
+        public void 初始关系独立声明实体端点和可选端口()
+        {
+            var source = MinimumBlueprint()
+                .Replace(
+                    "实验对象.csv",
+                    "实体ID,显示名称,特征列表,初始位置,初始旋转\n"
+                    + "瓶盖,瓶盖,可覆盖,0|1|0,0|0|0\n"
+                    + "试管,试管,可覆盖,0|0|0,0|0|0\n")
+                .Append(
+                    "初始关系.csv",
+                    "关系标识,关系类型,来源实体,目标实体,来源端口标识,目标端口标识\n"
+                    + "初始关系.盖合,交互.关系.覆盖,瓶盖,试管,,\n");
+
+            var result = new CourseBlueprintReader().Read(source);
+
+            Assert.That(result.IsSuccess, Is.True);
+            var relation = result.Blueprint.InitialRelations.Single();
+            Assert.That(relation.RelationId, Is.EqualTo("初始关系.盖合"));
+            Assert.That(relation.RelationTypeId,
+                Is.EqualTo("交互.关系.覆盖"));
+            Assert.That(relation.SourceEntityId, Is.EqualTo("瓶盖"));
+            Assert.That(relation.TargetEntityId, Is.EqualTo("试管"));
+            Assert.That(relation.SourcePortId, Is.Empty);
+            Assert.That(relation.TargetPortId, Is.Empty);
+        }
+
+        [Test]
+        public void 初始关系拒绝未知实体和单边端口()
+        {
+            var result = new CourseBlueprintReader().Read(
+                MinimumBlueprint().Append(
+                    "初始关系.csv",
+                    "关系标识,关系类型,来源实体,目标实体,来源端口标识,目标端口标识\n"
+                    + "初始关系.错误,交互.关系.连接,试管,未知对象,出口,\n"));
+
+            Assert.That(result.IsSuccess, Is.False);
+            Assert.That(
+                result.Diagnostics.Select(value => value.Code),
+                Does.Contain("blueprint.initial-relation.entity-missing")
+                    .And.Contain(
+                        "blueprint.initial-relation.port-pair-invalid"));
         }
 
         [Test]

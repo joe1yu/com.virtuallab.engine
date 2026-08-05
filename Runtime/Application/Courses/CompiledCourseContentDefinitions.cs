@@ -60,7 +60,9 @@ namespace VirtualLab.Application.Courses
             string relationId,
             RelationTypeId typeId,
             string sourceEntityId,
-            string targetEntityId)
+            string targetEntityId,
+            string sourcePortId = null,
+            string targetPortId = null)
         {
             RelationId = CourseContractGuard.Required(
                 relationId,
@@ -72,12 +74,21 @@ namespace VirtualLab.Application.Courses
             TargetEntityId = CourseContractGuard.Required(
                 targetEntityId,
                 $"初始关系“{RelationId}”的目标实体");
+            SourcePortId = CourseContractGuard.Optional(sourcePortId);
+            TargetPortId = CourseContractGuard.Optional(targetPortId);
+            if ((SourcePortId == null) != (TargetPortId == null))
+            {
+                throw new ArgumentException(
+                    $"初始关系“{RelationId}”必须同时声明来源端口和目标端口。");
+            }
         }
 
         public string RelationId { get; }
         public RelationTypeId TypeId { get; }
         public string SourceEntityId { get; }
         public string TargetEntityId { get; }
+        public string SourcePortId { get; }
+        public string TargetPortId { get; }
     }
 
     /// <summary>

@@ -8,6 +8,7 @@ using UnityEditor;
 using VirtualLab.Chemistry.Configuration;
 using VirtualLab.Chemistry.Courses;
 using VirtualLab.Chemistry.Matter;
+using VirtualLab.Domain.Relations;
 using VirtualLab.Kernel;
 using VirtualLab.Measurement;
 using VirtualLab.Spatial.Courses;
@@ -68,6 +69,11 @@ namespace VirtualLab.Chemistry.Authoring
                 ChemistryModuleIds.Chemistry,
                 SpatialModuleIds.Spatial
             };
+
+        public IReadOnlyList<RelationTypeId> RelationTypeIds { get; } =
+            ChemistryRelationSchemas.All
+                .Select(value => value.TypeId)
+                .ToArray();
 
         public RecipePackage Load()
         {

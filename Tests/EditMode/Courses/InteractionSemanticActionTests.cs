@@ -334,13 +334,18 @@ namespace VirtualLab.Engine.Tests.Courses
         }
 
         [Test]
-        public void 连接和固定事实直接读取权威关系()
+        public void 连接固定和覆盖事实直接读取权威关系()
         {
             var world = WorldWith(
                 Entity("镊子"),
                 Entity("棉花团"),
                 Entity("铁架台试管夹"),
-                Entity("大试管"));
+                Entity("大试管"),
+                Entity("酒精灯帽"),
+                Entity("酒精灯"),
+                Entity("木炭瓶盖"),
+                Entity("木炭广口瓶"),
+                Entity("木炭"));
             world.SetRelation(Relation(
                 InteractionRelationTypeIds.Connection,
                 "镊子",
@@ -349,6 +354,18 @@ namespace VirtualLab.Engine.Tests.Courses
                 InteractionRelationTypeIds.FixedBy,
                 "铁架台试管夹",
                 "大试管"));
+            world.SetRelation(Relation(
+                InteractionRelationTypeIds.Cover,
+                "酒精灯帽",
+                "酒精灯"));
+            world.SetRelation(Relation(
+                InteractionRelationTypeIds.Cover,
+                "木炭瓶盖",
+                "木炭广口瓶"));
+            world.SetRelation(Relation(
+                InteractionRelationTypeIds.ContainedBy,
+                "木炭",
+                "木炭广口瓶"));
             var readers = InteractionCourseRegistrations.CreateFactReaders();
 
             var connected = readers.Single(value => value.Field ==
@@ -375,6 +392,36 @@ namespace VirtualLab.Engine.Tests.Courses
                         null),
                     world)).TextList,
                 Is.EqualTo(new[] { "大试管" }));
+
+            var sourceCovers = readers.Single(value => value.Field ==
+                InteractionStructuredFactFields.来源对象覆盖物);
+            var targetContainerCovers = readers.Single(value => value.Field ==
+                InteractionStructuredFactFields.目标对象所在容器覆盖物);
+            var context = new StructuredRuleContext(
+                Request(
+                    "命令.检查盖合",
+                    "检查",
+                    "酒精灯",
+                    "木炭"),
+                world);
+            Assert.That(
+                sourceCovers.Read(context).TextList,
+                Is.EqualTo(new[] { "酒精灯帽" }));
+            Assert.That(
+                targetContainerCovers.Read(context).TextList,
+                Is.EqualTo(new[] { "木炭瓶盖" }));
+
+            var targetCovers = readers.Single(value => value.Field ==
+                InteractionStructuredFactFields.目标对象覆盖物);
+            Assert.That(
+                targetCovers.Read(new StructuredRuleContext(
+                    Request(
+                        "命令.检查试剂瓶",
+                        "检查",
+                        "木炭",
+                        "木炭广口瓶"),
+                    world)).TextList,
+                Is.EqualTo(new[] { "木炭瓶盖" }));
         }
 
         [Test]

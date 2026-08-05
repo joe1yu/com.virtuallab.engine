@@ -128,6 +128,40 @@ namespace VirtualLab.Application.Courses
             return CreateSession(world, Array.Empty<CourseEventState>());
         }
 
+        /// <summary>
+        /// 创建全新课程会话。先安装全部模块拥有的关系模式和世界状态，
+        /// 再写入课程初始关系，避免基础世界工厂提前解释具体模块关系。
+        /// </summary>
+        public ConfigDrivenCourseSession CreateInitialSession(
+            ExperimentWorld world,
+            IEnumerable<CourseInitialRelationDefinition> initialRelations)
+        {
+            if (initialRelations == null)
+            {
+                throw new ArgumentNullException(nameof(initialRelations));
+            }
+
+            PrepareWorld(world);
+            foreach (var relation in initialRelations)
+            {
+                if (relation == null)
+                {
+                    throw new ArgumentException(
+                        "初始关系集合不能包含空项。",
+                        nameof(initialRelations));
+                }
+
+                world.SetRelation(new EntityRelation(
+                    relation.TypeId,
+                    new EntityId(relation.SourceEntityId),
+                    new EntityId(relation.TargetEntityId),
+                    relation.SourcePortId,
+                    relation.TargetPortId));
+            }
+
+            return CreateSession(world, Array.Empty<CourseEventState>());
+        }
+
         public IReadOnlyList<IStructuredFactReader> FactReaders => _readers;
 
         internal CourseCapabilityStateCodecRegistry CapabilityStateCodecs =>

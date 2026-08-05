@@ -29,6 +29,12 @@ namespace VirtualLab.Interaction.Courses
             New("来源对象连接对象");
         public static readonly StructuredFactField 来源对象固定对象 =
             New("来源对象固定对象");
+        public static readonly StructuredFactField 来源对象覆盖物 =
+            New("来源对象覆盖物");
+        public static readonly StructuredFactField 目标对象覆盖物 =
+            New("目标对象覆盖物");
+        public static readonly StructuredFactField 目标对象所在容器覆盖物 =
+            New("目标对象所在容器覆盖物");
 
         public static IReadOnlyList<StructuredFactField> All { get; } =
             Array.AsReadOnly(new[]
@@ -42,7 +48,10 @@ namespace VirtualLab.Interaction.Courses
                 目标连接标签,
                 连接标签相匹配,
                 来源对象连接对象,
-                来源对象固定对象
+                来源对象固定对象,
+                来源对象覆盖物,
+                目标对象覆盖物,
+                目标对象所在容器覆盖物
             });
 
         private static StructuredFactField New(string id) =>

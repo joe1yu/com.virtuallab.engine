@@ -116,7 +116,7 @@ namespace VirtualLab.Interaction.Courses
                     course.ConfiguredActions,
                     course.ActionAssessments,
                     course.Assessments.Sum(value => value.MaximumScore))
-                .CreateSession(world);
+                .CreateInitialSession(world, course.InitialRelations);
             return new CourseRuntimeFacade(
                 world,
                 session,
@@ -156,11 +156,24 @@ namespace VirtualLab.Interaction.Courses
                 new RelatedEntityIdsFactReader(
                     InteractionStructuredFactFields.来源对象连接对象,
                     InteractionRelationTypeIds.Connection,
-                    true),
+                    context => context.Request.SourceEntityId,
+                    RelatedEntityDirection.Any),
                 new RelatedEntityIdsFactReader(
                     InteractionStructuredFactFields.来源对象固定对象,
                     InteractionRelationTypeIds.FixedBy,
-                    false)
+                    context => context.Request.SourceEntityId,
+                    RelatedEntityDirection.Outgoing),
+                new RelatedEntityIdsFactReader(
+                    InteractionStructuredFactFields.来源对象覆盖物,
+                    InteractionRelationTypeIds.Cover,
+                    context => context.Request.SourceEntityId,
+                    RelatedEntityDirection.Incoming),
+                new RelatedEntityIdsFactReader(
+                    InteractionStructuredFactFields.目标对象覆盖物,
+                    InteractionRelationTypeIds.Cover,
+                    context => context.Request.TargetEntityId,
+                    RelatedEntityDirection.Incoming),
+                new TargetContainerCoversFactReader()
             };
         }
 
@@ -365,40 +378,107 @@ namespace VirtualLab.Interaction.Courses
         }
 
         /// <summary>
-        /// 返回动作来源在指定交互关系下关联的实体标识。
-        /// 无向关系读取任一端，定向关系只读取来源端，课程无需重复写入派生状态。
+        /// 返回所选动作对象在指定交互关系下关联的实体标识。
+        /// 端点方向由注册项明确声明，课程无需重复写入派生状态。
         /// </summary>
         private sealed class RelatedEntityIdsFactReader : IStructuredFactReader
         {
             private readonly RelationTypeId _relationTypeId;
-            private readonly bool _undirected;
+            private readonly Func<StructuredRuleContext, string> _entityIdSelector;
+            private readonly RelatedEntityDirection _direction;
 
             public RelatedEntityIdsFactReader(
                 StructuredFactField field,
                 RelationTypeId relationTypeId,
-                bool undirected)
+                Func<StructuredRuleContext, string> entityIdSelector,
+                RelatedEntityDirection direction)
             {
                 Field = field;
                 _relationTypeId = relationTypeId;
-                _undirected = undirected;
+                _entityIdSelector = entityIdSelector;
+                _direction = direction;
             }
 
             public StructuredFactField Field { get; }
 
             public StructuredValue Read(StructuredRuleContext context)
             {
-                var source = new EntityId(context.Request.SourceEntityId);
+                var selectedId = _entityIdSelector(context);
+                if (string.IsNullOrWhiteSpace(selectedId))
+                {
+                    return StructuredValue.FromTextList(Array.Empty<string>());
+                }
+
+                var selected = new EntityId(selectedId);
                 var related = context.World.Relations
                     .Where(value => value.TypeId == _relationTypeId
-                        && (value.Source == source
-                            || (_undirected && value.Target == source)))
-                    .Select(value => value.Source == source
-                        ? value.Target.Value
-                        : value.Source.Value)
+                        && IsRelated(value, selected))
+                    .Select(value => RelatedId(value, selected))
                     .Distinct(StringComparer.Ordinal)
                     .OrderBy(value => value, StringComparer.Ordinal);
                 return StructuredValue.FromTextList(related);
             }
+
+            private bool IsRelated(EntityRelation relation, EntityId selected) =>
+                _direction switch
+                {
+                    RelatedEntityDirection.Outgoing =>
+                        relation.Source == selected,
+                    RelatedEntityDirection.Incoming =>
+                        relation.Target == selected,
+                    RelatedEntityDirection.Any =>
+                        relation.Source == selected
+                        || relation.Target == selected,
+                    _ => false
+                };
+
+            private string RelatedId(EntityRelation relation, EntityId selected) =>
+                _direction == RelatedEntityDirection.Incoming
+                    ? relation.Source.Value
+                    : relation.Source == selected
+                        ? relation.Target.Value
+                        : relation.Source.Value;
+        }
+
+        /// <summary>
+        /// 返回动作目标当前所在容器上的覆盖物，用于判断容器内样品能否取出。
+        /// </summary>
+        private sealed class TargetContainerCoversFactReader :
+            IStructuredFactReader
+        {
+            public StructuredFactField Field =>
+                InteractionStructuredFactFields.目标对象所在容器覆盖物;
+
+            public StructuredValue Read(StructuredRuleContext context)
+            {
+                if (string.IsNullOrWhiteSpace(context.Request.TargetEntityId))
+                {
+                    return StructuredValue.FromTextList(Array.Empty<string>());
+                }
+
+                var target = new EntityId(context.Request.TargetEntityId);
+                var containers = context.World.Relations
+                    .Where(value =>
+                        value.TypeId == InteractionRelationTypeIds.ContainedBy
+                        && value.Source == target)
+                    .Select(value => value.Target)
+                    .ToHashSet();
+                var covers = context.World.Relations
+                    .Where(value =>
+                        value.TypeId == InteractionRelationTypeIds.Cover
+                        && containers.Contains(value.Target))
+                    .Select(value => value.Source.Value)
+                    .Distinct(StringComparer.Ordinal)
+                    .OrderBy(value => value, StringComparer.Ordinal);
+                return StructuredValue.FromTextList(covers);
+            }
+        }
+
+        private enum RelatedEntityDirection
+        {
+            Outgoing,
+            Incoming,
+            Any
         }
     }
 }

@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Linq;
 using VirtualLab.Application.Courses;
+using VirtualLab.Domain.Relations;
 using VirtualLab.Presentation;
 using VirtualLab.Unity.Authoring.Diagnostics;
 using VirtualLab.Unity.Authoring.Normalized;
@@ -336,6 +337,66 @@ namespace VirtualLab.Unity.Authoring.Blueprints
                         $"配方包“{provider?.PackageId}”没有声明所需运行时模块。",
                         "由配方包提供者声明至少一个稳定的运行时模块标识。"));
                 }
+
+                if (provider?.RelationTypeIds == null)
+                {
+                    diagnostics.Add(Diagnostic(
+                        "blueprint.relation-types.missing",
+                        blueprint.Course.Source,
+                        provider?.PackageId ?? string.Empty,
+                        $"配方包“{provider?.PackageId}”没有声明关系类型集合。",
+                        "没有关系类型时声明空集合，不能返回空引用。"));
+                }
+            }
+
+            ValidateInitialRelationTypes(
+                blueprint,
+                new[] { platform }.Concat(disciplines),
+                diagnostics);
+        }
+
+        private static void ValidateInitialRelationTypes(
+            CourseBlueprint blueprint,
+            IEnumerable<IRecipePackageProvider> providers,
+            ICollection<CourseCompilationDiagnostic> diagnostics)
+        {
+            var ownership = providers
+                .Where(value => value?.RelationTypeIds != null)
+                .SelectMany(provider => provider.RelationTypeIds.Select(typeId =>
+                    new { provider.PackageId, TypeId = typeId }))
+                .GroupBy(value => value.TypeId)
+                .ToDictionary(value => value.Key, value => value.ToArray());
+            foreach (var duplicate in ownership.Where(value =>
+                         value.Value.Select(item => item.PackageId)
+                             .Distinct(StringComparer.Ordinal)
+                             .Count() > 1))
+            {
+                diagnostics.Add(Diagnostic(
+                    "blueprint.relation-type.owner-conflict",
+                    blueprint.Course.Source,
+                    duplicate.Key.Value,
+                    $"关系类型“{duplicate.Key}”被多个配方包声明："
+                    + string.Join("、", duplicate.Value.Select(value =>
+                        value.PackageId).Distinct(StringComparer.Ordinal)),
+                    "每个关系类型只由一个平台或学科配方包拥有。"));
+            }
+
+            foreach (var relation in blueprint.InitialRelations)
+            {
+                if (!string.IsNullOrWhiteSpace(relation.RelationTypeId)
+                    && ownership.ContainsKey(
+                        new RelationTypeId(relation.RelationTypeId)))
+                {
+                    continue;
+                }
+
+                diagnostics.Add(Diagnostic(
+                    "blueprint.initial-relation.type-unknown",
+                    relation.Source,
+                    relation.RelationId,
+                    $"初始关系“{relation.RelationId}”使用了未注册的关系类型"
+                    + $"“{relation.RelationTypeId}”。",
+                    "使用当前平台或已选择学科包声明的稳定关系类型标识。"));
             }
         }
 
@@ -662,6 +723,14 @@ namespace VirtualLab.Unity.Authoring.Blueprints
                     value.Definition.PortId,
                     value.Definition.EntityId,
                     value.Definition.CompatibilityGroup)).ToArray();
+            var initialRelations = blueprint.InitialRelations.Select(value =>
+                new CourseInitialRelationDefinition(
+                    value.RelationId,
+                    new RelationTypeId(value.RelationTypeId),
+                    value.SourceEntityId,
+                    value.TargetEntityId,
+                    value.SourcePortId,
+                    value.TargetPortId)).ToArray();
             var layouts = blueprint.Objects.Select(value =>
                 new CourseSceneLayoutDefinition(
                     value.EntityId,
@@ -695,7 +764,7 @@ namespace VirtualLab.Unity.Authoring.Blueprints
                 configuredActions,
                 resources,
                 ports,
-                Array.Empty<CourseInitialRelationDefinition>(),
+                initialRelations,
                 mutations,
                 events,
                 Array.Empty<CourseContinuousProcessDefinition>(),

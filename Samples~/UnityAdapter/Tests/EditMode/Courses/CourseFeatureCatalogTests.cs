@@ -117,6 +117,9 @@ namespace VirtualLab.Engine.Tests.Courses
             public string PackageId => _package.PackageId;
             public IReadOnlyList<string> RequiredRuntimeModuleIds { get; } =
                 new[] { CourseModuleIds.Core };
+            public IReadOnlyList<VirtualLab.Domain.Relations.RelationTypeId>
+                RelationTypeIds { get; } =
+                Array.Empty<VirtualLab.Domain.Relations.RelationTypeId>();
             public RecipePackage Load() => _package;
         }
     }

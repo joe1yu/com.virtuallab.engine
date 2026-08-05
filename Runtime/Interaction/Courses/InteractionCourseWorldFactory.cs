@@ -5,15 +5,15 @@ using VirtualLab.Application.Courses;
 using VirtualLab.Domain;
 using VirtualLab.Domain.Capabilities;
 using VirtualLab.Domain.Entities;
-using VirtualLab.Domain.Relations;
 using VirtualLab.Interaction.Capabilities;
 using VirtualLab.Kernel;
 
 namespace VirtualLab.Interaction.Courses
 {
     /// <summary>
-    /// 根据课程定义建立带通用交互能力的权威世界。
-    /// 具体学科参数仍由对应模块的结构化配置和状态操作提供。
+    /// 根据课程定义建立带通用交互能力的世界实体。
+    /// 初始关系必须等全部模块安装关系模式后由课程运行定义写入；具体学科参数
+    /// 仍由对应模块的结构化配置和状态操作提供。
     /// </summary>
     public static class InteractionCourseWorldFactory
     {
@@ -54,14 +54,6 @@ namespace VirtualLab.Interaction.Courses
                 }
 
                 world.AddEntity(entity);
-            }
-
-            foreach (var relation in course.InitialRelations)
-            {
-                world.SetRelation(new EntityRelation(
-                    relation.TypeId,
-                    new EntityId(relation.SourceEntityId),
-                    new EntityId(relation.TargetEntityId)));
             }
 
             return world;

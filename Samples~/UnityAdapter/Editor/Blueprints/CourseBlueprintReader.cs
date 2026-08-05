@@ -31,6 +31,7 @@ namespace VirtualLab.Unity.Authoring.Blueprints
     {
         private const string CourseFile = "课程.csv";
         private const string ObjectsFile = "实验对象.csv";
+        private const string InitialRelationsFile = "初始关系.csv";
         private const string InteractionRulesFile = "交互规则.csv";
         private const string DisciplineProcessesFile = "学科过程.csv";
         private const string TeachingEvaluationsFile = "教学评价.csv";
@@ -55,6 +56,16 @@ namespace VirtualLab.Unity.Authoring.Blueprints
                             "初始位置", "初始旋转"
                         },
                         new[] { "参数." }),
+                    [InitialRelationsFile] = new FileSchema(
+                        "关系ID",
+                        new[]
+                        {
+                            "关系ID", "关系类型", "来源实体", "目标实体"
+                        },
+                        optionalColumns: new[]
+                        {
+                            "来源端口ID", "目标端口ID"
+                        }),
                     [InteractionRulesFile] = new FileSchema(
                         "交互ID",
                         new[]
@@ -187,6 +198,11 @@ namespace VirtualLab.Unity.Authoring.Blueprints
             var course = ReadCourse(tables, diagnostics);
             var courseId = course?.CourseId ?? string.Empty;
             var objects = ReadObjects(tables, courseId, diagnostics);
+            var initialRelations = ReadInitialRelations(
+                tables,
+                courseId,
+                objects,
+                diagnostics);
             if (tables.TryGetValue(CourseFile, out var courseTable)
                 && courseTable.Headers.Contains(
                     "操作者实体ID",
@@ -273,6 +289,7 @@ namespace VirtualLab.Unity.Authoring.Blueprints
                         1,
                         string.Empty)),
                 objects,
+                initialRelations,
                 interactions,
                 processes,
                 evaluations,
@@ -512,6 +529,139 @@ namespace VirtualLab.Unity.Authoring.Blueprints
                 .OrderBy(value => value.EntityId, StringComparer.Ordinal)
                 .ThenBy(value => value.Source.Line)
                 .ToArray();
+        }
+
+        private static IReadOnlyList<CourseInitialRelationBlueprint>
+            ReadInitialRelations(
+                IReadOnlyDictionary<string, StrictCsvReadResult> tables,
+                string courseId,
+                IReadOnlyList<CourseObjectBlueprint> objects,
+                ICollection<CourseCompilationDiagnostic> diagnostics)
+        {
+            if (!tables.TryGetValue(InitialRelationsFile, out var table))
+            {
+                return Array.Empty<CourseInitialRelationBlueprint>();
+            }
+
+            var result = new List<CourseInitialRelationBlueprint>();
+            var relationIds = new HashSet<string>(StringComparer.Ordinal);
+            var entityIds = new HashSet<string>(
+                objects.Select(value => value.EntityId),
+                StringComparer.Ordinal);
+            foreach (var row in table.Rows)
+            {
+                var relationId = row["关系ID"].Trim();
+                var relationTypeId = row["关系类型"].Trim();
+                var sourceEntityId = row["来源实体"].Trim();
+                var targetEntityId = row["目标实体"].Trim();
+                ValidateIdentifier(
+                    InitialRelationsFile,
+                    row,
+                    "关系ID",
+                    relationId,
+                    diagnostics);
+                ValidateIdentifier(
+                    InitialRelationsFile,
+                    row,
+                    "关系类型",
+                    relationTypeId,
+                    diagnostics);
+                if (!string.IsNullOrWhiteSpace(relationId)
+                    && !relationIds.Add(relationId))
+                {
+                    diagnostics.Add(Diagnostic(
+                        "blueprint.initial-relation.duplicate",
+                        InitialRelationsFile,
+                        row.LineNumber,
+                        Column(table, "关系ID"),
+                        "关系ID",
+                        relationId,
+                        $"初始关系标识“{relationId}”重复。",
+                        "为每条初始关系使用唯一且稳定的中文标识。"));
+                }
+
+                ValidateRelationEntity(
+                    table,
+                    row,
+                    "来源实体",
+                    sourceEntityId,
+                    relationId,
+                    entityIds,
+                    diagnostics);
+                ValidateRelationEntity(
+                    table,
+                    row,
+                    "目标实体",
+                    targetEntityId,
+                    relationId,
+                    entityIds,
+                    diagnostics);
+                var sourcePortId = row["来源端口ID"].Trim();
+                var targetPortId = row["目标端口ID"].Trim();
+                if (string.IsNullOrWhiteSpace(sourcePortId)
+                    != string.IsNullOrWhiteSpace(targetPortId))
+                {
+                    diagnostics.Add(Diagnostic(
+                        "blueprint.initial-relation.port-pair-invalid",
+                        InitialRelationsFile,
+                        row.LineNumber,
+                        Column(table, string.IsNullOrWhiteSpace(sourcePortId)
+                            ? "来源端口ID"
+                            : "目标端口ID"),
+                        string.IsNullOrWhiteSpace(sourcePortId)
+                            ? "来源端口ID"
+                            : "目标端口ID",
+                        relationId,
+                        $"初始关系“{relationId}”只声明了一个端口。",
+                        "同时填写来源端口和目标端口，或同时留空。"));
+                }
+
+                result.Add(new CourseInitialRelationBlueprint(
+                    relationId,
+                    relationTypeId,
+                    sourceEntityId,
+                    targetEntityId,
+                    sourcePortId,
+                    targetPortId,
+                    Source(
+                        InitialRelationsFile,
+                        table,
+                        row,
+                        "关系ID",
+                        courseId,
+                        relationId)));
+            }
+
+            return result
+                .OrderBy(value => value.RelationId, StringComparer.Ordinal)
+                .ThenBy(value => value.Source.Line)
+                .ToArray();
+        }
+
+        private static void ValidateRelationEntity(
+            StrictCsvReadResult table,
+            StrictCsvRow row,
+            string column,
+            string entityId,
+            string relationId,
+            ISet<string> entityIds,
+            ICollection<CourseCompilationDiagnostic> diagnostics)
+        {
+            if (!string.IsNullOrWhiteSpace(entityId)
+                && entityIds.Contains(entityId))
+            {
+                return;
+            }
+
+            diagnostics.Add(Diagnostic(
+                "blueprint.initial-relation.entity-missing",
+                InitialRelationsFile,
+                row.LineNumber,
+                Column(table, column),
+                column,
+                relationId,
+                $"初始关系“{relationId}”引用了不存在的{column}“{entityId}”。",
+                "使用实验对象.csv 中已经声明的实体标识。"));
         }
 
         private static ExperimentFlowProjection ReadExperimentFlow(

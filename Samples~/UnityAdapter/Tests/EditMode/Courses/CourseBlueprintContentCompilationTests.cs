@@ -10,6 +10,37 @@ namespace VirtualLab.Engine.Tests.Courses
     public sealed class CourseBlueprintContentCompilationTests
     {
         [Test]
+        public void 初始关系类型必须由已选择配方包声明()
+        {
+            var source = new CourseBlueprintSource(new[]
+            {
+                new CourseBlueprintFile(
+                    "课程.csv",
+                    "课程ID,显示名称,学科配方包,实验Prefab\n"
+                    + "关系测试,关系测试,,环境.prefab\n"),
+                new CourseBlueprintFile(
+                    "实验对象.csv",
+                    "实体ID,显示名称,特征列表,初始位置,初始旋转\n"
+                    + "瓶盖,瓶盖,可覆盖,0|1|0,0|0|0\n"
+                    + "试管,试管,可覆盖,0|0|0,0|0|0\n"),
+                new CourseBlueprintFile(
+                    "初始关系.csv",
+                    "关系ID,关系类型,来源实体,目标实体\n"
+                    + "初始关系.未知,未知模块.关系.覆盖,瓶盖,试管\n")
+            });
+
+            var result = new CourseBlueprintCompiler().Compile(
+                source,
+                new CoreRecipePackageProvider(),
+                Array.Empty<IRecipePackageProvider>());
+
+            Assert.That(result.IsSuccess, Is.False);
+            Assert.That(
+                result.Diagnostics.Select(value => value.Code),
+                Does.Contain("blueprint.initial-relation.type-unknown"));
+        }
+
+        [Test]
         public void 相同评价的多行条件按且合并并保留独立评价元数据()
         {
             var blueprint = Read(

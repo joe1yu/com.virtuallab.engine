@@ -18,6 +18,7 @@ namespace VirtualLab.Application.Courses
     {
         public const string RelationSet = "设置关系";
         public const string RelationRemove = "移除关系";
+        public const string RelationsRemoveFromSource = "移除来源关系";
         public const string ScalarSet = "设置标量";
         public const string ScalarAdd = "增加标量";
         public const string ProcessStart = "开始过程";
@@ -29,6 +30,7 @@ namespace VirtualLab.Application.Courses
         {
             RelationSet,
             RelationRemove,
+            RelationsRemoveFromSource,
             ScalarSet,
             ScalarAdd,
             ProcessStart,
@@ -230,6 +232,7 @@ namespace VirtualLab.Application.Courses
         {
             Register(new RelationSetOperation());
             Register(new RelationRemoveOperation());
+            Register(new RelationsRemoveFromSourceOperation());
             Register(new ScalarSetOperation());
             Register(new ScalarAddOperation());
             Register(new ProcessStartOperation());
@@ -755,6 +758,40 @@ namespace VirtualLab.Application.Courses
                     new ConfiguredEventRecord(
                         eventType,
                         CreateEventPayload(request, mutation)));
+            }
+        }
+
+        /// <summary>
+        /// 移除动作来源作为关系来源端的全部指定类型关系。
+        /// 抓起盖子或容器内对象时无需提前知道其当前目标，仍能维护唯一权威关系。
+        /// </summary>
+        private sealed class RelationsRemoveFromSourceOperation :
+            IConfiguredStateOperation
+        {
+            public string OperationId =>
+                ConfiguredStateOperationIds.RelationsRemoveFromSource;
+
+            public void Apply(
+                SemanticActionRequest request,
+                ExperimentWorld world,
+                ConfiguredMutationDefinition mutation)
+            {
+                var typeId = ReadRelationTypeId(mutation);
+                world.RequireRelationSchema(typeId);
+                var source = ReadEntityId(
+                    mutation,
+                    CourseConfigurationKeys.Mutation.SourceEntityId,
+                    CourseConfigurationKeys.Mutation.SourceEntityReference,
+                    request,
+                    request.SourceEntityId);
+                var relations = world.Relations
+                    .Where(value => value.TypeId == typeId
+                        && value.Source == source)
+                    .ToArray();
+                foreach (var relation in relations)
+                {
+                    world.RemoveRelation(relation);
+                }
             }
         }
 

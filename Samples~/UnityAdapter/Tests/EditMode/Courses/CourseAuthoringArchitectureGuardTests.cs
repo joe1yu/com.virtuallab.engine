@@ -15,6 +15,7 @@ namespace VirtualLab.Engine.Tests.Courses
         {
             "课程.csv",
             "实验对象.csv",
+            "初始关系.csv",
             "交互规则.csv",
             "学科过程.csv",
             "教学评价.csv",

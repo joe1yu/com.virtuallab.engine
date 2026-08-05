@@ -119,7 +119,9 @@ namespace VirtualLab.Chemistry.Courses
                     combustion,
                     heating,
                     shaking);
-            var session = runtimeDefinition.CreateSession(world);
+            var session = runtimeDefinition.CreateInitialSession(
+                world,
+                course.InitialRelations);
             var processAdvancer = runtimeDefinition.CreateProcessAdvancer(world);
             var runtime = new ChemistryCourseRuntime(session, processAdvancer);
             runtime.Facade = new CourseRuntimeFacade(

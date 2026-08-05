@@ -1,8 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using VirtualLab.Application.Courses;
 using VirtualLab.Interaction.Courses;
+using VirtualLab.Domain.Relations;
+using VirtualLab.Interaction.Relations;
 using VirtualLab.Teaching.Courses;
 using UnityEditor.Compilation;
 
@@ -24,6 +27,11 @@ namespace VirtualLab.Unity.Authoring.Recipes
                 InteractionModuleIds.Interaction,
                 TeachingProtocolIds.Module
             };
+
+        public IReadOnlyList<RelationTypeId> RelationTypeIds { get; } =
+            InteractionRelationSchemas.All
+                .Select(value => value.TypeId)
+                .ToArray();
 
         public RecipePackage Load()
         {

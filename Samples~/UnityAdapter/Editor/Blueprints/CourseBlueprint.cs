@@ -101,6 +101,39 @@ namespace VirtualLab.Unity.Authoring.Blueprints
         public ConfigurationSource Source { get; }
     }
 
+    /// <summary>
+    /// 课程开始时已经成立的领域关系。关系类型直接使用模块注册的稳定中文标识，
+    /// 不经过课程词典转换。
+    /// </summary>
+    public sealed class CourseInitialRelationBlueprint
+    {
+        public CourseInitialRelationBlueprint(
+            string relationId,
+            string relationTypeId,
+            string sourceEntityId,
+            string targetEntityId,
+            string sourcePortId,
+            string targetPortId,
+            ConfigurationSource source)
+        {
+            RelationId = relationId;
+            RelationTypeId = relationTypeId;
+            SourceEntityId = sourceEntityId;
+            TargetEntityId = targetEntityId;
+            SourcePortId = sourcePortId;
+            TargetPortId = targetPortId;
+            Source = source;
+        }
+
+        public string RelationId { get; }
+        public string RelationTypeId { get; }
+        public string SourceEntityId { get; }
+        public string TargetEntityId { get; }
+        public string SourcePortId { get; }
+        public string TargetPortId { get; }
+        public ConfigurationSource Source { get; }
+    }
+
     public abstract class CourseBlueprintRecord
     {
         protected CourseBlueprintRecord(
@@ -271,6 +304,7 @@ namespace VirtualLab.Unity.Authoring.Blueprints
         public CourseBlueprint(
             CourseBlueprintCourse course,
             IEnumerable<CourseObjectBlueprint> objects,
+            IEnumerable<CourseInitialRelationBlueprint> initialRelations,
             IEnumerable<CourseInteractionRuleBlueprint> interactionRules,
             IEnumerable<CourseDisciplineProcessBlueprint> disciplineProcesses,
             IEnumerable<CourseTeachingEvaluationBlueprint> teachingEvaluations,
@@ -280,6 +314,7 @@ namespace VirtualLab.Unity.Authoring.Blueprints
         {
             Course = course;
             Objects = objects.ToArray();
+            InitialRelations = initialRelations.ToArray();
             InteractionRules = interactionRules.ToArray();
             DisciplineProcesses = disciplineProcesses.ToArray();
             TeachingEvaluations = teachingEvaluations.ToArray();
@@ -290,6 +325,10 @@ namespace VirtualLab.Unity.Authoring.Blueprints
 
         public CourseBlueprintCourse Course { get; }
         public IReadOnlyList<CourseObjectBlueprint> Objects { get; }
+        public IReadOnlyList<CourseInitialRelationBlueprint> InitialRelations
+        {
+            get;
+        }
         public IReadOnlyList<CourseInteractionRuleBlueprint> InteractionRules { get; }
         public IReadOnlyList<CourseDisciplineProcessBlueprint> DisciplineProcesses { get; }
         public IReadOnlyList<CourseTeachingEvaluationBlueprint> TeachingEvaluations { get; }

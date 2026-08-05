@@ -157,6 +157,46 @@ namespace VirtualLab.Engine.Tests.Courses
         }
 
         [Test]
+        public void 初始关系在所属模块安装关系模式后写入世界()
+        {
+            var typeId = new RelationTypeId("测试模块.关系.连接");
+            var module = Module(
+                "测试模块",
+                "测试模块",
+                new Version(1, 0, 0),
+                context => context.RegisterRelationSchema(new RelationSchema(
+                    typeId,
+                    portPolicy: RelationPortPolicy.可选)));
+            var runtime = new CourseRuntimeDefinition(
+                CourseRuntimeModuleScope.Create(module),
+                Array.Empty<ConfiguredActionDefinition>(),
+                Array.Empty<CourseActionAssessmentDefinition>(),
+                0);
+            var world = new ExperimentWorld();
+            world.AddEntity(new ExperimentEntity(new EntityId("来源")));
+            world.AddEntity(new ExperimentEntity(new EntityId("目标")));
+
+            runtime.CreateInitialSession(
+                world,
+                new[]
+                {
+                    new CourseInitialRelationDefinition(
+                        "初始关系.连接",
+                        typeId,
+                        "来源",
+                        "目标",
+                        "出口",
+                        "入口")
+                });
+
+            Assert.That(world.RelationSchemasFrozen, Is.True);
+            var relation = world.Relations.Single();
+            Assert.That(relation.TypeId, Is.EqualTo(typeId));
+            Assert.That(relation.SourcePortId, Is.EqualTo("出口"));
+            Assert.That(relation.TargetPortId, Is.EqualTo("入口"));
+        }
+
+        [Test]
         public void 通用事实字段值对象不再持有具体模块协议()
         {
             const System.Reflection.BindingFlags publicStatic =

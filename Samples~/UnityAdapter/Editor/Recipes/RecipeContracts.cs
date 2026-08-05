@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using VirtualLab.Application.Courses;
+using VirtualLab.Domain.Relations;
 using VirtualLab.Unity.Authoring.Diagnostics;
 using VirtualLab.Unity.Authoring.Blueprints;
 using VirtualLab.Unity.Authoring.Normalized;
@@ -212,6 +213,7 @@ namespace VirtualLab.Unity.Authoring.Recipes
     {
         string PackageId { get; }
         IReadOnlyList<string> RequiredRuntimeModuleIds { get; }
+        IReadOnlyList<RelationTypeId> RelationTypeIds { get; }
         RecipePackage Load();
     }
 
