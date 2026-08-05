@@ -27,6 +27,8 @@ namespace VirtualLab.Interaction.Courses
             New("连接标签相匹配");
         public static readonly StructuredFactField 来源对象连接对象 =
             New("来源对象连接对象");
+        public static readonly StructuredFactField 来源对象连接网络 =
+            New("来源对象连接网络");
         public static readonly StructuredFactField 来源对象固定对象 =
             New("来源对象固定对象");
         public static readonly StructuredFactField 来源对象覆盖物 =
@@ -48,6 +50,7 @@ namespace VirtualLab.Interaction.Courses
                 目标连接标签,
                 连接标签相匹配,
                 来源对象连接对象,
+                来源对象连接网络,
                 来源对象固定对象,
                 来源对象覆盖物,
                 目标对象覆盖物,

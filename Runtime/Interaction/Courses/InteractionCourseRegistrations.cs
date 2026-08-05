@@ -158,6 +158,7 @@ namespace VirtualLab.Interaction.Courses
                     InteractionRelationTypeIds.Connection,
                     context => context.Request.SourceEntityId,
                     RelatedEntityDirection.Any),
+                new ConnectedNetworkFactReader(),
                 new RelatedEntityIdsFactReader(
                     InteractionStructuredFactFields.来源对象固定对象,
                     InteractionRelationTypeIds.FixedBy,
@@ -438,6 +439,55 @@ namespace VirtualLab.Interaction.Courses
                     : relation.Source == selected
                         ? relation.Target.Value
                         : relation.Source.Value;
+        }
+
+        /// <summary>
+        /// 返回从动作来源沿无向连接关系可达的全部对象。
+        /// 课程可用该事实判断装置链路，无需维护与连接图重复的教学状态。
+        /// </summary>
+        private sealed class ConnectedNetworkFactReader : IStructuredFactReader
+        {
+            public StructuredFactField Field =>
+                InteractionStructuredFactFields.来源对象连接网络;
+
+            public StructuredValue Read(StructuredRuleContext context)
+            {
+                if (string.IsNullOrWhiteSpace(context.Request.SourceEntityId))
+                {
+                    return StructuredValue.FromTextList(Array.Empty<string>());
+                }
+
+                var source = new EntityId(context.Request.SourceEntityId);
+                var connections = context.World.Relations
+                    .Where(value =>
+                        value.TypeId == InteractionRelationTypeIds.Connection)
+                    .ToArray();
+                var visited = new HashSet<EntityId> { source };
+                var pending = new Queue<EntityId>();
+                pending.Enqueue(source);
+
+                while (pending.Count > 0)
+                {
+                    var current = pending.Dequeue();
+                    foreach (var relation in connections.Where(value =>
+                        value.Source == current || value.Target == current))
+                    {
+                        var adjacent = relation.Source == current
+                            ? relation.Target
+                            : relation.Source;
+                        if (visited.Add(adjacent))
+                        {
+                            pending.Enqueue(adjacent);
+                        }
+                    }
+                }
+
+                return StructuredValue.FromTextList(
+                    visited
+                        .Where(value => value != source)
+                        .Select(value => value.Value)
+                        .OrderBy(value => value, StringComparer.Ordinal));
+            }
         }
 
         /// <summary>

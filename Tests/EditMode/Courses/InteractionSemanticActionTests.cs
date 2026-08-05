@@ -425,6 +425,50 @@ namespace VirtualLab.Engine.Tests.Courses
         }
 
         [Test]
+        public void 连接网络事实遍历完整链路且排除无关对象()
+        {
+            var world = WorldWith(
+                Entity("大试管"),
+                Entity("橡胶塞玻璃导管"),
+                Entity("折角导气管"),
+                Entity("集气瓶"),
+                Entity("无关器材"));
+            world.SetRelation(new EntityRelation(
+                InteractionRelationTypeIds.Connection,
+                new EntityId("大试管"),
+                new EntityId("橡胶塞玻璃导管"),
+                "试管口",
+                "橡胶塞"));
+            world.SetRelation(new EntityRelation(
+                InteractionRelationTypeIds.Connection,
+                new EntityId("橡胶塞玻璃导管"),
+                new EntityId("折角导气管"),
+                "导管出口",
+                "导管入口"));
+            world.SetRelation(new EntityRelation(
+                InteractionRelationTypeIds.Connection,
+                new EntityId("折角导气管"),
+                new EntityId("集气瓶"),
+                "集气出口",
+                "集气入口"));
+
+            var reader = InteractionCourseRegistrations.CreateFactReaders()
+                .Single(value => value.Field ==
+                    InteractionStructuredFactFields.来源对象连接网络);
+
+            Assert.That(
+                reader.Read(new StructuredRuleContext(
+                    Request("命令.检查气路", "检查", "大试管", null),
+                    world)).TextList,
+                Is.EqualTo(new[]
+                {
+                    "折角导气管",
+                    "橡胶塞玻璃导管",
+                    "集气瓶"
+                }));
+        }
+
+        [Test]
         public void 同一容器可以容纳多个对象但同一对象不能同时位于两个容器()
         {
             var world = WorldWith(
