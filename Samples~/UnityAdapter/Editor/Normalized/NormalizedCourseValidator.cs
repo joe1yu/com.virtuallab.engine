@@ -510,7 +510,29 @@ namespace VirtualLab.Unity.Authoring.Normalized
                 reason,
                 suggestion,
                 CourseDiagnosticSeverity.Error,
-                provenance);
+                provenance,
+                new CourseDiagnosticTarget(
+                    source?.FileName ?? "规范化模型",
+                    source?.ConfigurationId ?? item.DefinitionId,
+                    string.Empty,
+                    DiagnosticAction(code)));
+        }
+
+        private static string DiagnosticAction(string code)
+        {
+            switch (code)
+            {
+                case "normalized.reference.entity-missing":
+                    return CourseDiagnosticActionIds.SelectEntity;
+                case "normalized.operation.unknown":
+                    return CourseDiagnosticActionIds.SelectOperation;
+                case "normalized.unit.unknown":
+                    return CourseDiagnosticActionIds.SelectUnit;
+                case "normalized.presentation-protocol.unknown":
+                    return CourseDiagnosticActionIds.SelectPresentation;
+                default:
+                    return CourseDiagnosticActionIds.LocateConfiguration;
+            }
         }
     }
 }

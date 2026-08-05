@@ -8,6 +8,7 @@ using UnityEngine;
 using VirtualLab.Application.Courses;
 using VirtualLab.Unity.Authoring.Blueprints;
 using VirtualLab.Unity.Authoring.Diagnostics;
+using VirtualLab.Unity.Authoring.Drafts;
 using VirtualLab.Unity.Authoring.Normalized;
 using VirtualLab.UnityAdapters.Authoring;
 using VirtualLab.UnityAdapters.Courses;
@@ -402,7 +403,8 @@ namespace VirtualLab.Unity.Authoring.Generation
                         diagnostic.Code,
                         pair.Key,
                         diagnostic.Message,
-                        "修正实体节点的通用组件、语义锚点或表现插槽。"));
+                        "修正实体节点的通用组件、语义锚点或表现插槽。",
+                        diagnostic.Target));
                 }
             }
         }
@@ -411,7 +413,8 @@ namespace VirtualLab.Unity.Authoring.Generation
             string code,
             string entityId,
             string reason,
-            string suggestion) =>
+            string suggestion,
+            CourseDiagnosticTarget target = null) =>
             new CourseCompilationDiagnostic(
                 code,
                 "实验预制体",
@@ -420,7 +423,14 @@ namespace VirtualLab.Unity.Authoring.Generation
                 string.Empty,
                 entityId,
                 reason,
-                suggestion);
+                suggestion,
+                CourseDiagnosticSeverity.Error,
+                null,
+                target ?? new CourseDiagnosticTarget(
+                    CourseAuthoringTableNames.Course,
+                    entityId,
+                    CourseAuthoringColumns.Course.ExperimentPrefab,
+                    CourseDiagnosticActionIds.EditExperimentPrefab));
 
         private static bool TryValidateArtifacts(
             string generatedDirectory,

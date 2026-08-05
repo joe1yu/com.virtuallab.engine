@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Linq;
 using VirtualLab.Chemistry.Authoring;
+using VirtualLab.Chemistry.Authoring.Catalogs;
 using VirtualLab.Unity.Authoring.Blueprints;
 using VirtualLab.Unity.Authoring.Catalogs;
 using VirtualLab.Unity.Authoring.Diagnostics;

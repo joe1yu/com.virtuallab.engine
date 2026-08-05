@@ -6,6 +6,7 @@ using UnityEditor;
 using UnityEngine;
 using VirtualLab.Unity.Authoring.Blueprints;
 using VirtualLab.Unity.Authoring.Catalogs;
+using VirtualLab.Unity.Authoring.Diagnostics;
 using VirtualLab.Unity.Authoring.Drafts;
 using VirtualLab.Unity.Authoring.Workbench.Panels;
 using VirtualLab.UnityAdapters.Input;
@@ -22,9 +23,7 @@ namespace VirtualLab.Unity.Authoring.Workbench
             "VirtualLab.CourseWorkbench.SelectedCourse";
 
         private static readonly string[] SectionNames =
-        {
-            "课程信息", "实验用品", "初始装置", "操作与过程", "教学与错误", "检查与生成"
-        };
+            CourseAuthoringSections.Names.ToArray();
 
         private readonly List<CourseLocation> _courses =
             new List<CourseLocation>();
@@ -33,6 +32,7 @@ namespace VirtualLab.Unity.Authoring.Workbench
         private CourseAuthoringWorkflow _workflow;
         private IReadOnlyList<Action> _panelDrawers = Array.Empty<Action>();
         private CourseBlueprintCompilationResult _compilation;
+        private CourseDiagnosticTarget _diagnosticTarget;
         private int _selectedCourseIndex = -1;
         private int _selectedSection;
         private Vector2 _scroll;
@@ -111,6 +111,7 @@ namespace VirtualLab.Unity.Authoring.Workbench
                 SectionNames);
             EditorGUILayout.Space();
             _scroll = EditorGUILayout.BeginScrollView(_scroll);
+            DrawDiagnosticTarget();
             _panelDrawers[_selectedSection]();
             EditorGUILayout.EndScrollView();
             DrawMessage();
@@ -158,6 +159,8 @@ namespace VirtualLab.Unity.Authoring.Workbench
             {
                 _session.Undo();
                 _compilation = null;
+                _diagnosticTarget = null;
+                _workflow.InvalidateCompiledReview();
             }
             EditorGUI.EndDisabledGroup();
             EditorGUI.BeginDisabledGroup(_session == null || !_session.CanRedo);
@@ -165,6 +168,8 @@ namespace VirtualLab.Unity.Authoring.Workbench
             {
                 _session.Redo();
                 _compilation = null;
+                _diagnosticTarget = null;
+                _workflow.InvalidateCompiledReview();
             }
             EditorGUI.EndDisabledGroup();
             EditorGUI.BeginDisabledGroup(_session == null);
@@ -248,6 +253,7 @@ namespace VirtualLab.Unity.Authoring.Workbench
                 _workflow = new CourseAuthoringWorkflow(_session);
                 _panelDrawers = CreatePanels(_workflow);
                 _compilation = null;
+                _diagnosticTarget = null;
                 _selectedCourseIndex = index;
                 _scroll = Vector2.zero;
                 EditorPrefs.SetString(
@@ -266,7 +272,7 @@ namespace VirtualLab.Unity.Authoring.Workbench
             }
         }
 
-        private static IReadOnlyList<Action> CreatePanels(
+        private IReadOnlyList<Action> CreatePanels(
             CourseAuthoringWorkflow workflow)
         {
             var information = new CourseInformationPanel(workflow);
@@ -274,7 +280,7 @@ namespace VirtualLab.Unity.Authoring.Workbench
             var setup = new CourseSetupPanel(workflow);
             var operations = new CourseOperationsPanel(workflow);
             var teaching = new CourseTeachingPanel(workflow);
-            var review = new CourseReviewPanel(workflow);
+            var review = new CourseReviewPanel(workflow, NavigateToDiagnostic);
             return new Action[]
             {
                 information.Draw,
@@ -312,12 +318,14 @@ namespace VirtualLab.Unity.Authoring.Workbench
                 var success = _compilation.IsSuccess;
                 var executionModesRegistered = success
                     && ExecutionModesAreRegistered(_compilation);
-                _workflow.SetCompiledReview(CoursePairingOverview.BuildReview(
-                    _compilation.Normalized,
-                    _session.Draft.Processes.Count,
-                    success,
-                    success,
-                    executionModesRegistered));
+                _workflow.SetCompiledReview(
+                    CoursePairingOverview.BuildReview(
+                        _compilation.Normalized,
+                        _session.Draft.Processes.Count,
+                        success,
+                        success,
+                        executionModesRegistered),
+                    _compilation.Diagnostics);
                 SetMessage(
                     success
                         ? "课程编译通过。"
@@ -384,6 +392,42 @@ namespace VirtualLab.Unity.Authoring.Workbench
             _message = message ?? string.Empty;
             _messageType = type;
             Repaint();
+        }
+
+        private void NavigateToDiagnostic(CourseDiagnosticTarget target)
+        {
+            if (target == null) return;
+            _diagnosticTarget = target;
+            _selectedSection = CourseAuthoringSections.IndexForTable(
+                target.FileName);
+            _scroll = Vector2.zero;
+            SetMessage(
+                $"已定位到 {DescribeTarget(target)}。",
+                MessageType.Info);
+        }
+
+        private void DrawDiagnosticTarget()
+        {
+            if (_diagnosticTarget == null) return;
+            EditorGUILayout.HelpBox(
+                $"当前修复位置：{DescribeTarget(_diagnosticTarget)}",
+                MessageType.Info);
+        }
+
+        private static string DescribeTarget(CourseDiagnosticTarget target)
+        {
+            var location = string.Join(
+                " / ",
+                new[]
+                    {
+                        target.FileName,
+                        target.ConfigurationId,
+                        target.ColumnName
+                    }
+                    .Where(value => !string.IsNullOrWhiteSpace(value)));
+            return string.IsNullOrWhiteSpace(target.ActionId)
+                ? location
+                : $"{location}（{target.ActionId}）";
         }
 
         private void DrawMessage()

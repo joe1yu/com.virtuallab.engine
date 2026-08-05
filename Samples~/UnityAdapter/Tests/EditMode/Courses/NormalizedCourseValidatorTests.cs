@@ -247,6 +247,15 @@ namespace VirtualLab.Engine.Tests.Courses
             Assert.That(codes, Does.Contain("normalized.operation.unknown"));
             Assert.That(codes, Does.Contain("normalized.presentation-protocol.unknown"));
             Assert.That(codes, Does.Contain("normalized.group-id.unreadable"));
+
+            var entityDiagnostic = result.Diagnostics.Single(value =>
+                value.Code == "normalized.reference.entity-missing"
+                && value.Reason.Contains("来源实体"));
+            Assert.That(entityDiagnostic.Target.FileName, Is.EqualTo("配方.csv"));
+            Assert.That(entityDiagnostic.Target.ConfigurationId, Is.EqualTo("动作"));
+            Assert.That(
+                entityDiagnostic.Target.ActionId,
+                Is.EqualTo(CourseDiagnosticActionIds.SelectEntity));
         }
 
         [Test]

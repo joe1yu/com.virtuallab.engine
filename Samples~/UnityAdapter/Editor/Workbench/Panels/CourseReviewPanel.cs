@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
+using VirtualLab.Unity.Authoring.Diagnostics;
 
 namespace VirtualLab.Unity.Authoring.Workbench.Panels
 {
@@ -11,6 +12,7 @@ namespace VirtualLab.Unity.Authoring.Workbench.Panels
     public sealed class CourseReviewPanel
     {
         private readonly CourseAuthoringWorkflow _workflow;
+        private readonly Action<CourseDiagnosticTarget> _navigate;
         private int _presentationSignal;
         private int _presentationSubject;
         private int _acceptanceOperation;
@@ -23,9 +25,12 @@ namespace VirtualLab.Unity.Authoring.Workbench.Panels
         private string _scenarioId = string.Empty;
         private string _message = string.Empty;
 
-        public CourseReviewPanel(CourseAuthoringWorkflow workflow)
+        public CourseReviewPanel(
+            CourseAuthoringWorkflow workflow,
+            Action<CourseDiagnosticTarget> navigate = null)
         {
             _workflow = workflow ?? throw new ArgumentNullException(nameof(workflow));
+            _navigate = navigate;
         }
 
         public void Draw()
@@ -45,6 +50,8 @@ namespace VirtualLab.Unity.Authoring.Workbench.Panels
                 "验收记录数",
                 _workflow.AcceptanceRecords.Count.ToString());
 
+            DrawDiagnostics();
+
             DrawPresentationForm();
             DrawAcceptanceForm();
 
@@ -57,6 +64,63 @@ namespace VirtualLab.Unity.Authoring.Workbench.Panels
             {
                 EditorGUILayout.HelpBox(_message, MessageType.Info);
             }
+        }
+
+        private void DrawDiagnostics()
+        {
+            var diagnostics = _workflow.CompilationDiagnostics;
+            if (diagnostics.Count == 0) return;
+
+            EditorGUILayout.Space();
+            EditorGUILayout.LabelField(
+                $"编译问题（{diagnostics.Count}）",
+                EditorStyles.boldLabel);
+            foreach (var diagnostic in diagnostics)
+            {
+                EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+                EditorGUILayout.LabelField(
+                    diagnostic.Severity == CourseDiagnosticSeverity.Error
+                        ? "错误"
+                        : "警告",
+                    EditorStyles.boldLabel);
+                EditorGUILayout.LabelField(
+                    "问题",
+                    diagnostic.Reason,
+                    EditorStyles.wordWrappedLabel);
+                EditorGUILayout.LabelField(
+                    "建议",
+                    diagnostic.Suggestion,
+                    EditorStyles.wordWrappedLabel);
+                EditorGUILayout.LabelField(
+                    "位置",
+                    DescribeTarget(diagnostic.Target),
+                    EditorStyles.wordWrappedLabel);
+
+                EditorGUI.BeginDisabledGroup(
+                    _navigate == null
+                    || string.IsNullOrWhiteSpace(diagnostic.Target.FileName));
+                if (GUILayout.Button(
+                        string.IsNullOrWhiteSpace(diagnostic.Target.ActionId)
+                            ? CourseDiagnosticActionIds.LocateConfiguration
+                            : diagnostic.Target.ActionId))
+                {
+                    _navigate?.Invoke(diagnostic.Target);
+                }
+                EditorGUI.EndDisabledGroup();
+                EditorGUILayout.EndVertical();
+            }
+        }
+
+        private static string DescribeTarget(CourseDiagnosticTarget target)
+        {
+            var parts = new[]
+                {
+                    target.FileName,
+                    target.ConfigurationId,
+                    target.ColumnName
+                }
+                .Where(value => !string.IsNullOrWhiteSpace(value));
+            return string.Join(" / ", parts);
         }
 
         private void DrawPresentationForm()

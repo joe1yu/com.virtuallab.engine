@@ -4,21 +4,29 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using UnityEngine;
 using VirtualLab.Application.Courses;
+using VirtualLab.Unity.Authoring.Diagnostics;
+using VirtualLab.Unity.Authoring.Drafts;
 using VirtualLab.UnityAdapters.Authoring;
 
 namespace VirtualLab.Unity.Authoring.Normalized
 {
     public sealed class PrefabContractDiagnostic
     {
-        public PrefabContractDiagnostic(string code, string message)
+        public PrefabContractDiagnostic(
+            string code,
+            string message,
+            CourseDiagnosticTarget target)
         {
             Code = code;
             Message = message;
+            Target = target ?? throw new ArgumentNullException(nameof(target));
         }
 
         public string Code { get; }
 
         public string Message { get; }
+
+        public CourseDiagnosticTarget Target { get; }
     }
 
     public static class PrefabContractValidator
@@ -51,7 +59,8 @@ namespace VirtualLab.Unity.Authoring.Normalized
             {
                 diagnostics.Add(new PrefabContractDiagnostic(
                     "prefab.entity-id.mismatch",
-                    $"实体视图 ID“{view.EntityId}”与契约实体 ID“{contract.EntityId}”不一致。"));
+                    $"实体视图 ID“{view.EntityId}”与契约实体 ID“{contract.EntityId}”不一致。",
+                    PrefabTarget(contract.EntityId)));
             }
 
             foreach (var requirement in
@@ -59,6 +68,7 @@ namespace VirtualLab.Unity.Authoring.Normalized
             {
                 ValidateRequirement(
                     requirement,
+                    contract.EntityId,
                     view,
                     anchors,
                     slots,
@@ -76,17 +86,23 @@ namespace VirtualLab.Unity.Authoring.Normalized
                 {
                     diagnostics.Add(new PrefabContractDiagnostic(
                         "prefab.port.missing",
-                        $"缺少连接端口锚点“{portId}”。"));
+                        $"缺少连接端口锚点“{portId}”。",
+                        PrefabTarget(contract.EntityId)));
                 }
             }
 
-            ValidateUniqueIds(anchors, slots, diagnostics);
+            ValidateUniqueIds(
+                contract.EntityId,
+                anchors,
+                slots,
+                diagnostics);
             return new ReadOnlyCollection<PrefabContractDiagnostic>(
                 diagnostics);
         }
 
         private static void ValidateRequirement(
             PrefabContractRequirement requirement,
+            string entityId,
             CourseEntityView view,
             IEnumerable<SemanticAnchorMarker> anchors,
             IEnumerable<PresentationSlotMarker> slots,
@@ -99,7 +115,10 @@ namespace VirtualLab.Unity.Authoring.Normalized
                             .Any(value => value.GetComponentInParent<
                                 CourseEntityView>(true) == view))
                     {
-                        AddRequirementDiagnostic(requirement, diagnostics);
+                        AddRequirementDiagnostic(
+                            requirement,
+                            entityId,
+                            diagnostics);
                     }
 
                     return;
@@ -109,7 +128,10 @@ namespace VirtualLab.Unity.Authoring.Normalized
                             requirement.Value);
                     if (!anchors.Any(value => value.Kind == anchorKind))
                     {
-                        AddRequirementDiagnostic(requirement, diagnostics);
+                        AddRequirementDiagnostic(
+                            requirement,
+                            entityId,
+                            diagnostics);
                     }
 
                     return;
@@ -119,7 +141,10 @@ namespace VirtualLab.Unity.Authoring.Normalized
                             requirement.Value));
                     if (!slots.Any(value => accepted.Contains(value.Kind)))
                     {
-                        AddRequirementDiagnostic(requirement, diagnostics);
+                        AddRequirementDiagnostic(
+                            requirement,
+                            entityId,
+                            diagnostics);
                     }
 
                     return;
@@ -130,14 +155,17 @@ namespace VirtualLab.Unity.Authoring.Normalized
 
         private static void AddRequirementDiagnostic(
             PrefabContractRequirement requirement,
+            string entityId,
             ICollection<PrefabContractDiagnostic> diagnostics)
         {
             diagnostics.Add(new PrefabContractDiagnostic(
                 requirement.DiagnosticCode,
-                requirement.Message));
+                requirement.Message,
+                PrefabTarget(entityId)));
         }
 
         private static void ValidateUniqueIds(
+            string entityId,
             IEnumerable<SemanticAnchorMarker> anchors,
             IEnumerable<PresentationSlotMarker> slots,
             ICollection<PrefabContractDiagnostic> diagnostics)
@@ -148,7 +176,8 @@ namespace VirtualLab.Unity.Authoring.Normalized
             {
                 diagnostics.Add(new PrefabContractDiagnostic(
                     "prefab.anchor.id-invalid",
-                    "语义锚点 ID 不能为空或重复。"));
+                    "语义锚点 ID 不能为空或重复。",
+                    PrefabTarget(entityId)));
             }
 
             if (slots.Any(value => string.IsNullOrWhiteSpace(value.SlotId)) ||
@@ -157,8 +186,16 @@ namespace VirtualLab.Unity.Authoring.Normalized
             {
                 diagnostics.Add(new PrefabContractDiagnostic(
                     "prefab.slot.id-invalid",
-                    "表现插槽 ID 不能为空或重复。"));
+                    "表现插槽 ID 不能为空或重复。",
+                    PrefabTarget(entityId)));
             }
         }
+
+        private static CourseDiagnosticTarget PrefabTarget(string entityId) =>
+            new CourseDiagnosticTarget(
+                CourseAuthoringTableNames.Course,
+                entityId,
+                CourseAuthoringColumns.Course.ExperimentPrefab,
+                CourseDiagnosticActionIds.EditExperimentPrefab);
     }
 }

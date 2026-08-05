@@ -7,6 +7,53 @@ using VirtualLab.Unity.Authoring.Drafts;
 
 namespace VirtualLab.Unity.Authoring.Workbench
 {
+    /// <summary>
+    /// 六个创作区及课程表到创作区的唯一映射，供窗口、工作流和诊断导航共用。
+    /// </summary>
+    public static class CourseAuthoringSections
+    {
+        public const string Information = "课程信息";
+        public const string Supplies = "实验用品";
+        public const string Setup = "装置与初始状态";
+        public const string Operations = "操作与科学过程";
+        public const string Teaching = "教学目标与错误后果";
+        public const string Review = "检查与生成";
+
+        public static IReadOnlyList<string> Names { get; } = new[]
+        {
+            Information,
+            Supplies,
+            Setup,
+            Operations,
+            Teaching,
+            Review
+        };
+
+        public static int IndexForTable(string fileName)
+        {
+            switch (fileName)
+            {
+                case CourseAuthoringTableNames.Course:
+                    return 0;
+                case CourseAuthoringTableNames.Objects:
+                case CourseAuthoringTableNames.Components:
+                    return 1;
+                case CourseAuthoringTableNames.InitialRelations:
+                    return 2;
+                case CourseAuthoringTableNames.OperationOverrides:
+                case CourseAuthoringTableNames.Processes:
+                    return 3;
+                case CourseAuthoringTableNames.Teaching:
+                case CourseAuthoringTableNames.TeachingConditions:
+                    return 4;
+                case CourseAuthoringTableNames.Presentation:
+                case CourseAuthoringTableNames.AcceptanceScenarios:
+                default:
+                    return 5;
+            }
+        }
+    }
+
     public sealed class CourseAuthoringSectionStatus
     {
         public CourseAuthoringSectionStatus(
@@ -135,16 +182,8 @@ namespace VirtualLab.Unity.Authoring.Workbench
     public sealed class CourseAuthoringWorkflow
     {
         private CourseAuthoringReviewSummary _compiledReview;
-        private static readonly string[] SectionNames =
-        {
-            "课程信息",
-            "实验用品",
-            "装置与初始状态",
-            "操作与科学过程",
-            "教学目标与错误后果",
-            "检查与生成"
-        };
-
+        private IReadOnlyList<CourseCompilationDiagnostic>
+            _compilationDiagnostics = Array.Empty<CourseCompilationDiagnostic>();
         private static readonly string[] OperationFields =
         {
             "来源选择方式",
@@ -220,6 +259,8 @@ namespace VirtualLab.Unity.Authoring.Workbench
                 null,
                 null,
                 null);
+        public IReadOnlyList<CourseCompilationDiagnostic> CompilationDiagnostics =>
+            _compilationDiagnostics;
         public IReadOnlyList<CourseAuthoringSectionStatus> Sections =>
             BuildSections();
 
@@ -321,7 +362,7 @@ namespace VirtualLab.Unity.Authoring.Workbench
                 template.TemplateId,
                 identities.Select(identity =>
                     new KeyValuePair<string, string>(identity, identity)));
-            _compiledReview = null;
+            InvalidateCompiledReview();
             return added;
         }
 
@@ -398,7 +439,7 @@ namespace VirtualLab.Unity.Authoring.Workbench
                     1,
                     1,
                     relationId)));
-            _compiledReview = null;
+            InvalidateCompiledReview();
             return CourseAuthoringCommandResult.Success();
         }
 
@@ -440,7 +481,7 @@ namespace VirtualLab.Unity.Authoring.Workbench
                 value.RejectionMessage,
                 value.ConsequenceTemplateId,
                 Source(CourseAuthoringTableNames.OperationOverrides, value.OverrideId)));
-            _compiledReview = null;
+            InvalidateCompiledReview();
         }
 
         public void SetRisk(RiskFormValue value)
@@ -474,7 +515,7 @@ namespace VirtualLab.Unity.Authoring.Workbench
                 value.Continuation,
                 string.Join(";", value.AffectedTargets),
                 Source(CourseAuthoringTableNames.Teaching, value.RiskId)));
-            _compiledReview = null;
+            InvalidateCompiledReview();
         }
 
         public void SetProcess(
@@ -506,7 +547,7 @@ namespace VirtualLab.Unity.Authoring.Workbench
                 targetSelectorValue,
                 parameters,
                 Source(CourseAuthoringTableNames.Processes, processId)));
-            _compiledReview = null;
+            InvalidateCompiledReview();
         }
 
         public void SetPresentation(
@@ -538,7 +579,7 @@ namespace VirtualLab.Unity.Authoring.Workbench
                 locationId,
                 parameters,
                 Source(CourseAuthoringTableNames.Presentation, presentationId)));
-            _compiledReview = null;
+            InvalidateCompiledReview();
         }
 
         public void SetAcceptanceAction(
@@ -581,12 +622,34 @@ namespace VirtualLab.Unity.Authoring.Workbench
                 string.Empty,
                 string.Empty,
                 Source(CourseAuthoringTableNames.AcceptanceScenarios, scenarioId)));
-            _compiledReview = null;
+            InvalidateCompiledReview();
         }
 
         public void SetCompiledReview(CourseAuthoringReviewSummary review)
         {
+            SetCompiledReview(
+                review,
+                Array.Empty<CourseCompilationDiagnostic>());
+        }
+
+        public void SetCompiledReview(
+            CourseAuthoringReviewSummary review,
+            IEnumerable<CourseCompilationDiagnostic> diagnostics)
+        {
             _compiledReview = review ?? throw new ArgumentNullException(nameof(review));
+            _compilationDiagnostics = (diagnostics
+                ?? Array.Empty<CourseCompilationDiagnostic>())
+                .Where(value => value != null)
+                .OrderBy(value => value.FileName, StringComparer.Ordinal)
+                .ThenBy(value => value.Line)
+                .ThenBy(value => value.Code, StringComparer.Ordinal)
+                .ToArray();
+        }
+
+        public void InvalidateCompiledReview()
+        {
+            _compiledReview = null;
+            _compilationDiagnostics = Array.Empty<CourseCompilationDiagnostic>();
         }
 
         private bool PortIsValid(string entityId, string portId) =>
@@ -649,7 +712,7 @@ namespace VirtualLab.Unity.Authoring.Workbench
                 teachingMissing,
                 reviewMissing
             };
-            return SectionNames.Select((name, index) =>
+            return CourseAuthoringSections.Names.Select((name, index) =>
                 new CourseAuthoringSectionStatus(
                     name,
                     missingBySection[index])).ToArray();

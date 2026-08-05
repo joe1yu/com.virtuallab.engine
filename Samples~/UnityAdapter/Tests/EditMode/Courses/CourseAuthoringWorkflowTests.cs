@@ -4,6 +4,8 @@ using System.IO;
 using System.Linq;
 using NUnit.Framework;
 using VirtualLab.Unity.Authoring.Catalogs;
+using VirtualLab.Unity.Authoring.Diagnostics;
+using VirtualLab.Unity.Authoring.Drafts;
 using VirtualLab.Unity.Authoring.Workbench;
 
 namespace VirtualLab.Engine.Tests.Courses
@@ -101,6 +103,44 @@ namespace VirtualLab.Engine.Tests.Courses
                 Does.Not.Contain("协议操作"));
             Assert.That(_workflow.VisibleOperationFields,
                 Does.Not.Contain("操作指令"));
+        }
+
+        [Test]
+        public void 编译诊断保留结构化修复目标且草稿修改后自动失效()
+        {
+            var target = new CourseDiagnosticTarget(
+                CourseAuthoringTableNames.Objects,
+                "集气瓶一",
+                CourseAuthoringColumns.Object.EntityType,
+                CourseDiagnosticActionIds.SelectEntity);
+            var diagnostic = new CourseCompilationDiagnostic(
+                "course.test",
+                "配方.csv",
+                2,
+                1,
+                string.Empty,
+                "测试规则",
+                "没有可配对的实验对象。",
+                "选择实验对象。",
+                CourseDiagnosticSeverity.Error,
+                null,
+                target);
+
+            _workflow.SetCompiledReview(
+                new CourseAuthoringReviewSummary(1, 0, 0, false, false, false),
+                new[] { diagnostic });
+
+            Assert.That(
+                _workflow.CompilationDiagnostics.Single().Target,
+                Is.SameAs(target));
+            Assert.That(
+                CourseAuthoringSections.IndexForTable(target.FileName),
+                Is.EqualTo(1));
+
+            _workflow.AddSupplies("容器与反应器皿", "集气瓶", 1);
+
+            Assert.That(_workflow.CompilationDiagnostics, Is.Empty);
+            Assert.That(_workflow.Review.GoalsReachable, Is.Null);
         }
 
         private static CourseAuthoringCatalog Catalog() =>

@@ -3,6 +3,8 @@ using System.Linq;
 using NUnit.Framework;
 using UnityEngine;
 using VirtualLab.Application.Courses;
+using VirtualLab.Unity.Authoring.Diagnostics;
+using VirtualLab.Unity.Authoring.Drafts;
 using VirtualLab.Unity.Authoring.Normalized;
 using VirtualLab.UnityAdapters.Authoring;
 
@@ -37,9 +39,20 @@ namespace VirtualLab.Engine.Tests.Courses
                     contract,
                     catalog);
 
+                var diagnostic = diagnostics.Single(value =>
+                    value.Code == "物理.需要读数观察点");
                 Assert.That(
-                    diagnostics.Select(value => value.Code),
-                    Does.Contain("物理.需要读数观察点"));
+                    diagnostic.Target.FileName,
+                    Is.EqualTo(CourseAuthoringTableNames.Course));
+                Assert.That(
+                    diagnostic.Target.ConfigurationId,
+                    Is.EqualTo("测力计"));
+                Assert.That(
+                    diagnostic.Target.ColumnName,
+                    Is.EqualTo(CourseAuthoringColumns.Course.ExperimentPrefab));
+                Assert.That(
+                    diagnostic.Target.ActionId,
+                    Is.EqualTo(CourseDiagnosticActionIds.EditExperimentPrefab));
             }
             finally
             {
