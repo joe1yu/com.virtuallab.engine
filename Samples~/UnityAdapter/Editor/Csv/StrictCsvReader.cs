@@ -34,13 +34,16 @@ namespace VirtualLab.Unity.Authoring.Csv
     public sealed class StrictCsvRow
     {
         private readonly IReadOnlyDictionary<string, string> _values;
+        private readonly IReadOnlyDictionary<string, string> _configuredValues;
 
         internal StrictCsvRow(
             int lineNumber,
-            IReadOnlyDictionary<string, string> values)
+            IReadOnlyDictionary<string, string> values,
+            IReadOnlyDictionary<string, string> configuredValues)
         {
             LineNumber = lineNumber;
             _values = values;
+            _configuredValues = configuredValues;
         }
 
         public int LineNumber { get; }
@@ -51,6 +54,12 @@ namespace VirtualLab.Unity.Authoring.Csv
             ? value
             : string.Empty;
         public bool Has(string header) => _values.ContainsKey(header);
+        public string ConfiguredValue(string header) =>
+            _configuredValues.TryGetValue(header, out var value)
+                ? value
+                : string.Empty;
+        public bool HasConfigured(string header) =>
+            _configuredValues.ContainsKey(header);
     }
 
     public sealed class StrictCsvReadResult
@@ -59,14 +68,17 @@ namespace VirtualLab.Unity.Authoring.Csv
             IEnumerable<string> headers,
             IEnumerable<StrictCsvRow> rows,
             IEnumerable<CourseCompilationDiagnostic> diagnostics,
-            IEnumerable<string> configuredHeaders = null)
+            IEnumerable<string> configuredHeaders = null,
+            string fileName = null)
         {
+            FileName = fileName?.Trim() ?? string.Empty;
             Headers = headers.ToArray();
             ConfiguredHeaders = (configuredHeaders ?? headers).ToArray();
             Rows = rows.ToArray();
             Diagnostics = diagnostics.ToArray();
         }
 
+        public string FileName { get; }
         public IReadOnlyList<string> Headers { get; }
         public IReadOnlyList<string> ConfiguredHeaders { get; }
         public IReadOnlyList<StrictCsvRow> Rows { get; }
@@ -110,7 +122,8 @@ namespace VirtualLab.Unity.Authoring.Csv
                                 string.Empty,
                                 "UTF-8 BOM 只能出现在文件开头。",
                                 "删除文件内容中的 BOM 字符后重新导出。")
-                        });
+                        },
+                        fileName: fileName);
                 }
 
                 return Read(fileName, text);
@@ -130,7 +143,8 @@ namespace VirtualLab.Unity.Authoring.Csv
                             string.Empty,
                             "文件不是严格 UTF-8 编码。",
                             "从 Excel 重新导出为 UTF-8 CSV。")
-                    });
+                    },
+                    fileName: fileName);
             }
         }
 
@@ -156,7 +170,8 @@ namespace VirtualLab.Unity.Authoring.Csv
                 return new StrictCsvReadResult(
                     Array.Empty<string>(),
                     Array.Empty<StrictCsvRow>(),
-                    diagnostics);
+                    diagnostics,
+                    fileName: fileName);
             }
 
             var headers = records[0].Cells
@@ -227,6 +242,8 @@ namespace VirtualLab.Unity.Authoring.Csv
 
                 var values = new Dictionary<string, string>(
                     StringComparer.Ordinal);
+                var configuredValues = new Dictionary<string, string>(
+                    StringComparer.Ordinal);
                 for (var index = 0; index < headers.Count; index++)
                 {
                     var cell = record.Cells[index];
@@ -246,19 +263,28 @@ namespace VirtualLab.Unity.Authoring.Csv
                     {
                         values.Add(headers[index], cell);
                     }
+
+                    var configuredHeader = records[0].Cells[index];
+                    if (!configuredValues.ContainsKey(configuredHeader))
+                    {
+                        configuredValues.Add(configuredHeader, cell);
+                    }
                 }
 
                 rows.Add(
                     new StrictCsvRow(
                         record.Line,
-                        new ReadOnlyDictionary<string, string>(values)));
+                        new ReadOnlyDictionary<string, string>(values),
+                        new ReadOnlyDictionary<string, string>(
+                            configuredValues)));
             }
 
             return new StrictCsvReadResult(
                 headers,
                 rows,
                 diagnostics,
-                records[0].Cells);
+                records[0].Cells,
+                fileName);
         }
 
         private static List<Record> Parse(
