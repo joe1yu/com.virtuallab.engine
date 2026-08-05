@@ -428,10 +428,12 @@ namespace VirtualLab.Engine.Tests.Courses
         public void 连接网络事实遍历完整链路且排除无关对象()
         {
             var world = WorldWith(
+                Entity("学生"),
                 Entity("大试管"),
                 Entity("橡胶塞玻璃导管"),
                 Entity("折角导气管"),
                 Entity("集气瓶"),
+                Entity("水槽"),
                 Entity("无关器材"));
             world.SetRelation(new EntityRelation(
                 InteractionRelationTypeIds.Connection,
@@ -451,13 +453,21 @@ namespace VirtualLab.Engine.Tests.Courses
                 new EntityId("集气瓶"),
                 "集气出口",
                 "集气入口"));
+            world.SetRelation(new EntityRelation(
+                InteractionRelationTypeIds.ContainedBy,
+                new EntityId("折角导气管"),
+                new EntityId("水槽")));
+            world.SetRelation(new EntityRelation(
+                InteractionRelationTypeIds.HeldBy,
+                new EntityId("大试管"),
+                new EntityId("学生")));
 
-            var reader = InteractionCourseRegistrations.CreateFactReaders()
-                .Single(value => value.Field ==
-                    InteractionStructuredFactFields.来源对象连接网络);
+            var readers = InteractionCourseRegistrations.CreateFactReaders();
 
             Assert.That(
-                reader.Read(new StructuredRuleContext(
+                readers.Single(value => value.Field ==
+                        InteractionStructuredFactFields.来源对象连接网络)
+                    .Read(new StructuredRuleContext(
                     Request("命令.检查气路", "检查", "大试管", null),
                     world)).TextList,
                 Is.EqualTo(new[]
@@ -466,6 +476,20 @@ namespace VirtualLab.Engine.Tests.Courses
                     "橡胶塞玻璃导管",
                     "集气瓶"
                 }));
+            var observeContext = new StructuredRuleContext(
+                Request("命令.检查气密性", "观察", "折角导气管", null),
+                world);
+            Assert.That(
+                readers.Single(value => value.Field ==
+                        InteractionStructuredFactFields.来源对象所在容器)
+                    .Read(observeContext).TextList,
+                Is.EqualTo(new[] { "水槽" }));
+            Assert.That(
+                readers.Single(value => value.Field ==
+                        InteractionStructuredFactFields
+                            .来源对象连接网络中由操作者持有的对象)
+                    .Read(observeContext).TextList,
+                Is.EqualTo(new[] { "大试管" }));
         }
 
         [Test]

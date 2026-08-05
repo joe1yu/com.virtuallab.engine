@@ -160,6 +160,12 @@ namespace VirtualLab.Interaction.Courses
                     RelatedEntityDirection.Any),
                 new ConnectedNetworkFactReader(),
                 new RelatedEntityIdsFactReader(
+                    InteractionStructuredFactFields.来源对象所在容器,
+                    InteractionRelationTypeIds.ContainedBy,
+                    context => context.Request.SourceEntityId,
+                    RelatedEntityDirection.Outgoing),
+                new ConnectedNetworkHeldByActorFactReader(),
+                new RelatedEntityIdsFactReader(
                     InteractionStructuredFactFields.来源对象固定对象,
                     InteractionRelationTypeIds.FixedBy,
                     context => context.Request.SourceEntityId,
@@ -458,36 +464,77 @@ namespace VirtualLab.Interaction.Courses
                 }
 
                 var source = new EntityId(context.Request.SourceEntityId);
-                var connections = context.World.Relations
-                    .Where(value =>
-                        value.TypeId == InteractionRelationTypeIds.Connection)
-                    .ToArray();
-                var visited = new HashSet<EntityId> { source };
-                var pending = new Queue<EntityId>();
-                pending.Enqueue(source);
-
-                while (pending.Count > 0)
-                {
-                    var current = pending.Dequeue();
-                    foreach (var relation in connections.Where(value =>
-                        value.Source == current || value.Target == current))
-                    {
-                        var adjacent = relation.Source == current
-                            ? relation.Target
-                            : relation.Source;
-                        if (visited.Add(adjacent))
-                        {
-                            pending.Enqueue(adjacent);
-                        }
-                    }
-                }
 
                 return StructuredValue.FromTextList(
-                    visited
+                    ConnectedNetwork(context, source)
                         .Where(value => value != source)
                         .Select(value => value.Value)
                         .OrderBy(value => value, StringComparer.Ordinal));
             }
+        }
+
+        /// <summary>
+        /// 返回连接网络中当前由动作操作者持有的对象，用权威关系表达手握检验等条件。
+        /// </summary>
+        private sealed class ConnectedNetworkHeldByActorFactReader :
+            IStructuredFactReader
+        {
+            public StructuredFactField Field =>
+                InteractionStructuredFactFields.来源对象连接网络中由操作者持有的对象;
+
+            public StructuredValue Read(StructuredRuleContext context)
+            {
+                if (string.IsNullOrWhiteSpace(context.Request.SourceEntityId)
+                    || string.IsNullOrWhiteSpace(context.Request.ActorEntityId))
+                {
+                    return StructuredValue.FromTextList(Array.Empty<string>());
+                }
+
+                var source = new EntityId(context.Request.SourceEntityId);
+                var actor = new EntityId(context.Request.ActorEntityId);
+                var held = context.World.Relations
+                    .Where(value =>
+                        value.TypeId == InteractionRelationTypeIds.HeldBy
+                        && value.Target == actor)
+                    .Select(value => value.Source)
+                    .ToHashSet();
+                return StructuredValue.FromTextList(
+                    ConnectedNetwork(context, source)
+                        .Where(value => value != source && held.Contains(value))
+                        .Select(value => value.Value)
+                        .OrderBy(value => value, StringComparer.Ordinal));
+            }
+        }
+
+        private static HashSet<EntityId> ConnectedNetwork(
+            StructuredRuleContext context,
+            EntityId source)
+        {
+            var connections = context.World.Relations
+                .Where(value =>
+                    value.TypeId == InteractionRelationTypeIds.Connection)
+                .ToArray();
+            var visited = new HashSet<EntityId> { source };
+            var pending = new Queue<EntityId>();
+            pending.Enqueue(source);
+
+            while (pending.Count > 0)
+            {
+                var current = pending.Dequeue();
+                foreach (var relation in connections.Where(value =>
+                    value.Source == current || value.Target == current))
+                {
+                    var adjacent = relation.Source == current
+                        ? relation.Target
+                        : relation.Source;
+                    if (visited.Add(adjacent))
+                    {
+                        pending.Enqueue(adjacent);
+                    }
+                }
+            }
+
+            return visited;
         }
 
         /// <summary>

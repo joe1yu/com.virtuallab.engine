@@ -576,14 +576,7 @@ namespace VirtualLab.Engine.Tests.Courses
         public void 实验目标开局未完成且不规范操作会执行并形成后果证据()
         {
             var context = CreateRuntime();
-            var readers = InteractionCourseRegistrations
-                .CreateModuleScope().FactReaders
-                .Concat(ChemistryCourseRegistrations.CreateFactReaders());
-            var initialGoals = new CourseGoalEvaluator(
-                    new StructuredRuleEvaluator(readers))
-                .Evaluate(
-                    context.World,
-                    context.Course.GoalRules);
+            var initialGoals = EvaluateGoals(context);
 
             PrepareHeatingApparatus(context.Runtime);
             context.World.RemoveRelation(new EntityRelation(
@@ -651,6 +644,7 @@ namespace VirtualLab.Engine.Tests.Courses
                     ChemistrySemanticActionIds.EndHeating,
                     "大试管",
                     "酒精灯"));
+            var goalsAfterUnsafeStop = EvaluateGoals(context);
             var assessment = context.Runtime.Session
                 .ExportState()
                 .Assessment;
@@ -678,7 +672,75 @@ namespace VirtualLab.Engine.Tests.Courses
                     .And.Contain("风险.装置漏气")
                     .And.Contain("风险.氧气不纯")
                     .And.Contain("风险.冷凝水倒吸"));
+            Assert.That(
+                goalsAfterUnsafeStop.CompletedGoalIds,
+                Does.Not.Contain("目标.安全停止加热"));
             Assert.That(assessment.Score, Is.LessThan(100));
+        }
+
+        [Test]
+        public void 气密性目标必须完成连接入水和手握观察后才成立()
+        {
+            var context = CreateRuntime();
+            var runtime = context.Runtime;
+            Assert.That(runtime.Session.Execute(Request(
+                "命令.气密性.拿起橡胶塞玻璃导管",
+                InteractionSemanticActionIds.Grab,
+                "橡胶塞玻璃导管",
+                null)).IsAccepted, Is.True);
+            Assert.That(runtime.Session.Execute(Request(
+                "命令.气密性.连接大试管",
+                InteractionSemanticActionIds.Connect,
+                "橡胶塞玻璃导管",
+                "大试管")).IsAccepted, Is.True);
+
+            Assert.That(
+                EvaluateGoals(context).CompletedGoalIds,
+                Does.Not.Contain("目标.检查装置气密性"));
+
+            Assert.That(runtime.Session.Execute(Request(
+                "命令.气密性.放下橡胶塞玻璃导管",
+                InteractionSemanticActionIds.Release,
+                "橡胶塞玻璃导管",
+                null)).IsAccepted, Is.True);
+            Assert.That(runtime.Session.Execute(Request(
+                "命令.气密性.拿起折角导气管",
+                InteractionSemanticActionIds.Grab,
+                "折角导气管",
+                null)).IsAccepted, Is.True);
+            Assert.That(runtime.Session.Execute(Request(
+                "命令.气密性.连接两段导气管",
+                InteractionSemanticActionIds.Connect,
+                "折角导气管",
+                "橡胶塞玻璃导管")).IsAccepted, Is.True);
+            Assert.That(runtime.Session.Execute(Request(
+                "命令.气密性.导气管入水",
+                InteractionSemanticActionIds.Place,
+                "折角导气管",
+                "水槽")).IsAccepted, Is.True);
+            Assert.That(runtime.Session.Execute(Request(
+                "命令.气密性.放下折角导气管",
+                InteractionSemanticActionIds.Release,
+                "折角导气管",
+                null)).IsAccepted, Is.True);
+            Assert.That(runtime.Session.Execute(Request(
+                "命令.气密性.手握大试管",
+                InteractionSemanticActionIds.Grab,
+                "大试管",
+                null)).IsAccepted, Is.True);
+            var observed = runtime.Session.Execute(Request(
+                "命令.气密性.观察气泡",
+                InteractionSemanticActionIds.Observe,
+                "折角导气管",
+                null));
+
+            Assert.That(
+                observed.IsAccepted,
+                Is.True,
+                string.Join(",", observed.RejectionCodes));
+            Assert.That(
+                EvaluateGoals(context).CompletedGoalIds,
+                Does.Contain("目标.检查装置气密性"));
         }
 
         [Test]
@@ -802,14 +864,7 @@ namespace VirtualLab.Engine.Tests.Courses
                         "集气瓶二")).IsAccepted,
                 Is.True);
 
-            var completed = new CourseGoalEvaluator(
-                    new StructuredRuleEvaluator(
-                        InteractionCourseRegistrations
-                            .CreateModuleScope().FactReaders
-                            .Concat(
-                                ChemistryCourseRegistrations
-                                    .CreateFactReaders())))
-                .Evaluate(context.World, context.Course.GoalRules);
+            var completed = EvaluateGoals(context);
 
             Assert.That(
                 completed.CompletedGoalIds,
@@ -877,6 +932,14 @@ namespace VirtualLab.Engine.Tests.Courses
                     compilation.Domain,
                     chemistry));
         }
+
+        private static CourseGoalEvaluationResult EvaluateGoals(
+            RuntimeContext context) =>
+            new CourseGoalEvaluator(
+                    new StructuredRuleEvaluator(
+                        ChemistryCourseRegistrations
+                            .CreateModuleScope().FactReaders))
+                .Evaluate(context.World, context.Course.GoalRules);
 
         private static CourseBlueprintCompilationResult Compile() =>
             new CourseBlueprintCompiler().Compile(
@@ -1257,11 +1320,29 @@ namespace VirtualLab.Engine.Tests.Courses
             Assert.That(
                 runtime.Session.Execute(
                     Request(
+                        "命令.折角导气管放入水槽",
+                        InteractionSemanticActionIds.Place,
+                        "折角导气管",
+                        "水槽")).IsAccepted,
+                Is.True);
+            Assert.That(
+                runtime.Session.Execute(
+                    Request(
                         "命令.放下折角导气管",
                         InteractionSemanticActionIds.Release,
                         "折角导气管",
                         null)).IsAccepted,
                 Is.True);
+            var gasTightness = runtime.Session.Execute(
+                Request(
+                    "命令.观察气密性",
+                    InteractionSemanticActionIds.Observe,
+                    "折角导气管",
+                    null));
+            Assert.That(
+                gasTightness.IsAccepted,
+                Is.True,
+                string.Join(",", gasTightness.RejectionCodes));
             Assert.That(
                 runtime.Session.Execute(
                     Request(
