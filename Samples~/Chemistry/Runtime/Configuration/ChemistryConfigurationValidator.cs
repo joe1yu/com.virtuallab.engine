@@ -4,7 +4,7 @@ using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
-using VirtualLab.Domain.Matter;
+using VirtualLab.Chemistry.Matter;
 using VirtualLab.Kernel;
 using VirtualLab.Measurement;
 

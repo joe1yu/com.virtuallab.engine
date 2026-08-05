@@ -22,9 +22,9 @@ namespace VirtualLab.Chemistry.Courses
             public const string TargetEntityId =
                 CourseConfigurationKeys.Common.TargetEntityId;
             public const string SubstanceId =
-                CourseConfigurationKeys.EventPayload.SubstanceId;
+                EventPayload.SubstanceId;
             public const string Quantity =
-                CourseConfigurationKeys.EventPayload.Quantity;
+                EventPayload.Quantity;
             public const string MeasurementUnit = "计量单位";
             public const string StateKey =
                 CourseConfigurationKeys.Mutation.StateKey;
@@ -131,6 +131,9 @@ namespace VirtualLab.Chemistry.Courses
 
         public static class EventPayload
         {
+            public const string SubstanceId = "物质标识";
+            public const string Quantity = "数量";
+            public const string Unit = "单位";
             public const string LocationEntityId = "位置实体标识";
             public const string Components = "组分";
             public const string ProcessStopped = "过程已停止";

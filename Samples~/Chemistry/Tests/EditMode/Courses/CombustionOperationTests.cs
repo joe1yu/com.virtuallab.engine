@@ -9,7 +9,7 @@ using VirtualLab.Chemistry.Courses;
 using VirtualLab.Domain;
 using VirtualLab.Domain.Capabilities;
 using VirtualLab.Domain.Entities;
-using VirtualLab.Domain.Matter;
+using VirtualLab.Chemistry.Matter;
 using VirtualLab.Interaction.Capabilities;
 using VirtualLab.Kernel;
 using VirtualLab.Measurement;
@@ -97,7 +97,7 @@ namespace VirtualLab.Chemistry.Tests.Courses
             Assert.That(ignited.IsAccepted, Is.True);
             Assert.That(extinguished.IsAccepted, Is.True);
             Assert.That(
-                world.Matter.Total(
+                world.RequireMatterInventory().Total(
                     new EntityId("器材.燃烧匙"),
                     "二氧化碳",
                     Unit.Gram).Value,
@@ -161,7 +161,7 @@ namespace VirtualLab.Chemistry.Tests.Courses
         {
             var world = CombustionWorld(true, true, 300m);
             Add(world, "器材.氧气瓶", new ContainerCapability(100m));
-            world.Matter.Transfer(
+            world.RequireMatterInventory().Transfer(
                 new EntityId("器材.燃烧匙"),
                 new EntityId("器材.氧气瓶"),
                 "氧气",
@@ -200,13 +200,13 @@ namespace VirtualLab.Chemistry.Tests.Courses
 
             Assert.That(result.IsAccepted, Is.True);
             Assert.That(
-                world.Matter.Total(
+                world.RequireMatterInventory().Total(
                     new EntityId("器材.燃烧匙"),
                     "氧气",
                     Unit.Gram).Value,
                 Is.EqualTo(2m));
             Assert.That(
-                world.Matter.Total(
+                world.RequireMatterInventory().Total(
                     new EntityId("器材.氧气瓶"),
                     "氧气",
                     Unit.Gram).Value,
@@ -305,7 +305,7 @@ namespace VirtualLab.Chemistry.Tests.Courses
                 validIgniter
                     ? new ICapability[] { new Heat来源对象能力(100m) }
                     : Array.Empty<ICapability>());
-            world.Matter.Add(
+            world.RequireMatterInventory().Add(
                 new EntityId("器材.燃烧匙"),
                 new SubstanceBatch(
                     "碳",
@@ -314,7 +314,7 @@ namespace VirtualLab.Chemistry.Tests.Courses
                     new Temperature(temperature)));
             if (validIgniter)
             {
-                world.Matter.Add(
+                world.RequireMatterInventory().Add(
                     new EntityId("器材.燃烧匙"),
                     new SubstanceBatch(
                         "氧气",

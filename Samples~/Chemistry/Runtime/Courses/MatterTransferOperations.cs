@@ -5,7 +5,7 @@ using VirtualLab.Application.Courses;
 using VirtualLab.Domain;
 using VirtualLab.Domain.Capabilities;
 using VirtualLab.Domain.Events;
-using VirtualLab.Domain.Matter;
+using VirtualLab.Chemistry.Matter;
 using VirtualLab.Domain.Processes;
 using VirtualLab.Interaction.Capabilities;
 using VirtualLab.Kernel;
@@ -88,7 +88,7 @@ namespace VirtualLab.Chemistry.Courses
             var requested = rate * (decimal)elapsedSeconds;
             var capacityPolicy =
                 process.TextParameters[ChemistryConfigurationKeys.Pour.CapacityPolicy];
-            var available = world.Matter.Total(
+            var available = world.RequireMatterInventory().Total(
                 source,
                 substanceId,
                 unit).Value;
@@ -132,7 +132,7 @@ namespace VirtualLab.Chemistry.Courses
                         {
                             if (amount > 0m)
                             {
-                                prepared.Matter.Transfer(
+                                prepared.RequireMatterInventory().Transfer(
                                     source,
                                     target,
                                     substanceId,
@@ -166,7 +166,7 @@ namespace VirtualLab.Chemistry.Courses
                     "倾倒目标必须声明容器能力。");
             }
 
-            var used = world.Matter.Entries
+            var used = world.RequireMatterInventory().Entries
                 .Where(value => value.LocationId == target
                     && value.Batch.Quantity.Unit == unit)
                 .Sum(value => value.Batch.Quantity.Value);
@@ -240,7 +240,7 @@ namespace VirtualLab.Chemistry.Courses
                     target,
                     unit,
                     configuredCapacity);
-                var available = world.Matter.Total(
+                var available = world.RequireMatterInventory().Total(
                     source,
                     substanceId,
                     unit).Value;
@@ -324,7 +324,7 @@ namespace VirtualLab.Chemistry.Courses
                 }
 
                 var unit = ReadUnit(mutation);
-                var available = world.Matter.Total(
+                var available = world.RequireMatterInventory().Total(
                     source,
                     substanceId,
                     unit).Value;
@@ -365,7 +365,7 @@ namespace VirtualLab.Chemistry.Courses
                         });
                 }
 
-                world.Matter.Transfer(
+                world.RequireMatterInventory().Transfer(
                     source,
                     target,
                     substanceId,

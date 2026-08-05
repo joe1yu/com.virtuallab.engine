@@ -2,7 +2,7 @@ using VirtualLab.Application.Events;
 using VirtualLab.Domain;
 using VirtualLab.Domain.Events;
 using VirtualLab.Domain.Entities;
-using VirtualLab.Domain.Matter;
+using VirtualLab.Chemistry.Matter;
 using VirtualLab.Domain.Processes;
 using VirtualLab.Kernel;
 using VirtualLab.Measurement;
@@ -65,7 +65,7 @@ namespace VirtualLab.Chemistry.Tests.Fixtures
             var world = WorldWithLocations(tube);
             foreach (var batch in batches)
             {
-                world.Matter.Add(tube, batch);
+                world.RequireMatterInventory().Add(tube, batch);
             }
 
             var reaction = new ChemicalReactionDefinition(
@@ -111,7 +111,7 @@ namespace VirtualLab.Chemistry.Tests.Fixtures
             var source = new EntityId("beaker-source");
             var target = new EntityId("beaker-target");
             var world = WorldWithLocations(source, target);
-            world.Matter.Add(
+            world.RequireMatterInventory().Add(
                 source,
                 new SubstanceBatch(
                     "water",
@@ -127,7 +127,7 @@ namespace VirtualLab.Chemistry.Tests.Fixtures
             var world = WorldWithLocations(bottle);
             if (hasFuel)
             {
-                world.Matter.Add(
+                world.RequireMatterInventory().Add(
                     bottle,
                     new SubstanceBatch(
                         "carbon",
@@ -138,7 +138,7 @@ namespace VirtualLab.Chemistry.Tests.Fixtures
 
             if (hasOxygen)
             {
-                world.Matter.Add(
+                world.RequireMatterInventory().Add(
                     bottle,
                     new SubstanceBatch(
                         "oxygen",

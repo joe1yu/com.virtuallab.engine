@@ -4,7 +4,7 @@ using System.Collections.ObjectModel;
 using VirtualLab.Kernel;
 using VirtualLab.Measurement;
 
-namespace VirtualLab.Domain.Matter
+namespace VirtualLab.Chemistry.Matter
 {
     public readonly struct MatterBatchSelection
     {

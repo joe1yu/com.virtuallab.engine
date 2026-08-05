@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
+using VirtualLab.Chemistry.Matter;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
@@ -484,16 +485,10 @@ namespace VirtualLab.Engine.PlayModeTests
 
             var state = chemistry.Runtime.Session.ExportState();
             Assert.That(
-                state.Matter.Any(value =>
-                    value.LocationId == "集气瓶一"
-                    && value.SubstanceId == "碳酸钙"
-                    && value.Value == 10.00865m),
+                HasMatter(state, "集气瓶一", "碳酸钙", 10.00865m),
                 Is.True);
             Assert.That(
-                state.Matter.Any(value =>
-                    value.LocationId == "集气瓶二"
-                    && value.SubstanceId == "四氧化三铁"
-                    && value.Value == 116m),
+                HasMatter(state, "集气瓶二", "四氧化三铁", 116m),
                 Is.True);
             Assert.That(
                 state.Commands.Select(value => value.Request.ActionId),
@@ -620,6 +615,26 @@ namespace VirtualLab.Engine.PlayModeTests
                     .And.Contain("观察火柴铁丝组合在氧气中的燃烧现象")
                     .And.Not.Contain("操作未完成")
                     .And.Not.Contain("[脚本✓]"));
+        }
+
+        private static bool HasMatter(
+            CourseSessionState state,
+            string locationId,
+            string substanceId,
+            decimal value)
+        {
+            var expectedValue = value.ToString(
+                System.Globalization.CultureInfo.InvariantCulture);
+            return state.WorldStates
+                .Single(item => item.TypeId == MatterWorldStateTypeIds.Inventory)
+                .Entries.Any(entry =>
+                    entry.EntryType == MatterInventorySnapshotKeys.BatchEntry
+                    && entry.Values[MatterInventorySnapshotKeys.LocationId]
+                        == locationId
+                    && entry.Values[MatterInventorySnapshotKeys.SubstanceId]
+                        == substanceId
+                    && entry.Values[MatterInventorySnapshotKeys.Value]
+                        == expectedValue);
         }
 
         private static void FillBottle(

@@ -13,9 +13,6 @@ namespace VirtualLab.Domain.Events
         public const string ContainmentChanged = "容纳关系.已变更";
         public const string SealConfirmed = "密封.已确认";
         public const string ObservationAvailable = "观察.可用";
-
-        // 与具体学科无关的物质库存变化。
-        public const string SubstanceTransferred = "物质.已转移";
     }
 
     /// <summary>

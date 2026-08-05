@@ -7,7 +7,6 @@ using VirtualLab.Application.Courses;
 using VirtualLab.Infrastructure.Persistence;
 using VirtualLab.Infrastructure.Reporting;
 using VirtualLab.Kernel;
-using VirtualLab.Measurement;
 
 namespace VirtualLab.Engine.Tests.Infrastructure
 {
@@ -29,6 +28,8 @@ namespace VirtualLab.Engine.Tests.Infrastructure
             Assert.That(json, Does.Not.Contain("engineVersion"));
             Assert.That(json, Does.Not.Contain("configurationHash"));
             Assert.That(json, Does.Not.Contain("stateHash"));
+            Assert.That(json, Does.Not.Contain("\"matter\""));
+            Assert.That(json, Does.Not.Contain("\"knownUnits\""));
         }
 
         [Test]
@@ -155,8 +156,7 @@ namespace VirtualLab.Engine.Tests.Infrastructure
                         })
                 },
                 Array.Empty<CourseRelationState>(),
-                Array.Empty<CourseMatterState>(),
-                Array.Empty<KeyValuePair<string, Unit>>(),
+                Array.Empty<CourseWorldState>(),
                 Array.Empty<CourseScalarState>(),
                 Array.Empty<CourseProcessState>(),
                 Array.Empty<CourseEventState>(),

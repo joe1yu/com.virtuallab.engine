@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using VirtualLab.Application.Courses;
+using VirtualLab.Chemistry.Matter;
 using VirtualLab.Domain.Events;
 
 namespace VirtualLab.Chemistry.Courses
@@ -26,6 +27,15 @@ namespace VirtualLab.Chemistry.Courses
                     payload = Reaction(
                         advanced.ReactionId,
                         advanced.LocationId.Value);
+                    return true;
+                case SubstanceTransferredEvent transferred:
+                    payload = Transfer(
+                        transferred.SourceId.Value,
+                        transferred.TargetId.Value,
+                        transferred.SubstanceId,
+                        (double)transferred.Quantity.Value,
+                        transferred.Quantity.Unit.ToString(),
+                        false);
                     return true;
                 case PourAdvancedEvent poured:
                     payload = Transfer(
@@ -94,11 +104,11 @@ namespace VirtualLab.Chemistry.Courses
                     StructuredValue.FromText(sourceId),
                 [CourseConfigurationKeys.EventPayload.TargetEntityId] =
                     StructuredValue.FromText(targetId),
-                [CourseConfigurationKeys.EventPayload.SubstanceId] =
+                [ChemistryConfigurationKeys.EventPayload.SubstanceId] =
                     StructuredValue.FromText(substanceId),
-                [CourseConfigurationKeys.EventPayload.Quantity] =
+                [ChemistryConfigurationKeys.EventPayload.Quantity] =
                     StructuredValue.FromNumber(quantity),
-                [CourseConfigurationKeys.EventPayload.Unit] =
+                [ChemistryConfigurationKeys.EventPayload.Unit] =
                     StructuredValue.FromText(unit),
                 [ChemistryConfigurationKeys.EventPayload.ProcessStopped] =
                     StructuredValue.FromBoolean(processStopped)

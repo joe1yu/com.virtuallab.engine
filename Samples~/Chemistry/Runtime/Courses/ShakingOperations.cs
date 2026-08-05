@@ -1,4 +1,5 @@
 using System;
+using VirtualLab.Chemistry.Matter;
 using System.Collections.Generic;
 using System.Linq;
 using VirtualLab.Application.Courses;
@@ -58,7 +59,7 @@ namespace VirtualLab.Chemistry.Courses
                 .ToArray())
             {
                 executor.Execute(
-                    world.Matter,
+                    world.RequireMatterInventory(),
                     process.EntityId,
                     _mixingReactions[
                         process.TextParameters[ChemistryConfigurationKeys.Common.ReactionId]],

@@ -9,7 +9,7 @@ using VirtualLab.Chemistry.Courses;
 using VirtualLab.Domain;
 using VirtualLab.Domain.Capabilities;
 using VirtualLab.Domain.Entities;
-using VirtualLab.Domain.Matter;
+using VirtualLab.Chemistry.Matter;
 using VirtualLab.Domain.Relations;
 using VirtualLab.Domain.Events;
 using VirtualLab.Domain.Processes;
@@ -30,7 +30,7 @@ namespace VirtualLab.Chemistry.Tests.Courses
             var world = CreateWorld(20m, 20m);
             var operations = new MatterTransferOperations();
             var session = Session(world, operations);
-            var before = world.Matter.Total("水", Unit.Millilitre);
+            var before = world.RequireMatterInventory().Total("水", Unit.Millilitre);
 
             var begin = session.Execute(
                 BeginRequest("命令.开始倾倒", 70d, true, 5d));
@@ -44,13 +44,13 @@ namespace VirtualLab.Chemistry.Tests.Courses
             Assert.That(begin.IsAccepted, Is.True);
             Assert.That(end.IsAccepted, Is.True);
             Assert.That(
-                world.Matter.Total(
+                world.RequireMatterInventory().Total(
                     new EntityId("器材.试管"),
                     "水",
                     Unit.Millilitre).Value,
                 Is.EqualTo(10m));
             Assert.That(
-                world.Matter.Total("水", Unit.Millilitre),
+                world.RequireMatterInventory().Total("水", Unit.Millilitre),
                 Is.EqualTo(before));
             Assert.That(
                 world.IsProcessActive(
@@ -79,7 +79,7 @@ namespace VirtualLab.Chemistry.Tests.Courses
                     "容器未被当前主体持有",
                     "来源物质单位不是毫升"
                 }));
-            Assert.That(world.Matter.Total("水", Unit.Gram).Value, Is.EqualTo(20m));
+            Assert.That(world.RequireMatterInventory().Total("水", Unit.Gram).Value, Is.EqualTo(20m));
         }
 
         [Test]
@@ -89,7 +89,7 @@ namespace VirtualLab.Chemistry.Tests.Courses
             var operations = new MatterTransferOperations();
             var session = Session(world, operations);
             var events = new EventCollector();
-            var before = world.Matter.Total("水", Unit.Millilitre);
+            var before = world.RequireMatterInventory().Total("水", Unit.Millilitre);
 
             Assert.That(
                 session.Execute(
@@ -103,12 +103,12 @@ namespace VirtualLab.Chemistry.Tests.Courses
                 events);
 
             Assert.That(
-                world.Matter.Total(
+                world.RequireMatterInventory().Total(
                     new EntityId("器材.试管"),
                     "水",
                     Unit.Millilitre).Value,
                 Is.EqualTo(5m));
-            Assert.That(world.Matter.Total("水", Unit.Millilitre), Is.EqualTo(before));
+            Assert.That(world.RequireMatterInventory().Total("水", Unit.Millilitre), Is.EqualTo(before));
             Assert.That(
                 world.IsProcessActive(
                     MatterTransferOperations.PourProcessId,
@@ -131,7 +131,7 @@ namespace VirtualLab.Chemistry.Tests.Courses
                 new EventCollector());
 
             Assert.That(
-                world.Matter.Total(
+                world.RequireMatterInventory().Total(
                     new EntityId("器材.试管"),
                     "水",
                     Unit.Millilitre).Value,
@@ -150,7 +150,7 @@ namespace VirtualLab.Chemistry.Tests.Courses
             var operations = new MatterTransferOperations();
             var session = Session(world, operations, "溢出事件");
             var events = new EventCollector();
-            var before = world.Matter.Total("水", Unit.Millilitre);
+            var before = world.RequireMatterInventory().Total("水", Unit.Millilitre);
 
             session.Execute(BeginRequest("命令.溢出策略", 70d, true, 5d));
             operations.Advance(
@@ -159,7 +159,7 @@ namespace VirtualLab.Chemistry.Tests.Courses
                 new SimulationTick(1),
                 events);
 
-            Assert.That(world.Matter.Total("水", Unit.Millilitre), Is.EqualTo(before));
+            Assert.That(world.RequireMatterInventory().Total("水", Unit.Millilitre), Is.EqualTo(before));
             Assert.That(
                 events.Events,
                 Has.Some.Matches<VirtualLab.Application.Events.DomainEventEnvelope>(
@@ -205,7 +205,7 @@ namespace VirtualLab.Chemistry.Tests.Courses
                 world,
                 new[] { action },
                 operations);
-            var before = world.Matter.Total("水", Unit.Millilitre);
+            var before = world.RequireMatterInventory().Total("水", Unit.Millilitre);
 
             var result = session.Execute(
                 new SemanticActionRequest(
@@ -218,13 +218,13 @@ namespace VirtualLab.Chemistry.Tests.Courses
 
             Assert.That(result.IsAccepted, Is.True);
             Assert.That(
-                world.Matter.Total(
+                world.RequireMatterInventory().Total(
                     new EntityId("器材.收集瓶"),
                     "水",
                     Unit.Millilitre).Value,
                 Is.EqualTo(7m));
             Assert.That(
-                world.Matter.Total("水", Unit.Millilitre),
+                world.RequireMatterInventory().Total("水", Unit.Millilitre),
                 Is.EqualTo(before));
         }
 
@@ -244,13 +244,13 @@ namespace VirtualLab.Chemistry.Tests.Courses
                     new ThrowingCollector()));
 
             Assert.That(
-                world.Matter.Total(
+                world.RequireMatterInventory().Total(
                     new EntityId("器材.量筒"),
                     "水",
                     Unit.Millilitre).Value,
                 Is.EqualTo(20m));
             Assert.That(
-                world.Matter.Total(
+                world.RequireMatterInventory().Total(
                     new EntityId("器材.试管"),
                     "水",
                     Unit.Millilitre).Value,
@@ -443,7 +443,7 @@ namespace VirtualLab.Chemistry.Tests.Courses
                         new EntityId("学生")));
             }
 
-            world.Matter.Add(
+            world.RequireMatterInventory().Add(
                 new EntityId("器材.量筒"),
                 new SubstanceBatch(
                     "水",

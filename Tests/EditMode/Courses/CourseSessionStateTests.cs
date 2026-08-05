@@ -6,13 +6,11 @@ using VirtualLab.Application.Courses;
 using VirtualLab.Domain;
 using VirtualLab.Domain.Capabilities;
 using VirtualLab.Domain.Entities;
-using VirtualLab.Domain.Matter;
 using VirtualLab.Domain.Relations;
 using VirtualLab.Interaction.Capabilities;
 using VirtualLab.Interaction.Courses;
 using VirtualLab.Interaction.Relations;
 using VirtualLab.Kernel;
-using VirtualLab.Measurement;
 
 namespace VirtualLab.Engine.Tests.Courses
 {
@@ -102,7 +100,7 @@ namespace VirtualLab.Engine.Tests.Courses
         }
 
         [Test]
-        public void 恢复保持能力decimal精度并统一报告非法物质引用()
+        public void 恢复保持能力decimal精度()
         {
             const decimal capacity = 0.1234567890123456789012345678m;
             var world = new ExperimentWorld();
@@ -115,21 +113,6 @@ namespace VirtualLab.Engine.Tests.Courses
                 .Capabilities.Single();
 
             Assert.That(capability.NumberValue, Is.EqualTo(capacity));
-
-            var invalidMatter = state.WithMatter(
-                new[]
-                {
-                    new CourseMatterState(
-                        "器材.不存在",
-                        "水",
-                        1m,
-                        Unit.Millilitre,
-                        MatterPhase.Liquid,
-                        20m)
-                });
-            var error = Assert.Throws<CourseStateRestoreException>(
-                () => ConfigDrivenCourseSession.Restore(runtime, invalidMatter));
-            Assert.That(error.Code, Is.EqualTo("session.state.invalid"));
         }
 
         private static CourseRuntimeDefinition RuntimeDefinition()
@@ -188,13 +171,6 @@ namespace VirtualLab.Engine.Tests.Courses
             Add(world, "端口.来源", new ConnectorCapability("导气"));
             Add(world, "端口.目标", new ConnectorCapability("导气"));
             Add(world, "器材.试管", new ContainerCapability(50m));
-            world.Matter.Add(
-                new EntityId("器材.试管"),
-                new SubstanceBatch(
-                    "水",
-                    new Quantity(10m, Unit.Millilitre),
-                    MatterPhase.Liquid,
-                    new Temperature(25m)));
             return world;
         }
 

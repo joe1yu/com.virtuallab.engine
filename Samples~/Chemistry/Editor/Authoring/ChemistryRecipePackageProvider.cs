@@ -7,7 +7,7 @@ using System.Text;
 using UnityEditor;
 using VirtualLab.Chemistry.Configuration;
 using VirtualLab.Chemistry.Courses;
-using VirtualLab.Domain.Matter;
+using VirtualLab.Chemistry.Matter;
 using VirtualLab.Kernel;
 using VirtualLab.Measurement;
 using VirtualLab.Spatial.Courses;

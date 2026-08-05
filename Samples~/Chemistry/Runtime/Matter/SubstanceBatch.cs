@@ -2,7 +2,7 @@ using System;
 using VirtualLab.Kernel;
 using VirtualLab.Measurement;
 
-namespace VirtualLab.Domain.Matter
+namespace VirtualLab.Chemistry.Matter
 {
     public enum MatterPhase
     {

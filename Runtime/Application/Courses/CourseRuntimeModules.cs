@@ -5,6 +5,7 @@ using System.Linq;
 using VirtualLab.Domain;
 using VirtualLab.Domain.Processes;
 using VirtualLab.Domain.Relations;
+using VirtualLab.Domain.WorldStates;
 using VirtualLab.Kernel;
 
 namespace VirtualLab.Application.Courses
@@ -129,6 +130,18 @@ namespace VirtualLab.Application.Courses
             _builder.RegisterCapabilityStateCodec(ModuleId, codec);
         }
 
+        public void RegisterWorldState(
+            WorldStateTypeId typeId,
+            Func<ExperimentWorld, IWorldStateExtension> factory)
+        {
+            _builder.RegisterWorldState(ModuleId, typeId, factory);
+        }
+
+        public void RegisterWorldStateCodec(ICourseWorldStateCodec codec)
+        {
+            _builder.RegisterWorldStateCodec(ModuleId, codec);
+        }
+
         public void RegisterStateOperations(
             string registrationId,
             Action<ConfiguredStateOperationRegistry> registration)
@@ -171,12 +184,19 @@ namespace VirtualLab.Application.Courses
         private readonly IReadOnlyList<
             Func<ExperimentWorld, ICourseProcessAdvancer>>
             _processFactories;
+        private readonly IReadOnlyList<KeyValuePair<
+            WorldStateTypeId,
+            Func<ExperimentWorld, IWorldStateExtension>>> _worldStateFactories;
 
         internal CourseRuntimeModuleScope(
             IEnumerable<CourseModuleManifest> manifests,
             IEnumerable<RelationSchema> relationSchemas,
             IEnumerable<IStructuredFactReader> factReaders,
             IEnumerable<ICourseCapabilityStateCodec> capabilityStateCodecs,
+            IEnumerable<KeyValuePair<
+                WorldStateTypeId,
+                Func<ExperimentWorld, IWorldStateExtension>>> worldStateFactories,
+            IEnumerable<ICourseWorldStateCodec> worldStateCodecs,
             IEnumerable<Action<ConfiguredStateOperationRegistry>> stateRegistrations,
             IEnumerable<ICourseEventProjector> eventProjectors,
             IEnumerable<Func<ExperimentWorld, ICourseProcessAdvancer>>
@@ -190,6 +210,12 @@ namespace VirtualLab.Application.Courses
                 factReaders.ToArray());
             CapabilityStateCodecs = new CourseCapabilityStateCodecRegistry(
                 capabilityStateCodecs);
+            _worldStateFactories = new ReadOnlyCollection<KeyValuePair<
+                WorldStateTypeId,
+                Func<ExperimentWorld, IWorldStateExtension>>>(
+                worldStateFactories.ToArray());
+            WorldStateCodecs = new CourseWorldStateCodecRegistry(
+                worldStateCodecs);
             EventProjectors = new ReadOnlyCollection<ICourseEventProjector>(
                 eventProjectors.ToArray());
             _stateRegistrations = new ReadOnlyCollection<
@@ -210,6 +236,8 @@ namespace VirtualLab.Application.Courses
         {
             get;
         }
+
+        public CourseWorldStateCodecRegistry WorldStateCodecs { get; }
 
         public IReadOnlyList<ICourseEventProjector> EventProjectors { get; }
 
@@ -240,6 +268,27 @@ namespace VirtualLab.Application.Courses
             if (world == null)
             {
                 throw new ArgumentNullException(nameof(world));
+            }
+
+            foreach (var registration in _worldStateFactories)
+            {
+                if (world.TryGetWorldState<IWorldStateExtension>(
+                    registration.Key,
+                    out _))
+                {
+                    continue;
+                }
+
+                var state = registration.Value(world)
+                    ?? throw new InvalidOperationException(
+                        $"世界状态“{registration.Key}”的工厂返回了空值。");
+                if (state.TypeId != registration.Key)
+                {
+                    throw new InvalidOperationException(
+                        $"世界状态工厂“{registration.Key}”创建了类型“{state.TypeId}”。");
+                }
+
+                world.RegisterWorldState(state);
             }
 
             if (!world.RelationSchemasFrozen)
@@ -342,6 +391,12 @@ namespace VirtualLab.Application.Courses
             _capabilityStateCodecs = new Dictionary<
                 string,
                 OwnedCapabilityStateCodec>(StringComparer.Ordinal);
+        private readonly Dictionary<WorldStateTypeId, OwnedWorldStateFactory>
+            _worldStateFactories =
+                new Dictionary<WorldStateTypeId, OwnedWorldStateFactory>();
+        private readonly Dictionary<WorldStateTypeId, OwnedWorldStateCodec>
+            _worldStateCodecs =
+                new Dictionary<WorldStateTypeId, OwnedWorldStateCodec>();
         private readonly Dictionary<string, OwnedStateRegistration>
             _stateRegistrations = new Dictionary<string, OwnedStateRegistration>(
                 StringComparer.Ordinal);
@@ -402,6 +457,15 @@ namespace VirtualLab.Application.Courses
             }
 
             validationRegistry.Freeze();
+            if (builder._worldStateFactories.Count
+                    != builder._worldStateCodecs.Count
+                || builder._worldStateFactories.Keys.Any(
+                    typeId => !builder._worldStateCodecs.ContainsKey(typeId)))
+            {
+                throw new InvalidOperationException(
+                    "每个模块世界状态都必须注册且只能注册一个课程存档编解码器。");
+            }
+
             builder._isFrozen = true;
             return new CourseRuntimeModuleScope(
                 ordered.Select(value => value.Manifest),
@@ -413,6 +477,16 @@ namespace VirtualLab.Application.Courses
                     .Select(value => value.Value.Reader),
                 builder._capabilityStateCodecs
                     .OrderBy(value => value.Key, StringComparer.Ordinal)
+                    .Select(value => value.Value.Codec),
+                builder._worldStateFactories
+                    .OrderBy(value => value.Key.Value, StringComparer.Ordinal)
+                    .Select(value => new KeyValuePair<
+                        WorldStateTypeId,
+                        Func<ExperimentWorld, IWorldStateExtension>>(
+                            value.Key,
+                            value.Value.Factory)),
+                builder._worldStateCodecs
+                    .OrderBy(value => value.Key.Value, StringComparer.Ordinal)
                     .Select(value => value.Value.Codec),
                 builder._stateRegistrations
                     .OrderBy(value => value.Key, StringComparer.Ordinal)
@@ -485,6 +559,61 @@ namespace VirtualLab.Application.Courses
                 var owner = _capabilityStateCodecs[capabilityId].ModuleId;
                 throw new InvalidOperationException(
                     $"能力“{capabilityId}”的状态编解码器已由模块“{owner}”注册，"
+                    + $"模块“{moduleId}”不能重复注册。");
+            }
+        }
+
+        public void RegisterWorldState(
+            string moduleId,
+            WorldStateTypeId typeId,
+            Func<ExperimentWorld, IWorldStateExtension> factory)
+        {
+            EnsureMutable();
+            if (string.IsNullOrWhiteSpace(typeId.Value))
+            {
+                throw new ArgumentException("世界状态类型标识不能为空。", nameof(typeId));
+            }
+
+            if (factory == null)
+            {
+                throw new ArgumentNullException(nameof(factory));
+            }
+
+            if (!_worldStateFactories.TryAdd(
+                typeId,
+                new OwnedWorldStateFactory(moduleId, factory)))
+            {
+                var owner = _worldStateFactories[typeId].ModuleId;
+                throw new InvalidOperationException(
+                    $"世界状态“{typeId}”已由模块“{owner}”注册，"
+                    + $"模块“{moduleId}”不能重复注册。");
+            }
+        }
+
+        public void RegisterWorldStateCodec(
+            string moduleId,
+            ICourseWorldStateCodec codec)
+        {
+            EnsureMutable();
+            if (codec == null)
+            {
+                throw new ArgumentNullException(nameof(codec));
+            }
+
+            if (string.IsNullOrWhiteSpace(codec.TypeId.Value))
+            {
+                throw new ArgumentException(
+                    "世界状态编解码器的类型标识不能为空。",
+                    nameof(codec));
+            }
+
+            if (!_worldStateCodecs.TryAdd(
+                codec.TypeId,
+                new OwnedWorldStateCodec(moduleId, codec)))
+            {
+                var owner = _worldStateCodecs[codec.TypeId].ModuleId;
+                throw new InvalidOperationException(
+                    $"世界状态“{codec.TypeId}”的编解码器已由模块“{owner}”注册，"
                     + $"模块“{moduleId}”不能重复注册。");
             }
         }
@@ -670,6 +799,36 @@ namespace VirtualLab.Application.Courses
 
             public string ModuleId { get; }
             public ICourseCapabilityStateCodec Codec { get; }
+        }
+
+        private sealed class OwnedWorldStateFactory
+        {
+            public OwnedWorldStateFactory(
+                string moduleId,
+                Func<ExperimentWorld, IWorldStateExtension> factory)
+            {
+                ModuleId = moduleId;
+                Factory = factory;
+            }
+
+            public string ModuleId { get; }
+
+            public Func<ExperimentWorld, IWorldStateExtension> Factory { get; }
+        }
+
+        private sealed class OwnedWorldStateCodec
+        {
+            public OwnedWorldStateCodec(
+                string moduleId,
+                ICourseWorldStateCodec codec)
+            {
+                ModuleId = moduleId;
+                Codec = codec;
+            }
+
+            public string ModuleId { get; }
+
+            public ICourseWorldStateCodec Codec { get; }
         }
 
         private sealed class OwnedStateRegistration : IOwnedRegistration

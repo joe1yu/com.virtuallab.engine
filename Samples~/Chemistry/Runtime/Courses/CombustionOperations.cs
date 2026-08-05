@@ -5,7 +5,7 @@ using VirtualLab.Application.Courses;
 using VirtualLab.Chemistry.Capabilities;
 using VirtualLab.Domain;
 using VirtualLab.Domain.Capabilities;
-using VirtualLab.Domain.Matter;
+using VirtualLab.Chemistry.Matter;
 using VirtualLab.Domain.Processes;
 using VirtualLab.Kernel;
 using VirtualLab.Measurement;
@@ -73,7 +73,7 @@ namespace VirtualLab.Chemistry.Courses
                     process.EntityId,
                     process.TextParameters[ChemistryConfigurationKeys.Combustion.FuelId]);
                 var advanced = ReactionProgress.Advance(
-                    world.Matter,
+                    world.RequireMatterInventory(),
                     process.EntityId,
                     reaction,
                     new ReactionRate(rate),
@@ -84,7 +84,7 @@ namespace VirtualLab.Chemistry.Courses
                     events);
                 var canContinue = advanced
                     && reaction.Reactants.All(
-                        reactant => world.Matter.Total(
+                        reactant => world.RequireMatterInventory().Total(
                             process.EntityId,
                             reactant.SubstanceId,
                             reactant.Quantity.Unit).Value
@@ -198,7 +198,7 @@ namespace VirtualLab.Chemistry.Courses
 
                 if (oxidizerSource != source)
                 {
-                    world.Matter.Transfer(
+                    world.RequireMatterInventory().Transfer(
                         oxidizerSource,
                         source,
                         oxidizerId,
@@ -261,7 +261,7 @@ namespace VirtualLab.Chemistry.Courses
         {
             try
             {
-                return world.Matter.Total(location, substanceId).Value;
+                return world.RequireMatterInventory().Total(location, substanceId).Value;
             }
             catch (InvalidOperationException)
             {
@@ -289,7 +289,7 @@ namespace VirtualLab.Chemistry.Courses
                     (decimal)configuredTemperature.Value);
             }
 
-            return world.Matter.TryGetTemperature(
+            return world.RequireMatterInventory().TryGetTemperature(
                 source,
                 fuelId,
                 out var matterTemperature)
@@ -376,7 +376,7 @@ namespace VirtualLab.Chemistry.Courses
             var minimum = (decimal)Number(
                 mutation,
                 ChemistryConfigurationKeys.Combustion.MinimumSafeLiquidVolumeMillilitres);
-            var actual = world.Matter.Entries
+            var actual = world.RequireMatterInventory().Entries
                 .Where(value => value.LocationId == container
                     && value.Batch.Phase == MatterPhase.Liquid
                     && value.Batch.Quantity.Unit == Unit.Millilitre)

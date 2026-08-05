@@ -5,10 +5,8 @@ using NUnit.Framework;
 using VirtualLab.Application.Courses;
 using VirtualLab.Domain;
 using VirtualLab.Domain.Entities;
-using VirtualLab.Domain.Matter;
 using VirtualLab.Domain.Relations;
 using VirtualLab.Kernel;
-using VirtualLab.Measurement;
 
 namespace VirtualLab.Engine.Tests.Courses
 {
@@ -216,7 +214,6 @@ namespace VirtualLab.Engine.Tests.Courses
             var world = WorldWith("器材.试管", "学生");
             var registry = new ConfiguredStateOperationRegistry();
             registry.Register(new ThrowingOperation());
-            registry.Register(new MatterAddingOperation());
             var session = Session(
                 world,
                 registry,
@@ -239,10 +236,6 @@ namespace VirtualLab.Engine.Tests.Courses
                         ("事件类型", StructuredValue.FromText(
                             "课程.测试事件")))),
                 new ConfiguredMutationDefinition(
-                    "变更.模拟加入物质",
-                    MatterAddingOperation.Id,
-                    EmptyParameters()),
-                new ConfiguredMutationDefinition(
                     "变更.模拟失败",
                     ThrowingOperation.Id,
                     EmptyParameters()));
@@ -260,8 +253,6 @@ namespace VirtualLab.Engine.Tests.Courses
                 }));
             Assert.That(result.Events, Is.Empty);
             Assert.That(world.Relations, Is.Empty);
-            Assert.That(world.Matter.Entries, Is.Empty);
-            Assert.That(world.Matter.KnownUnits, Is.Empty);
             Assert.That(
                 world.TryGetScalar("试管.温度", out _),
                 Is.False);
@@ -659,28 +650,6 @@ namespace VirtualLab.Engine.Tests.Courses
                 ConfiguredMutationDefinition mutation)
             {
                 ApplyCount++;
-            }
-        }
-
-        private sealed class MatterAddingOperation : IConfiguredStateOperation
-        {
-            public const string Id = "test.matter-add";
-
-            public string OperationId => Id;
-
-            public void Apply(
-                SemanticActionRequest request,
-                ExperimentWorld world,
-                ConfiguredMutationDefinition mutation)
-            {
-                world.Matter.RegisterUnit("测试液体", Unit.Millilitre);
-                world.Matter.Add(
-                    new EntityId(request.SourceEntityId),
-                    new SubstanceBatch(
-                        "测试液体",
-                        new Quantity(10m, Unit.Millilitre),
-                        MatterPhase.Liquid,
-                        new Temperature(20m)));
             }
         }
 

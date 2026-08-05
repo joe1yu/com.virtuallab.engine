@@ -17,8 +17,7 @@ namespace VirtualLab.Engine.Tests.Architecture
                 ["VirtualLab.Measurement"] = Array.Empty<string>(),
                 ["VirtualLab.Domain"] = new[]
                 {
-                    "VirtualLab.Kernel",
-                    "VirtualLab.Measurement"
+                    "VirtualLab.Kernel"
                 },
                 ["VirtualLab.Interaction"] = new[]
                 {
@@ -51,7 +50,6 @@ namespace VirtualLab.Engine.Tests.Architecture
                 ["VirtualLab.Infrastructure"] = new[]
                 {
                     "VirtualLab.Kernel",
-                    "VirtualLab.Measurement",
                     "VirtualLab.Domain",
                     "VirtualLab.Application"
                 },

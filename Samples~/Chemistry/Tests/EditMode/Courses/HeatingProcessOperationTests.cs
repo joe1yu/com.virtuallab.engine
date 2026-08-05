@@ -8,7 +8,7 @@ using VirtualLab.Chemistry.Courses;
 using VirtualLab.Domain;
 using VirtualLab.Domain.Capabilities;
 using VirtualLab.Domain.Entities;
-using VirtualLab.Domain.Matter;
+using VirtualLab.Chemistry.Matter;
 using VirtualLab.Domain.Events;
 using VirtualLab.Domain.Processes;
 using VirtualLab.Domain.Relations;
@@ -54,7 +54,7 @@ namespace VirtualLab.Chemistry.Tests.Courses
                 Is.True);
             Assert.That(temperature.Value, Is.EqualTo(40d).Within(0.000001d));
             Assert.That(
-                world.Matter.Total(
+                world.RequireMatterInventory().Total(
                     new EntityId("器材.试管"),
                     "产物",
                     Unit.Gram).Value,
@@ -91,7 +91,7 @@ namespace VirtualLab.Chemistry.Tests.Courses
                 Is.True);
             Assert.That(temperature.Value, Is.EqualTo(20d));
             Assert.That(
-                world.Matter.Total(
+                world.RequireMatterInventory().Total(
                     new EntityId("器材.试管"),
                     "反应物",
                     Unit.Gram).Value,
@@ -287,7 +287,7 @@ namespace VirtualLab.Chemistry.Tests.Courses
                 new WorldScalarUnit("摄氏度"),
                 null,
                 null);
-            world.Matter.Add(
+            world.RequireMatterInventory().Add(
                 new EntityId("器材.试管"),
                 new SubstanceBatch(
                     "反应物",

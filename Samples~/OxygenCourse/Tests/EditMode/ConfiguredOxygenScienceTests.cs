@@ -8,7 +8,7 @@ using VirtualLab.Chemistry.Authoring;
 using VirtualLab.Chemistry.Courses;
 using VirtualLab.Chemistry.Configuration;
 using VirtualLab.Domain;
-using VirtualLab.Domain.Matter;
+using VirtualLab.Chemistry.Matter;
 using VirtualLab.Domain.Relations;
 using VirtualLab.Interaction.Actions;
 using VirtualLab.Interaction.Courses;
@@ -313,7 +313,7 @@ namespace VirtualLab.Engine.Tests.Courses
             var world = context.World;
             var runtime = context.Runtime;
             var events = new EventCollector();
-            var before = world.Matter.Total(
+            var before = world.RequireMatterInventory().Total(
                 "高锰酸钾",
                 Unit.Gram);
             var fixedActions = context.Course.ConfiguredActions
@@ -368,22 +368,22 @@ namespace VirtualLab.Engine.Tests.Courses
                 Is.True,
                 string.Join(",", heating.RejectionCodes));
             Assert.That(
-                world.Matter.Total(
+                world.RequireMatterInventory().Total(
                     new EntityId("大试管"),
                     "氧气",
                     Unit.Gram).Value,
                 Is.EqualTo(32m));
             Assert.That(
-                world.Matter.Total(
+                world.RequireMatterInventory().Total(
                         "高锰酸钾",
                         Unit.Gram).Value
-                    + world.Matter.Total(
+                    + world.RequireMatterInventory().Total(
                         "二氧化锰",
                         Unit.Gram).Value
-                    + world.Matter.Total(
+                    + world.RequireMatterInventory().Total(
                         "氧气",
                         Unit.Gram).Value
-                    + world.Matter.Total(
+                    + world.RequireMatterInventory().Total(
                         "锰酸钾",
                         Unit.Gram).Value,
                 Is.EqualTo(before.Value));
@@ -482,13 +482,13 @@ namespace VirtualLab.Engine.Tests.Courses
             Assert.That(carbonPlaced.IsAccepted, Is.True);
             Assert.That(ironPlaced.IsAccepted, Is.True);
             Assert.That(
-                world.Matter.Total(
+                world.RequireMatterInventory().Total(
                     new EntityId("集气瓶一"),
                     "二氧化碳",
                     Unit.Gram).Value,
                 Is.EqualTo(44m));
             Assert.That(
-                world.Matter.Total(
+                world.RequireMatterInventory().Total(
                     new EntityId("集气瓶二"),
                     "四氧化三铁",
                     Unit.Gram).Value,
@@ -554,7 +554,7 @@ namespace VirtualLab.Engine.Tests.Courses
                 Is.True,
                 string.Join(",", shaken.RejectionCodes));
             Assert.That(
-                world.Matter.Total(
+                world.RequireMatterInventory().Total(
                     new EntityId("集气瓶一"),
                     "碳酸钙",
                     Unit.Gram).Value,

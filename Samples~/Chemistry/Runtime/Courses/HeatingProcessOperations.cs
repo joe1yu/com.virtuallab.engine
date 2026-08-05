@@ -5,7 +5,7 @@ using VirtualLab.Application.Courses;
 using VirtualLab.Chemistry.Capabilities;
 using VirtualLab.Domain;
 using VirtualLab.Domain.Capabilities;
-using VirtualLab.Domain.Matter;
+using VirtualLab.Chemistry.Matter;
 using VirtualLab.Domain.Processes;
 using VirtualLab.Domain.Relations;
 using VirtualLab.Interaction.Relations;
@@ -91,7 +91,7 @@ namespace VirtualLab.Chemistry.Courses
                         >= process.NumberParameters[ChemistryConfigurationKeys.Heating.ReactionThresholdCelsius])
                 {
                     ReactionProgress.Advance(
-                        world.Matter,
+                        world.RequireMatterInventory(),
                         process.EntityId,
                         _reactions[reactionId],
                         new ReactionRate(

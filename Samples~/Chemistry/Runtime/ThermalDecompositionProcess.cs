@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using VirtualLab.Domain;
 using VirtualLab.Domain.Events;
-using VirtualLab.Domain.Matter;
+using VirtualLab.Chemistry.Matter;
 using VirtualLab.Domain.Processes;
 using VirtualLab.Kernel;
 using VirtualLab.Measurement;
@@ -14,6 +14,9 @@ namespace VirtualLab.Chemistry
     /// </summary>
     public static class ChemistryEventTypes
     {
+        // 物质库存事件。
+        public const string SubstanceTransferred = "物质.已转移";
+
         // 反应过程事件。
         public const string GasGenerated = "气体.已生成";
         public const string ReactionAdvanced = "反应.已推进";
@@ -70,7 +73,7 @@ namespace VirtualLab.Chemistry
             }
 
             ReactionProgress.Advance(
-                world.Matter,
+                world.RequireMatterInventory(),
                 _locationId,
                 _reaction,
                 Rate,

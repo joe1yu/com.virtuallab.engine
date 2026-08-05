@@ -41,9 +41,6 @@ namespace VirtualLab.Application.Courses
             public const string ActorEntityId = "操作者实体标识";
             public const string SourceEntityId = Common.SourceEntityId;
             public const string TargetEntityId = Common.TargetEntityId;
-            public const string SubstanceId = "物质标识";
-            public const string Quantity = "数量";
-            public const string Unit = Common.Unit;
         }
     }
 }

@@ -7,7 +7,7 @@ using VirtualLab.Domain.WorldStates;
 using VirtualLab.Kernel;
 using VirtualLab.Measurement;
 
-namespace VirtualLab.Domain.Matter
+namespace VirtualLab.Chemistry.Matter
 {
     /// <summary>
     /// 物质模块拥有的世界状态类型标识，迁移到化学程序集时随库存一起移动。
@@ -269,6 +269,56 @@ namespace VirtualLab.Domain.Matter
             EnsureCanMutate();
             source.EnsureCanMutate();
             _state = source._state.Clone();
+        }
+
+        /// <summary>
+        /// 由化学存档编解码器一次性恢复完整库存，避免逐条写入留下半恢复状态。
+        /// </summary>
+        internal void ReplaceContents(
+            IEnumerable<KeyValuePair<string, Unit>> knownUnits,
+            IEnumerable<MatterInventoryEntry> entries)
+        {
+            if (knownUnits == null)
+            {
+                throw new ArgumentNullException(nameof(knownUnits));
+            }
+
+            if (entries == null)
+            {
+                throw new ArgumentNullException(nameof(entries));
+            }
+
+            EnterTransaction();
+            try
+            {
+                var preparedState = InventoryState.Empty();
+                var transaction = new MatterInventoryTransaction(
+                    preparedState,
+                    EnsureLocationExists);
+                foreach (var unit in knownUnits)
+                {
+                    transaction.RegisterUnit(unit.Key, unit.Value);
+                }
+
+                foreach (var entry in entries)
+                {
+                    if (entry == null)
+                    {
+                        throw new ArgumentException(
+                            "物质库存快照不能包含空条目。",
+                            nameof(entries));
+                    }
+
+                    transaction.Add(entry.LocationId, entry.Batch);
+                }
+
+                transaction.Seal();
+                _state = preparedState;
+            }
+            finally
+            {
+                _transactionActive = false;
+            }
         }
 
         WorldStateTypeId IWorldStateExtension.TypeId =>
@@ -740,7 +790,7 @@ namespace VirtualLab.Domain.Matter
             Quantity = quantity;
         }
 
-        public string EventType => DomainEventTypes.SubstanceTransferred;
+        public string EventType => ChemistryEventTypes.SubstanceTransferred;
 
         public EntityId SourceId { get; }
 

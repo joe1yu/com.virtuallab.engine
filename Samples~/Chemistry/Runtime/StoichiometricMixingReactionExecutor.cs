@@ -4,7 +4,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using VirtualLab.Chemistry.Configuration;
 using VirtualLab.Domain.Events;
-using VirtualLab.Domain.Matter;
+using VirtualLab.Chemistry.Matter;
 using VirtualLab.Domain.Processes;
 using VirtualLab.Kernel;
 using VirtualLab.Measurement;

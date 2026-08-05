@@ -1,4 +1,5 @@
 using System;
+using VirtualLab.Chemistry.Matter;
 using System.Linq;
 using VirtualLab.Domain;
 using VirtualLab.Domain.Processes;
@@ -79,14 +80,14 @@ namespace VirtualLab.Chemistry
                 throw new ArgumentNullException(nameof(events));
             }
 
-            var temperature = world.Matter.TryGetTemperature(
+            var temperature = world.RequireMatterInventory().TryGetTemperature(
                 _locationId,
                 FuelSubstanceId,
                 out var fuelTemperature)
                 ? fuelTemperature
                 : new Temperature(20m);
             ReactionProgress.Advance(
-                world.Matter,
+                world.RequireMatterInventory(),
                 _locationId,
                 _reaction,
                 Rate,

@@ -6,7 +6,7 @@ using VirtualLab.Chemistry.Capabilities;
 using VirtualLab.Chemistry.Configuration;
 using VirtualLab.Domain;
 using VirtualLab.Domain.Capabilities;
-using VirtualLab.Domain.Matter;
+using VirtualLab.Chemistry.Matter;
 using VirtualLab.Domain.Processes;
 using VirtualLab.Kernel;
 using VirtualLab.Measurement;
@@ -166,7 +166,7 @@ namespace VirtualLab.Chemistry.Courses
 
             foreach (var initial in configuration.InitialSubstances)
             {
-                world.Matter.Add(
+                world.RequireMatterInventory().Add(
                     new EntityId(initial.EntityId),
                     new SubstanceBatch(
                         initial.SubstanceId,

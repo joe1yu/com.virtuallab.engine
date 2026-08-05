@@ -6,10 +6,8 @@ using System.Linq;
 using VirtualLab.Application.Commands;
 using VirtualLab.Domain;
 using VirtualLab.Domain.Entities;
-using VirtualLab.Domain.Matter;
 using VirtualLab.Domain.Relations;
 using VirtualLab.Kernel;
-using VirtualLab.Measurement;
 
 namespace VirtualLab.Application.Courses
 {
@@ -38,6 +36,7 @@ namespace VirtualLab.Application.Courses
         private readonly Action<ExperimentWorld> _worldPreparation;
         private readonly CourseCapabilityStateCodecRegistry
             _capabilityStateCodecs;
+        private readonly CourseWorldStateCodecRegistry _worldStateCodecs;
 
         public CourseRuntimeDefinition(
             CourseRuntimeModuleScope modules,
@@ -54,7 +53,8 @@ namespace VirtualLab.Application.Courses
                 modules.EventProjectors,
                 modules.CreateProcessAdvancer,
                 modules.PrepareWorld,
-                modules.CapabilityStateCodecs)
+                modules.CapabilityStateCodecs,
+                modules.WorldStateCodecs)
         {
         }
 
@@ -95,7 +95,8 @@ namespace VirtualLab.Application.Courses
             Func<ExperimentWorld, ICourseProcessAdvancer>
                 processAdvancerFactory = null,
             Action<ExperimentWorld> worldPreparation = null,
-            CourseCapabilityStateCodecRegistry capabilityStateCodecs = null)
+            CourseCapabilityStateCodecRegistry capabilityStateCodecs = null,
+            CourseWorldStateCodecRegistry worldStateCodecs = null)
         {
             _readers = (readers
                 ?? throw new ArgumentNullException(nameof(readers))).ToArray();
@@ -118,6 +119,8 @@ namespace VirtualLab.Application.Courses
             _worldPreparation = worldPreparation ?? FreezeRegisteredWorldContracts;
             _capabilityStateCodecs = capabilityStateCodecs
                 ?? new CourseCapabilityStateCodecRegistry();
+            _worldStateCodecs = worldStateCodecs
+                ?? new CourseWorldStateCodecRegistry();
         }
 
         public ConfigDrivenCourseSession CreateSession(ExperimentWorld world)
@@ -129,6 +132,9 @@ namespace VirtualLab.Application.Courses
 
         internal CourseCapabilityStateCodecRegistry CapabilityStateCodecs =>
             _capabilityStateCodecs;
+
+        internal CourseWorldStateCodecRegistry WorldStateCodecs =>
+            _worldStateCodecs;
 
         public ICourseProcessAdvancer CreateProcessAdvancer(
             ExperimentWorld world)
@@ -177,7 +183,8 @@ namespace VirtualLab.Application.Courses
                 _actionAssessments,
                 _maximumScore,
                 new CourseEventStream(initialEvents, _eventProjectors),
-                _capabilityStateCodecs);
+                _capabilityStateCodecs,
+                _worldStateCodecs);
         }
     }
 
@@ -264,32 +271,6 @@ namespace VirtualLab.Application.Courses
         public string TargetEntityId { get; }
         public string SourcePortId { get; }
         public string TargetPortId { get; }
-    }
-
-    public sealed class CourseMatterState
-    {
-        public CourseMatterState(
-            string locationId,
-            string substanceId,
-            decimal value,
-            Unit unit,
-            MatterPhase phase,
-            decimal temperatureCelsius)
-        {
-            LocationId = locationId;
-            SubstanceId = substanceId;
-            Value = value;
-            Unit = unit;
-            Phase = phase;
-            TemperatureCelsius = temperatureCelsius;
-        }
-
-        public string LocationId { get; }
-        public string SubstanceId { get; }
-        public decimal Value { get; }
-        public Unit Unit { get; }
-        public MatterPhase Phase { get; }
-        public decimal TemperatureCelsius { get; }
     }
 
     public sealed class CourseScalarState
@@ -433,8 +414,7 @@ namespace VirtualLab.Application.Courses
         internal CourseSessionState(
             IEnumerable<CourseEntityState> entities,
             IEnumerable<CourseRelationState> relations,
-            IEnumerable<CourseMatterState> matter,
-            IEnumerable<KeyValuePair<string, Unit>> knownUnits,
+            IEnumerable<CourseWorldState> worldStates,
             IEnumerable<CourseScalarState> scalars,
             IEnumerable<CourseProcessState> processes,
             IEnumerable<CourseEventState> events,
@@ -447,9 +427,16 @@ namespace VirtualLab.Application.Courses
         {
             Entities = entities.ToArray();
             Relations = relations.ToArray();
-            Matter = matter.ToArray();
-            KnownUnits = new ReadOnlyDictionary<string, Unit>(
-                knownUnits.ToDictionary(value => value.Key, value => value.Value));
+            WorldStates = worldStates.ToArray();
+            if (WorldStates.Any(value => value == null)
+                || WorldStates.GroupBy(value => value.TypeId)
+                    .Any(group => group.Count() > 1))
+            {
+                throw new ArgumentException(
+                    "世界状态快照不能包含空项或重复状态类型。",
+                    nameof(worldStates));
+            }
+
             Scalars = scalars.ToArray();
             Processes = processes.ToArray();
             Events = events.ToArray();
@@ -474,8 +461,7 @@ namespace VirtualLab.Application.Courses
 
         public IReadOnlyList<CourseEntityState> Entities { get; }
         public IReadOnlyList<CourseRelationState> Relations { get; }
-        public IReadOnlyList<CourseMatterState> Matter { get; }
-        public IReadOnlyDictionary<string, Unit> KnownUnits { get; }
+        public IReadOnlyList<CourseWorldState> WorldStates { get; }
         public IReadOnlyList<CourseScalarState> Scalars { get; }
         public IReadOnlyList<CourseProcessState> Processes { get; }
         public IReadOnlyList<CourseEventState> Events { get; }
@@ -493,8 +479,7 @@ namespace VirtualLab.Application.Courses
         public static CourseSessionState RestoreCurrent(
             IEnumerable<CourseEntityState> entities,
             IEnumerable<CourseRelationState> relations,
-            IEnumerable<CourseMatterState> matter,
-            IEnumerable<KeyValuePair<string, Unit>> knownUnits,
+            IEnumerable<CourseWorldState> worldStates,
             IEnumerable<CourseScalarState> scalars,
             IEnumerable<CourseProcessState> processes,
             IEnumerable<CourseEventState> events,
@@ -508,8 +493,8 @@ namespace VirtualLab.Application.Courses
             var state = new CourseSessionState(
                 entities ?? throw new ArgumentNullException(nameof(entities)),
                 relations ?? throw new ArgumentNullException(nameof(relations)),
-                matter ?? throw new ArgumentNullException(nameof(matter)),
-                knownUnits ?? throw new ArgumentNullException(nameof(knownUnits)),
+                worldStates
+                    ?? throw new ArgumentNullException(nameof(worldStates)),
                 scalars ?? throw new ArgumentNullException(nameof(scalars)),
                 processes ?? throw new ArgumentNullException(nameof(processes)),
                 events ?? throw new ArgumentNullException(nameof(events)),
@@ -520,18 +505,8 @@ namespace VirtualLab.Application.Courses
                 observations
                     ?? throw new ArgumentNullException(nameof(observations)),
                 spatialPoses);
-            var entityIds = state.Entities
-                .Select(value => value.EntityId)
-                .ToHashSet(StringComparer.Ordinal);
-            if (state.SpatialPoses.Any(value =>
-                    !entityIds.Contains(value.EntityId)))
-            {
-                throw new CourseStateRestoreException(
-                    "session.reference.invalid",
-                    "空间姿态引用了不存在的实体。");
-            }
-
-            state.RestoreWorld();
+            state.ValidateCoreReferences();
+            state.ValidateJournal();
             return state;
         }
 
@@ -540,8 +515,7 @@ namespace VirtualLab.Application.Courses
             new CourseSessionState(
                 Entities,
                 relations,
-                Matter,
-                KnownUnits,
+                WorldStates,
                 Scalars,
                 Processes,
                 Events,
@@ -552,13 +526,12 @@ namespace VirtualLab.Application.Courses
                 Observations,
                 SpatialPoses);
 
-        public CourseSessionState WithMatter(
-            IEnumerable<CourseMatterState> matter) =>
+        public CourseSessionState WithWorldStates(
+            IEnumerable<CourseWorldState> worldStates) =>
             new CourseSessionState(
                 Entities,
                 Relations,
-                matter,
-                KnownUnits,
+                worldStates,
                 Scalars,
                 Processes,
                 Events,
@@ -580,6 +553,7 @@ namespace VirtualLab.Application.Courses
         internal static CourseSessionState Capture(
             ExperimentWorld world,
             CourseCapabilityStateCodecRegistry capabilityStateCodecs,
+            CourseWorldStateCodecRegistry worldStateCodecs,
             IEnumerable<CourseEventState> events,
             IEnumerable<CourseExecutedCommandState> commands,
             long nextEventSequence,
@@ -593,6 +567,11 @@ namespace VirtualLab.Application.Courses
                 throw new ArgumentNullException(nameof(capabilityStateCodecs));
             }
 
+            if (worldStateCodecs == null)
+            {
+                throw new ArgumentNullException(nameof(worldStateCodecs));
+            }
+
             return new CourseSessionState(
                 world.Entities.Select(value => new CourseEntityState(
                     value.Id.Value,
@@ -604,14 +583,7 @@ namespace VirtualLab.Application.Courses
                     value.Target.Value,
                     value.SourcePortId,
                     value.TargetPortId)),
-                world.Matter.Entries.Select(value => new CourseMatterState(
-                    value.LocationId.Value,
-                    value.Batch.SubstanceId,
-                    value.Batch.Quantity.Value,
-                    value.Batch.Quantity.Unit,
-                    value.Batch.Phase,
-                    value.Batch.Temperature.Celsius)),
-                world.Matter.KnownUnits,
+                worldStateCodecs.Capture(world),
                 world.Scalars.Select(value => new CourseScalarState(
                     value.Key,
                     value.Value.Value,
@@ -628,12 +600,15 @@ namespace VirtualLab.Application.Courses
 
         internal ExperimentWorld RestoreWorld(
             Action<ExperimentWorld> prepareWorld = null,
-            CourseCapabilityStateCodecRegistry capabilityStateCodecs = null)
+            CourseCapabilityStateCodecRegistry capabilityStateCodecs = null,
+            CourseWorldStateCodecRegistry worldStateCodecs = null)
         {
             try
             {
                 var codecs = capabilityStateCodecs
                     ?? new CourseCapabilityStateCodecRegistry();
+                var stateCodecs = worldStateCodecs
+                    ?? new CourseWorldStateCodecRegistry();
                 ValidateJournal();
                 var world = prepareWorld == null
                     ? new ExperimentWorld(Relations
@@ -677,29 +652,7 @@ namespace VirtualLab.Application.Courses
                         relation.TargetPortId));
                 }
 
-                foreach (var unit in KnownUnits)
-                {
-                    world.Matter.RegisterUnit(unit.Key, unit.Value);
-                }
-
-                foreach (var item in Matter)
-                {
-                    var locationId = new EntityId(item.LocationId);
-                    if (!world.ContainsEntity(locationId))
-                    {
-                        throw new CourseStateRestoreException(
-                            "session.state.invalid",
-                            $"物质引用了不存在的实体“{item.LocationId}”。");
-                    }
-
-                    world.Matter.Add(
-                        locationId,
-                        new SubstanceBatch(
-                            item.SubstanceId,
-                            new Quantity(item.Value, item.Unit),
-                            item.Phase,
-                            new Temperature(item.TemperatureCelsius)));
-                }
+                stateCodecs.Restore(world, WorldStates);
 
                 foreach (var scalar in Scalars)
                 {
@@ -789,6 +742,36 @@ namespace VirtualLab.Application.Courses
             }
         }
 
+        private void ValidateCoreReferences()
+        {
+            var entityIds = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var entity in Entities)
+            {
+                if (entity == null
+                    || string.IsNullOrWhiteSpace(entity.EntityId)
+                    || !entityIds.Add(entity.EntityId)
+                    || entity.Capabilities.Any(capability => capability == null))
+                {
+                    throw new CourseStateRestoreException(
+                        "session.state.invalid",
+                        "实体状态包含空项、空标识、重复标识或空能力。");
+                }
+            }
+
+            if (Relations.Any(value => value == null
+                    || !entityIds.Contains(value.SourceEntityId)
+                    || !entityIds.Contains(value.TargetEntityId))
+                || SpatialPoses.Any(value =>
+                    !entityIds.Contains(value.EntityId))
+                || Processes.Any(value => value == null
+                    || !entityIds.Contains(value.EntityId)))
+            {
+                throw new CourseStateRestoreException(
+                    "session.reference.invalid",
+                    "关系、空间姿态或过程引用了不存在的实体。");
+            }
+        }
+
         private string Canonical()
         {
             var values = new List<string>
@@ -812,10 +795,13 @@ namespace VirtualLab.Application.Courses
             values.AddRange(Relations.OrderBy(value => value.SourceEntityId).ThenBy(value => value.TargetEntityId).Select(
                 value => $"relation:{value.TypeId}:{Token(value.SourceEntityId)}{Token(value.TargetEntityId)}"
                          + $"{Token(value.SourcePortId)}{Token(value.TargetPortId)}"));
-            values.AddRange(Matter.OrderBy(value => value.LocationId).ThenBy(value => value.SubstanceId).Select(
-                value => $"matter:{Token(value.LocationId)}{Token(value.SubstanceId)}:{value.Value.ToString(CultureInfo.InvariantCulture)}:{value.Unit}:{value.Phase}:{value.TemperatureCelsius.ToString(CultureInfo.InvariantCulture)}"));
-            values.AddRange(KnownUnits.OrderBy(value => value.Key, StringComparer.Ordinal).Select(
-                value => $"unit:{Token(value.Key)}{Token(value.Value.ToString())}"));
+            values.AddRange(WorldStates
+                .OrderBy(value => value.TypeId.Value, StringComparer.Ordinal)
+                .Select(value => "world-state:"
+                    + Token(value.TypeId.Value)
+                    + string.Join(
+                        string.Empty,
+                        value.Entries.Select(WorldStateEntryCanonical))));
             values.AddRange(Scalars.OrderBy(value => value.Key).Select(
                 value => $"scalar:{Token(value.Key)}:{value.Value.ToString("R", CultureInfo.InvariantCulture)}:{Token(value.UnitId)}"));
             values.AddRange(SpatialPoses.OrderBy(value => value.EntityId).Select(
@@ -848,6 +834,15 @@ namespace VirtualLab.Application.Courses
             + string.Join(
                 string.Empty,
                 state.TextProperties
+                    .OrderBy(value => value.Key, StringComparer.Ordinal)
+                    .Select(value => Token(value.Key) + Token(value.Value)));
+
+        private static string WorldStateEntryCanonical(
+            CourseWorldStateEntry entry) =>
+            Token(entry.EntryType)
+            + string.Join(
+                string.Empty,
+                entry.Values
                     .OrderBy(value => value.Key, StringComparer.Ordinal)
                     .Select(value => Token(value.Key) + Token(value.Value)));
 

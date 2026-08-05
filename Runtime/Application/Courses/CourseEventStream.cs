@@ -4,10 +4,8 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using VirtualLab.Application.Events;
 using VirtualLab.Domain.Events;
-using VirtualLab.Domain.Matter;
 using VirtualLab.Domain.Processes;
 using VirtualLab.Kernel;
-using VirtualLab.Measurement;
 
 namespace VirtualLab.Application.Courses
 {
@@ -55,8 +53,7 @@ namespace VirtualLab.Application.Courses
                 new ReadOnlyCollection<CourseEventState>(_states);
             _projectors = new ICourseEventProjector[]
                 {
-                    new ConfiguredEventProjector(),
-                    new MatterEventProjector()
+                    new ConfiguredEventProjector()
                 }
                 .Concat(projectors ?? Array.Empty<ICourseEventProjector>())
                 .ToArray();
@@ -208,39 +205,6 @@ namespace VirtualLab.Application.Courses
             }
         }
 
-        private sealed class MatterEventProjector : ICourseEventProjector
-        {
-            public bool TryProject(
-                IDomainEvent domainEvent,
-                out IReadOnlyDictionary<string, StructuredValue> payload)
-            {
-                if (!(domainEvent is SubstanceTransferredEvent transferred))
-                {
-                    payload = null;
-                    return false;
-                }
-
-                payload = new Dictionary<string, StructuredValue>
-                {
-                    [CourseConfigurationKeys.EventPayload.SourceEntityId] =
-                        StructuredValue.FromText(
-                        transferred.SourceId.Value),
-                    [CourseConfigurationKeys.EventPayload.TargetEntityId] =
-                        StructuredValue.FromText(
-                        transferred.TargetId.Value),
-                    [CourseConfigurationKeys.EventPayload.SubstanceId] =
-                        StructuredValue.FromText(
-                        transferred.SubstanceId),
-                    [CourseConfigurationKeys.EventPayload.Quantity] =
-                        StructuredValue.FromNumber(
-                        (double)transferred.Quantity.Value),
-                    [CourseConfigurationKeys.EventPayload.Unit] =
-                        StructuredValue.FromText(
-                        transferred.Quantity.Unit.ToString())
-                };
-                return true;
-            }
-        }
     }
 
     /// <summary>

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using VirtualLab.Application.Courses;
 using VirtualLab.Domain;
-using VirtualLab.Domain.Matter;
+using VirtualLab.Chemistry.Matter;
 using VirtualLab.Interaction.Courses;
 using VirtualLab.Kernel;
 using VirtualLab.Measurement;
@@ -64,6 +64,12 @@ namespace VirtualLab.Chemistry.Courses
 
         public void Register(CourseModuleRegistrationContext context)
         {
+            context.RegisterWorldState(
+                MatterWorldStateTypeIds.Inventory,
+                world => new MatterInventory(world.ContainsEntity));
+            context.RegisterWorldStateCodec(
+                new MatterInventoryCourseStateCodec());
+
             foreach (var schema in ChemistryRelationSchemas.All)
             {
                 context.RegisterRelationSchema(schema);
@@ -234,7 +240,7 @@ namespace VirtualLab.Chemistry.Courses
             public StructuredValue Read(StructuredRuleContext context)
             {
                 var source = new EntityId(context.Request.SourceEntityId);
-                var total = context.World.Matter.Entries
+                var total = context.World.RequireMatterInventory().Entries
                     .Where(value => value.LocationId == source
                         && value.Batch.Phase == MatterPhase.Liquid
                         && value.Batch.Quantity.Unit == Unit.Millilitre)
@@ -261,7 +267,7 @@ namespace VirtualLab.Chemistry.Courses
             public StructuredValue Read(StructuredRuleContext context)
             {
                 var source = new EntityId(context.Request.SourceEntityId);
-                var total = context.World.Matter.Entries
+                var total = context.World.RequireMatterInventory().Entries
                     .Where(value => value.LocationId == source
                         && value.Batch.Phase == _phase
                         && value.Batch.Quantity.Unit == Unit.Gram)
@@ -307,7 +313,7 @@ namespace VirtualLab.Chemistry.Courses
             public StructuredValue Read(StructuredRuleContext context)
             {
                 var source = new EntityId(context.Request.SourceEntityId);
-                var batch = context.World.Matter.Entries.FirstOrDefault(
+                var batch = context.World.RequireMatterInventory().Entries.FirstOrDefault(
                     value => value.LocationId == source
                         && value.Batch.Phase == MatterPhase.Liquid
                         && value.Batch.Quantity.Value > 0m);

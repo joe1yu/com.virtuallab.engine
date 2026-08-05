@@ -3,11 +3,9 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using VirtualLab.Domain.Entities;
-using VirtualLab.Domain.Matter;
 using VirtualLab.Domain.Relations;
 using VirtualLab.Domain.WorldStates;
 using VirtualLab.Kernel;
-using VirtualLab.Measurement;
 
 namespace VirtualLab.Domain
 {
@@ -80,26 +78,9 @@ namespace VirtualLab.Domain
         private bool _transactionActive;
 
         public ExperimentWorld(IEnumerable<RelationSchema> relationSchemas = null)
-            : this(relationSchemas, true)
-        {
-        }
-
-        private ExperimentWorld(
-            IEnumerable<RelationSchema> relationSchemas,
-            bool installTransitionalMatterState)
         {
             _relationGraph = new RelationGraph(relationSchemas);
-            if (installTransitionalMatterState)
-            {
-                RegisterWorldState(new MatterInventory(ContainsEntity));
-            }
         }
-
-        /// <summary>
-        /// 迁移期间保留的物质库存访问入口；库存生命周期已经由通用世界状态契约托管。
-        /// </summary>
-        public MatterInventory Matter => RequireWorldState<MatterInventory>(
-            MatterWorldStateTypeIds.Inventory);
 
         public IReadOnlyCollection<WorldStateTypeId> WorldStateTypes =>
             new ReadOnlyCollection<WorldStateTypeId>(
@@ -455,7 +436,7 @@ namespace VirtualLab.Domain
 
         private ExperimentWorld CreateTransactionalCopy()
         {
-            var copy = new ExperimentWorld(RelationSchemas, false);
+            var copy = new ExperimentWorld(RelationSchemas);
             if (RelationSchemasFrozen)
             {
                 copy.FreezeRelationSchemas();

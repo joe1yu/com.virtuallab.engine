@@ -11,10 +11,9 @@ using Newtonsoft.Json.Converters;
 using VirtualLab.Application.Commands;
 using VirtualLab.Application.Courses;
 using VirtualLab.Application.Events;
-using VirtualLab.Domain.Matter;
 using VirtualLab.Domain.Relations;
+using VirtualLab.Domain.WorldStates;
 using VirtualLab.Kernel;
-using VirtualLab.Measurement;
 
 namespace VirtualLab.Infrastructure.Persistence
 {
@@ -76,7 +75,8 @@ namespace VirtualLab.Infrastructure.Persistence
         public const int MaxJsonDepth = 64;
         public const int MaxEntities = 10000;
         public const int MaxRelations = 50000;
-        public const int MaxMatterEntries = 50000;
+        public const int MaxWorldStates = 256;
+        public const int MaxWorldStateEntries = 50000;
         public const int MaxProcesses = 10000;
         public const int MaxEvents = 100000;
         public const int MaxCommands = 100000;
@@ -280,9 +280,7 @@ namespace VirtualLab.Infrastructure.Persistence
             [JsonProperty(Required = Required.Always)]
             public List<RelationDocument> Relations { get; set; }
             [JsonProperty(Required = Required.Always)]
-            public List<MatterDocument> Matter { get; set; }
-            [JsonProperty(Required = Required.Always)]
-            public List<KnownUnitDocument> KnownUnits { get; set; }
+            public List<WorldStateDocument> WorldStates { get; set; }
             [JsonProperty(Required = Required.Always)]
             public List<ScalarDocument> Scalars { get; set; }
             [JsonProperty(Required = Required.Default)]
@@ -314,13 +312,8 @@ namespace VirtualLab.Infrastructure.Persistence
                         .ToList(),
                     Relations = value.Relations.Select(RelationDocument.From)
                         .ToList(),
-                    Matter = value.Matter.Select(MatterDocument.From).ToList(),
-                    KnownUnits = value.KnownUnits.Select(
-                        item => new KnownUnitDocument
-                        {
-                            SubstanceId = item.Key,
-                            Unit = item.Value
-                        }).ToList(),
+                    WorldStates = value.WorldStates
+                        .Select(WorldStateDocument.From).ToList(),
                     Scalars = value.Scalars.Select(ScalarDocument.From).ToList(),
                     SpatialPoses = value.SpatialPoses
                         .Select(SpatialPoseDocument.From).ToList(),
@@ -343,10 +336,27 @@ namespace VirtualLab.Infrastructure.Persistence
             {
                 Count(Entities, SessionArchiveReadLimits.MaxEntities, "entities");
                 Count(Relations, SessionArchiveReadLimits.MaxRelations, "relations");
-                Count(Matter, SessionArchiveReadLimits.MaxMatterEntries, "matter");
-                Count(KnownUnits, SessionArchiveReadLimits.MaxMatterEntries,
-                    "knownUnits");
-                Count(Scalars, SessionArchiveReadLimits.MaxMatterEntries,
+                Count(WorldStates, SessionArchiveReadLimits.MaxWorldStates,
+                    "worldStates");
+                foreach (var state in Require(WorldStates, "worldStates"))
+                {
+                    var requiredState = Require(state, "world state");
+                    Count(
+                        requiredState.Entries,
+                        SessionArchiveReadLimits.MaxWorldStateEntries,
+                        "world state entries");
+                    foreach (var entry in Require(
+                        requiredState.Entries,
+                        "world state entries"))
+                    {
+                        Count(
+                            Require(entry, "world state entry").Values,
+                            SessionArchiveReadLimits.MaxParameters,
+                            "world state values");
+                    }
+                }
+
+                Count(Scalars, SessionArchiveReadLimits.MaxWorldStateEntries,
                     "scalars");
                 Count(SpatialPoses ?? new List<SpatialPoseDocument>(),
                     SessionArchiveReadLimits.MaxEntities,
@@ -365,10 +375,8 @@ namespace VirtualLab.Infrastructure.Persistence
                         Require(value, "entity").ToState()),
                     Require(Relations, "relations").Select(value =>
                         Require(value, "relation").ToState()),
-                    Require(Matter, "matter").Select(value =>
-                        Require(value, "matter item").ToState()),
-                    Require(KnownUnits, "knownUnits").Select(value =>
-                        Require(value, "known unit").ToState()),
+                    Require(WorldStates, "worldStates").Select(value =>
+                        Require(value, "world state").ToState()),
                     Require(Scalars, "scalars").Select(value =>
                         Require(value, "scalar").ToState()),
                     Require(Processes, "processes").Select(value =>
@@ -500,51 +508,65 @@ namespace VirtualLab.Infrastructure.Persistence
                     TargetPortId);
         }
 
-        private sealed class MatterDocument
+        private sealed class WorldStateDocument
         {
             [JsonProperty(Required = Required.Always)]
-            public string LocationId { get; set; }
+            public string TypeId { get; set; }
             [JsonProperty(Required = Required.Always)]
-            public string SubstanceId { get; set; }
-            [JsonProperty(Required = Required.Always)]
-            public decimal Value { get; set; }
-            [JsonProperty(Required = Required.Always)]
-            public Unit Unit { get; set; }
-            [JsonProperty(Required = Required.Always)]
-            public MatterPhase Phase { get; set; }
-            [JsonProperty(Required = Required.Always)]
-            public decimal TemperatureCelsius { get; set; }
+            public List<WorldStateEntryDocument> Entries { get; set; }
 
-            public static MatterDocument From(CourseMatterState value) =>
-                new MatterDocument
+            public static WorldStateDocument From(CourseWorldState value) =>
+                new WorldStateDocument
                 {
-                    LocationId = value.LocationId,
-                    SubstanceId = value.SubstanceId,
-                    Value = value.Value,
-                    Unit = value.Unit,
-                    Phase = value.Phase,
-                    TemperatureCelsius = value.TemperatureCelsius
+                    TypeId = value.TypeId.Value,
+                    Entries = value.Entries
+                        .Select(WorldStateEntryDocument.From).ToList()
                 };
 
-            public CourseMatterState ToState() =>
-                new CourseMatterState(
-                    LocationId,
-                    SubstanceId,
-                    Value,
-                    Unit,
-                    Phase,
-                    TemperatureCelsius);
+            public CourseWorldState ToState() =>
+                new CourseWorldState(
+                    new WorldStateTypeId(TypeId),
+                    Require(Entries, "world state entries").Select(value =>
+                        Require(value, "world state entry").ToState()));
         }
 
-        private sealed class KnownUnitDocument
+        private sealed class WorldStateEntryDocument
         {
             [JsonProperty(Required = Required.Always)]
-            public string SubstanceId { get; set; }
+            public string EntryType { get; set; }
             [JsonProperty(Required = Required.Always)]
-            public Unit Unit { get; set; }
+            public List<WorldStateValueDocument> Values { get; set; }
 
-            public KeyValuePair<string, Unit> ToState() =>
-                new KeyValuePair<string, Unit>(SubstanceId, Unit);
+            public static WorldStateEntryDocument From(
+                CourseWorldStateEntry value) => new WorldStateEntryDocument
+            {
+                EntryType = value.EntryType,
+                Values = value.Values.Select(item =>
+                    new WorldStateValueDocument
+                    {
+                        Key = item.Key,
+                        Value = item.Value
+                    }).ToList()
+            };
+
+            public CourseWorldStateEntry ToState() =>
+                new CourseWorldStateEntry(
+                    EntryType,
+                    Require(Values, "world state values").Select(value =>
+                    {
+                        var item = Require(value, "world state value");
+                        return new KeyValuePair<string, string>(
+                            item.Key,
+                            item.Value);
+                    }));
+        }
+
+        private sealed class WorldStateValueDocument
+        {
+            [JsonProperty(Required = Required.Always)]
+            public string Key { get; set; }
+            [JsonProperty(Required = Required.Always)]
+            public string Value { get; set; }
         }
 
         private sealed class SpatialPoseDocument
