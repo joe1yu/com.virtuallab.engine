@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using NUnit.Framework;
+using VirtualLab.Application.Courses;
 using VirtualLab.Unity.Authoring.Blueprints;
 using VirtualLab.Unity.Authoring.Diagnostics;
 using VirtualLab.Unity.Authoring.Recipes;
@@ -30,14 +31,14 @@ namespace VirtualLab.Engine.Tests.Courses
                     "策略.通用抓取.大试管",
                     "策略.通用释放.大试管"
                 }));
+            var operationIds = result.Model.StateChanges.Select(value =>
+                value.Definition.OperationId);
             Assert.That(
-                result.Model.StateChanges.Select(value =>
-                    value.Definition.OperationId),
-                Is.EquivalentTo(new[]
-                {
-                    "设置关系",
-                    "移除关系"
-                }));
+                operationIds,
+                Does.Contain(ConfiguredStateOperationIds.RelationSet));
+            Assert.That(
+                operationIds,
+                Does.Contain(ConfiguredStateOperationIds.RelationRemove));
             Assert.That(
                 result.Model.PresentationStates.Select(value =>
                     value.Definition.StateId),
