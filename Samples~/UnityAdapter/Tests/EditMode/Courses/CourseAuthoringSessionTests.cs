@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using NUnit.Framework;
 using VirtualLab.Unity.Authoring.Catalogs;
+using VirtualLab.Unity.Authoring.Diagnostics;
 using VirtualLab.Unity.Authoring.Drafts;
 using VirtualLab.Unity.Authoring.Workbench;
 
@@ -86,6 +87,43 @@ namespace VirtualLab.Engine.Tests.Courses
             Assert.That(workflow.Section("课程信息").IsComplete, Is.True);
             Assert.That(workflow.Section("实验用品").MissingItems,
                 Does.Contain("至少添加一种实验用品"));
+        }
+
+        [Test]
+        public void 表现触发来源和目标保存后可以完整往返()
+        {
+            _session.AddSupply("试管", "药匙", "药匙");
+            _session.AddSupply("试管", "试剂瓶", "试剂瓶");
+            _session.SetPresentation(new CourseDraftPresentation(
+                "舀取表现",
+                "动作成功",
+                "取出",
+                "药匙",
+                "试剂瓶",
+                "实体",
+                "试剂瓶",
+                "隐藏渲染器",
+                "表现插槽",
+                "插槽.内容",
+                string.Empty,
+                new ConfigurationSource(
+                    ConfigurationLayer.Course,
+                    "测试课程",
+                    CourseAuthoringTableNames.Presentation,
+                    2,
+                    1,
+                    "舀取表现")));
+
+            _session.Save();
+            var reloaded = CourseAuthoringSession.Load(
+                _session.AuthoringDirectory,
+                Catalog());
+            var presentation = reloaded.Draft.Presentations.Single();
+
+            Assert.That(presentation.TriggerSourceEntityId,
+                Is.EqualTo("药匙"));
+            Assert.That(presentation.TriggerTargetEntityId,
+                Is.EqualTo("试剂瓶"));
         }
 
         private static CourseAuthoringCatalog Catalog() =>

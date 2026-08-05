@@ -6,6 +6,7 @@ using VirtualLab.Application.Courses;
 using VirtualLab.Presentation;
 using VirtualLab.Unity.Authoring.Blueprints;
 using VirtualLab.Unity.Authoring.Diagnostics;
+using VirtualLab.Unity.Authoring.Drafts;
 using VirtualLab.Unity.Authoring.Normalized;
 using VirtualLab.UnityAdapters.Authoring;
 using VirtualLab.UnityAdapters.Presentation;
@@ -690,15 +691,21 @@ namespace VirtualLab.Unity.Authoring.Recipes
             return value?.Trim() switch
             {
                 "" or null => null,
-                "课程初始化" =>
+                CoursePresentationTriggerNames.CourseInitialized =>
                     CoursePresentationTriggerKind.CourseInitialized,
-                "动作成功" => CoursePresentationTriggerKind.ActionAccepted,
-                "动作拒绝" => CoursePresentationTriggerKind.ActionRejected,
-                "领域事件" => CoursePresentationTriggerKind.DomainEvent,
-                "状态进入" => CoursePresentationTriggerKind.StateEntered,
-                "状态持续" => CoursePresentationTriggerKind.StateActive,
-                "状态退出" => CoursePresentationTriggerKind.StateExited,
-                "可用性变化" =>
+                CoursePresentationTriggerNames.ActionAccepted =>
+                    CoursePresentationTriggerKind.ActionAccepted,
+                CoursePresentationTriggerNames.ActionRejected =>
+                    CoursePresentationTriggerKind.ActionRejected,
+                CoursePresentationTriggerNames.DomainEvent =>
+                    CoursePresentationTriggerKind.DomainEvent,
+                CoursePresentationTriggerNames.StateEntered =>
+                    CoursePresentationTriggerKind.StateEntered,
+                CoursePresentationTriggerNames.StateActive =>
+                    CoursePresentationTriggerKind.StateActive,
+                CoursePresentationTriggerNames.StateExited =>
+                    CoursePresentationTriggerKind.StateExited,
+                CoursePresentationTriggerNames.ActionAvailabilityChanged =>
                     CoursePresentationTriggerKind.ActionAvailabilityChanged,
                 _ => throw new InvalidOperationException(
                     $"未注册表现触发类型“{value}”。")

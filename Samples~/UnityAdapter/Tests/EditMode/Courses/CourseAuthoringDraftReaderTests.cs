@@ -28,6 +28,13 @@ namespace VirtualLab.Engine.Tests.Courses
             Assert.That(
                 result.Draft.OperationOverrides.Single().Source.FileName,
                 Is.EqualTo(CourseAuthoringTableNames.OperationOverrides));
+            var presentation = result.Draft.Presentations.Single();
+            Assert.That(
+                presentation.TriggerSourceEntityId,
+                Is.EqualTo("大试管"));
+            Assert.That(
+                presentation.TriggerTargetEntityId,
+                Is.EqualTo("大试管"));
         }
 
         [Test]
@@ -42,6 +49,15 @@ namespace VirtualLab.Engine.Tests.Courses
                     "场景标识", "顺序", "记录类型", "操作", "来源", "目标",
                     "参数名", "参数值", "断言类型", "对象", "事实", "比较",
                     "期望值", "单位"
+                }));
+            Assert.That(
+                CourseAuthoringSchema.ByFileName[
+                    CourseAuthoringTableNames.Presentation].Columns,
+                Is.EqualTo(new[]
+                {
+                    "表现标识", "触发类型", "触发值", "触发来源", "触发目标",
+                    "主体选择方式", "主体选择值", "表现信号", "作用位置",
+                    "位置标识", "参数"
                 }));
         }
 

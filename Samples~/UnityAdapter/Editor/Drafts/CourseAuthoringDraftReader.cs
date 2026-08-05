@@ -166,6 +166,8 @@ namespace VirtualLab.Unity.Authoring.Drafts
                         Value(row, CourseAuthoringColumns.Presentation.Id),
                         Value(row, CourseAuthoringColumns.Presentation.TriggerType),
                         Value(row, CourseAuthoringColumns.Presentation.TriggerValue),
+                        Value(row, CourseAuthoringColumns.Presentation.TriggerSource),
+                        Value(row, CourseAuthoringColumns.Presentation.TriggerTarget),
                         Value(row, CourseAuthoringColumns.Presentation.SubjectSelectorKind),
                         Value(row, CourseAuthoringColumns.Presentation.SubjectSelectorValue),
                         Value(row, CourseAuthoringColumns.Presentation.Signal),

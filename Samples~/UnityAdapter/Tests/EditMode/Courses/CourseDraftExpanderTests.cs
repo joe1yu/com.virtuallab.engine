@@ -341,13 +341,84 @@ namespace VirtualLab.Engine.Tests.Courses
                 Is.EqualTo("目标.收集两瓶氧气"));
         }
 
+        [Test]
+        public void 表现触发来源和目标精确进入蓝图()
+        {
+            var catalog = Catalog(
+                components: Array.Empty<AuthoringComponentDescriptor>(),
+                templates: new[] { Template("器材", Array.Empty<string>()) });
+            var draft = Draft(
+                new[]
+                {
+                    Object("药匙", "器材"),
+                    Object("试剂瓶", "器材")
+                },
+                presentations: new[]
+                {
+                    Presentation(
+                        "舀取表现",
+                        "动作成功",
+                        "取出",
+                        "药匙",
+                        "试剂瓶")
+                });
+
+            var result = Expand(draft, catalog);
+
+            Assert.That(result.IsSuccess, Is.True, Diagnostics(result));
+            var presentation = result.Blueprint.PresentationOverrides.Single();
+            Assert.That(presentation.TriggerSourceEntityId,
+                Is.EqualTo("药匙"));
+            Assert.That(presentation.TriggerTargetEntityId,
+                Is.EqualTo("试剂瓶"));
+        }
+
+        [Test]
+        public void 表现触发对象必须存在且只适用于动作触发类型()
+        {
+            var catalog = Catalog(
+                components: Array.Empty<AuthoringComponentDescriptor>(),
+                templates: new[] { Template("器材", Array.Empty<string>()) });
+            var draft = Draft(
+                new[] { Object("试剂瓶", "器材") },
+                presentations: new[]
+                {
+                    Presentation(
+                        "不存在来源",
+                        "动作成功",
+                        "取出",
+                        "不存在的药匙",
+                        "试剂瓶"),
+                    Presentation(
+                        "初始化不应限定对象",
+                        "课程初始化",
+                        "课程已初始化",
+                        "试剂瓶",
+                        string.Empty)
+                });
+
+            var result = Expand(draft, catalog);
+
+            Assert.That(result.IsSuccess, Is.False);
+            Assert.That(result.Diagnostics.Select(value => value.Code),
+                Does.Contain("draft.presentation-trigger.entity-missing")
+                    .And.Contain(
+                        "draft.presentation-trigger.entity-not-applicable"));
+            Assert.That(
+                result.Diagnostics.Single(value => value.Code ==
+                    "draft.presentation-trigger.entity-missing")
+                    .Target.ColumnName,
+                Is.EqualTo("触发来源"));
+        }
+
         private static CourseAuthoringDraft Draft(
             IEnumerable<CourseDraftObject> objects,
             IEnumerable<CourseDraftComponent> components = null,
             IEnumerable<CourseDraftOperationOverride> operationOverrides = null,
             IEnumerable<CourseDraftProcess> processes = null,
             IEnumerable<CourseDraftTeachingItem> teachingItems = null,
-            IEnumerable<CourseDraftTeachingCondition> teachingConditions = null) =>
+            IEnumerable<CourseDraftTeachingCondition> teachingConditions = null,
+            IEnumerable<CourseDraftPresentation> presentations = null) =>
             new CourseAuthoringDraft(
                 new CourseDraftCourse(
                     "测试课程", "测试课程", "化学基础", "学生", "实验.prefab",
@@ -359,8 +430,28 @@ namespace VirtualLab.Engine.Tests.Courses
                 processes ?? Array.Empty<CourseDraftProcess>(),
                 teachingItems ?? Array.Empty<CourseDraftTeachingItem>(),
                 teachingConditions ?? Array.Empty<CourseDraftTeachingCondition>(),
-                Array.Empty<CourseDraftPresentation>(),
+                presentations ?? Array.Empty<CourseDraftPresentation>(),
                 Array.Empty<CourseDraftAcceptanceRecord>());
+
+        private static CourseDraftPresentation Presentation(
+            string id,
+            string triggerType,
+            string triggerValue,
+            string triggerSource,
+            string triggerTarget) =>
+            new CourseDraftPresentation(
+                id,
+                triggerType,
+                triggerValue,
+                triggerSource,
+                triggerTarget,
+                "实体",
+                "试剂瓶",
+                "隐藏渲染器",
+                "表现插槽",
+                "插槽.内容",
+                string.Empty,
+                Source("表现.csv", 2, id));
 
         private static CourseDraftObject Object(string id, string type) =>
             new CourseDraftObject(

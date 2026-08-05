@@ -301,6 +301,8 @@ namespace VirtualLab.Unity.Authoring.Drafts
             string presentationId,
             string triggerType,
             string triggerValue,
+            string triggerSourceEntityId,
+            string triggerTargetEntityId,
             string subjectSelectorKind,
             string subjectSelectorValue,
             string signal,
@@ -313,6 +315,8 @@ namespace VirtualLab.Unity.Authoring.Drafts
             PresentationId = Text(presentationId);
             TriggerType = Text(triggerType);
             TriggerValue = Text(triggerValue);
+            TriggerSourceEntityId = Text(triggerSourceEntityId);
+            TriggerTargetEntityId = Text(triggerTargetEntityId);
             SubjectSelectorKind = Text(subjectSelectorKind);
             SubjectSelectorValue = Text(subjectSelectorValue);
             Signal = Text(signal);
@@ -324,6 +328,8 @@ namespace VirtualLab.Unity.Authoring.Drafts
         public string PresentationId { get; }
         public string TriggerType { get; }
         public string TriggerValue { get; }
+        public string TriggerSourceEntityId { get; }
+        public string TriggerTargetEntityId { get; }
         public string SubjectSelectorKind { get; }
         public string SubjectSelectorValue { get; }
         public string Signal { get; }

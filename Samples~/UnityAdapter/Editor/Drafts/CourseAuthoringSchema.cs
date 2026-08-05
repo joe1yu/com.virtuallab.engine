@@ -130,6 +130,8 @@ namespace VirtualLab.Unity.Authoring.Drafts
             public const string Id = "表现标识";
             public const string TriggerType = "触发类型";
             public const string TriggerValue = "触发值";
+            public const string TriggerSource = "触发来源";
+            public const string TriggerTarget = "触发目标";
             public const string SubjectSelectorKind = "主体选择方式";
             public const string SubjectSelectorValue = "主体选择值";
             public const string Signal = "表现信号";
@@ -155,6 +157,30 @@ namespace VirtualLab.Unity.Authoring.Drafts
             public const string ExpectedValue = "期望值";
             public const string Unit = "单位";
         }
+    }
+
+    /// <summary>
+    /// 表现表使用的自然语言触发类型。读取、验证和编译必须复用这些常量，
+    /// 避免各层分别维护协议文字。
+    /// </summary>
+    public static class CoursePresentationTriggerNames
+    {
+        public const string CourseInitialized = "课程初始化";
+        public const string ActionAccepted = "动作成功";
+        public const string ActionRejected = "动作拒绝";
+        public const string DomainEvent = "领域事件";
+        public const string StateEntered = "状态进入";
+        public const string StateActive = "状态持续";
+        public const string StateExited = "状态退出";
+        public const string ActionAvailabilityChanged = "可用性变化";
+
+        public static bool SupportsActionEntities(string value) =>
+            string.Equals(value, ActionAccepted, StringComparison.Ordinal)
+            || string.Equals(value, ActionRejected, StringComparison.Ordinal)
+            || string.Equals(
+                value,
+                ActionAvailabilityChanged,
+                StringComparison.Ordinal);
     }
 
     public sealed class CourseAuthoringTableSchema
@@ -260,6 +286,8 @@ namespace VirtualLab.Unity.Authoring.Drafts
                     CourseAuthoringColumns.Presentation.Id,
                     CourseAuthoringColumns.Presentation.TriggerType,
                     CourseAuthoringColumns.Presentation.TriggerValue,
+                    CourseAuthoringColumns.Presentation.TriggerSource,
+                    CourseAuthoringColumns.Presentation.TriggerTarget,
                     CourseAuthoringColumns.Presentation.SubjectSelectorKind,
                     CourseAuthoringColumns.Presentation.SubjectSelectorValue,
                     CourseAuthoringColumns.Presentation.Signal,

@@ -550,6 +550,14 @@ namespace VirtualLab.Unity.Authoring.Drafts
         {
             foreach (var item in draft.Presentations)
             {
+                if (!ValidatePresentationTriggerEntities(
+                        item,
+                        objects,
+                        diagnostics))
+                {
+                    continue;
+                }
+
                 if (!TrySelect(item.SubjectSelectorKind, item.SubjectSelectorValue,
                         objects.Values, item.Source, diagnostics, out var subjects))
                 {
@@ -572,8 +580,8 @@ namespace VirtualLab.Unity.Authoring.Drafts
                             Pair("覆盖ID", item.PresentationId + "." + subject.Draft.EntityId),
                             Pair("触发类型", item.TriggerType),
                             Pair("触发值", item.TriggerValue),
-                            Pair("触发来源", string.Empty),
-                            Pair("触发目标", string.Empty),
+                            Pair("触发来源", item.TriggerSourceEntityId),
+                            Pair("触发目标", item.TriggerTargetEntityId),
                             Pair("对象或状态", subject.Draft.EntityId),
                             Pair("表现原语", item.Signal),
                             Pair("作用位置", item.Location),
@@ -585,6 +593,77 @@ namespace VirtualLab.Unity.Authoring.Drafts
                     }
                 }
             }
+        }
+
+        /// <summary>
+        /// 触发来源和目标描述语义动作上下文，仅动作类触发能够使用。
+        /// 这里显式校验实体引用，避免运行时把拼写错误默认为“任意对象”。
+        /// </summary>
+        private static bool ValidatePresentationTriggerEntities(
+            CourseDraftPresentation item,
+            IReadOnlyDictionary<string, ExpandedObject> objects,
+            ICollection<CourseCompilationDiagnostic> diagnostics)
+        {
+            var hasSource = !string.IsNullOrWhiteSpace(
+                item.TriggerSourceEntityId);
+            var hasTarget = !string.IsNullOrWhiteSpace(
+                item.TriggerTargetEntityId);
+            if (!hasSource && !hasTarget)
+            {
+                return true;
+            }
+
+            if (!CoursePresentationTriggerNames.SupportsActionEntities(
+                    item.TriggerType))
+            {
+                var columnName = hasSource
+                    ? CourseAuthoringColumns.Presentation.TriggerSource
+                    : CourseAuthoringColumns.Presentation.TriggerTarget;
+                diagnostics.Add(Diagnostic(
+                    "draft.presentation-trigger.entity-not-applicable",
+                    item.Source,
+                    $"表现“{item.PresentationId}”的触发类型“{item.TriggerType}”没有动作来源或目标。",
+                    "仅动作成功、动作拒绝或可用性变化可以填写触发来源和触发目标。",
+                    columnName));
+                return false;
+            }
+
+            var isValid = true;
+            isValid &= ValidatePresentationTriggerEntity(
+                item,
+                item.TriggerSourceEntityId,
+                CourseAuthoringColumns.Presentation.TriggerSource,
+                objects,
+                diagnostics);
+            isValid &= ValidatePresentationTriggerEntity(
+                item,
+                item.TriggerTargetEntityId,
+                CourseAuthoringColumns.Presentation.TriggerTarget,
+                objects,
+                diagnostics);
+            return isValid;
+        }
+
+        private static bool ValidatePresentationTriggerEntity(
+            CourseDraftPresentation item,
+            string entityId,
+            string columnName,
+            IReadOnlyDictionary<string, ExpandedObject> objects,
+            ICollection<CourseCompilationDiagnostic> diagnostics)
+        {
+            if (string.IsNullOrWhiteSpace(entityId)
+                || objects.ContainsKey(entityId))
+            {
+                return true;
+            }
+
+            diagnostics.Add(Diagnostic(
+                "draft.presentation-trigger.entity-missing",
+                item.Source,
+                $"表现“{item.PresentationId}”的{columnName}“{entityId}”不存在。",
+                "从当前课程的实验对象中选择，或留空表示任意对象。",
+                columnName));
+            return false;
         }
 
         private static string ParameterType(string value)
@@ -803,20 +882,28 @@ namespace VirtualLab.Unity.Authoring.Drafts
             string code,
             ConfigurationSource source,
             string reason,
-            string suggestion) =>
+            string suggestion,
+            string columnName = "") =>
             new CourseCompilationDiagnostic(
                 code,
                 source.FileName,
                 source.Line,
                 source.Column,
-                string.Empty,
+                columnName,
                 source.ConfigurationId,
                 reason,
                 suggestion,
                 CourseDiagnosticSeverity.Error,
                 new ConfigurationProvenance(
                     source.ConfigurationId,
-                    new[] { source }));
+                    new[] { source }),
+                new CourseDiagnosticTarget(
+                    source.FileName,
+                    source.ConfigurationId,
+                    columnName,
+                    string.IsNullOrWhiteSpace(columnName)
+                        ? CourseDiagnosticActionIds.LocateConfiguration
+                        : CourseDiagnosticActionIds.SelectPresentation));
 
         private sealed class ExpandedObject
         {

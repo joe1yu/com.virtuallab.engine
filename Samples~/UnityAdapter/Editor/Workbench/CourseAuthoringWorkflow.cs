@@ -559,7 +559,9 @@ namespace VirtualLab.Unity.Authoring.Workbench
             string signalId,
             string location,
             string locationId,
-            string parameters)
+            string parameters,
+            string triggerSourceEntityId = "",
+            string triggerTargetEntityId = "")
         {
             if (!PresentationSignals.Any(value => value.OptionId == signalId))
             {
@@ -572,6 +574,8 @@ namespace VirtualLab.Unity.Authoring.Workbench
                 presentationId,
                 triggerType,
                 triggerValue,
+                triggerSourceEntityId,
+                triggerTargetEntityId,
                 subjectSelectorKind,
                 subjectSelectorValue,
                 signalId,
