@@ -427,6 +427,10 @@ namespace VirtualLab.Chemistry.Configuration
                 if (!string.Equals(
                         value.CapabilityId,
                         ChemistryCapabilityIds.Combustible,
+                        StringComparison.Ordinal)
+                    && !string.Equals(
+                        value.CapabilityId,
+                        ChemistryCapabilityIds.SolidMatterCarrier,
                         StringComparison.Ordinal))
                 {
                     Add(

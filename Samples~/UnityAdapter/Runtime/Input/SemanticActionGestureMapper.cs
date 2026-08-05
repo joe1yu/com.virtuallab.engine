@@ -7,11 +7,12 @@ using VirtualLab.UnityAdapters.Physics;
 namespace VirtualLab.UnityAdapters.Input
 {
     /// <summary>
-    /// 鼠标、VR 和自动化测试共用的设备无关意图。
+    /// 鼠标、VR 和自动化测试共用的设备无关观测。观测只描述操作者、
+    /// 来源、目标和输入参数，不声明科学结果。
     /// </summary>
-    public sealed class SemanticInputIntent
+    public sealed class SemanticInputObservation
     {
-        public SemanticInputIntent(
+        public SemanticInputObservation(
             string actionId,
             string actorEntityId,
             string sourceEntityId,
@@ -66,12 +67,12 @@ namespace VirtualLab.UnityAdapters.Input
             string operationInstanceId,
             SemanticActionPhase phase,
             double occurredAtSeconds,
-            SemanticInputIntent intent,
+            SemanticInputObservation observation,
             SpatialFactSet spatialFacts)
         {
-            if (intent == null)
+            if (observation == null)
             {
-                throw new ArgumentNullException(nameof(intent));
+                throw new ArgumentNullException(nameof(observation));
             }
 
             if (spatialFacts == null)
@@ -80,7 +81,7 @@ namespace VirtualLab.UnityAdapters.Input
             }
 
             var parameters = new Dictionary<string, StructuredValue>(
-                intent.Parameters,
+                observation.Parameters,
                 StringComparer.Ordinal);
             foreach (var fact in spatialFacts.Values)
             {
@@ -89,13 +90,13 @@ namespace VirtualLab.UnityAdapters.Input
 
             return new SemanticActionRequest(
                 commandId,
-                intent.ActionId,
+                observation.ActionId,
                 operationInstanceId,
                 phase,
                 occurredAtSeconds,
-                intent.ActorEntityId,
-                intent.SourceEntityId,
-                intent.TargetEntityId,
+                observation.ActorEntityId,
+                observation.SourceEntityId,
+                observation.TargetEntityId,
                 parameters);
         }
     }

@@ -148,6 +148,26 @@ namespace VirtualLab.Chemistry.Matter
             SimulationTick tick,
             IProcessEventCollector events)
         {
+            Transfer(
+                sourceId,
+                targetId,
+                MatterBatchSelection.All(substanceId),
+                quantity,
+                tick,
+                events);
+        }
+
+        /// <summary>
+        /// 按批次选择条件转移物质，用于需要约束相态或温度的学科操作。
+        /// </summary>
+        public void Transfer(
+            EntityId sourceId,
+            EntityId targetId,
+            MatterBatchSelection selection,
+            Quantity quantity,
+            SimulationTick tick,
+            IProcessEventCollector events)
+        {
             if (events == null)
             {
                 throw new ArgumentNullException(nameof(events));
@@ -158,7 +178,8 @@ namespace VirtualLab.Chemistry.Matter
                 throw new ArgumentOutOfRangeException(nameof(tick), "A transfer tick cannot be negative.");
             }
 
-            var normalizedId = InventoryValidation.NormalizeSubstanceId(substanceId);
+            var normalizedId = InventoryValidation.NormalizeSubstanceId(
+                selection.SubstanceId);
             InventoryValidation.ValidateRequestedQuantity(quantity);
             var domainEvent = new SubstanceTransferredEvent(
                 sourceId,
@@ -171,7 +192,7 @@ namespace VirtualLab.Chemistry.Matter
                 {
                     var selected = transaction.Select(
                         sourceId,
-                        MatterBatchSelection.All(normalizedId),
+                        selection,
                         quantity.Unit);
                     var moved = transaction.Consume(selected, quantity);
                     foreach (var batch in moved)

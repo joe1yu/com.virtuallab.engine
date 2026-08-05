@@ -7,7 +7,7 @@ using VirtualLab.UnityAdapters.Physics;
 namespace VirtualLab.UnityAdapters.Input
 {
     /// <summary>
-    /// Pointer 只负责识别实体和提交语义意图，不直接移动 Transform 或改写实验状态。
+    /// Pointer 只负责识别实体和提交语义观测，不直接移动 Transform 或改写实验状态。
     /// </summary>
     public sealed class SemanticPointerInputAdapter : MonoBehaviour
     {
@@ -40,7 +40,7 @@ namespace VirtualLab.UnityAdapters.Input
                 throw new InvalidOperationException("语义输入适配器尚未配置。");
             }
 
-            var intent = new SemanticInputIntent(
+            var observation = new SemanticInputObservation(
                 actionId,
                 actorEntityId,
                 sourceEntityId,
@@ -51,8 +51,8 @@ namespace VirtualLab.UnityAdapters.Input
                 operationInstanceId,
                 phase,
                 occurredAtSeconds,
-                intent,
-                _spatialFacts.Measure(intent));
+                observation,
+                _spatialFacts.Measure(observation));
         }
     }
 }

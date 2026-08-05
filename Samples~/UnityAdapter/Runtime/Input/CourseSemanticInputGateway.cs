@@ -148,6 +148,9 @@ namespace VirtualLab.UnityAdapters.Input
             var values = _bootstrap.Domain.ConfiguredActions
                 .Where(value =>
                     value.Effect == ConfiguredActionPolicyEffect.Allow
+                    && _bootstrap.OperationExecutors.TryGet(
+                        value.ExecutionModeId,
+                        out _)
                     && !value.MatchesAnyEntities
                     && IsManipulationPair(
                         value,
@@ -192,6 +195,9 @@ namespace VirtualLab.UnityAdapters.Input
             var values = _bootstrap.Domain.ConfiguredActions
                 .Where(value =>
                     value.Effect == ConfiguredActionPolicyEffect.Allow
+                    && _bootstrap.OperationExecutors.TryGet(
+                        value.ExecutionModeId,
+                        out _)
                     && value.TargetEntityId == null
                     && (value.MatchesAnyEntities
                         || string.Equals(

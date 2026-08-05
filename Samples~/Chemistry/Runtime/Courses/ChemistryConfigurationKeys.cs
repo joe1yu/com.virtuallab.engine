@@ -3,7 +3,7 @@ using VirtualLab.Application.Courses;
 namespace VirtualLab.Chemistry.Courses
 {
     /// <summary>
-    /// 化学课程配置使用的 Key。按通用、倾倒、加热、燃烧和振荡职责分组，
+    /// 化学课程配置使用的 Key。按通用、固体取用、倾倒、加热、燃烧和振荡职责分组，
     /// 课程配方协议变更时只需在此处统一调整。
     /// </summary>
     public static class ChemistryConfigurationKeys
@@ -44,6 +44,20 @@ namespace VirtualLab.Chemistry.Courses
                 "数量不足风险状态键";
             public const string QuantityInsufficientRejectionReason =
                 "数量不足拒绝原因";
+        }
+
+        public static class SolidPickup
+        {
+            public const string ContainerUnsupportedRejectionReason =
+                "容器不支持固体取用拒绝原因";
+            public const string ContainerCoveredRejectionReason =
+                "容器已覆盖拒绝原因";
+            public const string ToolUnsupportedRejectionReason =
+                "工具不支持拒绝原因";
+            public const string SubstanceMissingRejectionReason =
+                "物质不存在拒绝原因";
+            public const string QuantityInvalidRejectionReason =
+                "数量无效拒绝原因";
         }
 
         public static class Heating

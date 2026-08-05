@@ -4,7 +4,6 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using VirtualLab.Application.Courses;
-using VirtualLab.Interaction.Actions;
 using VirtualLab.UnityAdapters.Authoring;
 using VirtualLab.UnityAdapters.Courses;
 using VirtualLab.UnityAdapters.Presentation;
@@ -33,6 +32,7 @@ namespace VirtualLab.UnityAdapters.Input
         private int _commandSequence;
         private string _lastPreviewKey;
         private string _manipulationOperationInstanceId;
+        private string _manipulationOperationId;
         private readonly CourseManipulationPreview _preview =
             new CourseManipulationPreview();
 
@@ -126,23 +126,20 @@ namespace VirtualLab.UnityAdapters.Input
                 return false;
             }
 
-            var grabCandidate = _gateway.FindUnaryCandidates(source.EntityId)
-                .FirstOrDefault(value => string.Equals(
-                    value.ActionId,
-                    InteractionSemanticActionIds.Grab,
-                    StringComparison.Ordinal));
-            if (grabCandidate == null)
+            var beginCandidate = _gateway.FindUnaryCandidates(source.EntityId)
+                .FirstOrDefault(IsDirectManipulationStart);
+            if (beginCandidate == null)
             {
                 return false;
             }
 
             _preview.Begin(source);
-            var operationInstanceId = NextCommandId("抓取操作");
+            var operationInstanceId = NextCommandId("操纵操作");
             var result = _gateway.Dispatch(
-                NextCommandId(InteractionSemanticActionIds.Grab),
-                InteractionSemanticActionIds.Grab,
+                NextCommandId(beginCandidate.ActionId),
+                beginCandidate.ActionId,
                 operationInstanceId,
-                grabCandidate.Phase,
+                beginCandidate.Phase,
                 CurrentTimeSeconds(),
                 actorEntityId,
                 source.EntityId);
@@ -154,6 +151,7 @@ namespace VirtualLab.UnityAdapters.Input
 
             _selected = source;
             _manipulationOperationInstanceId = operationInstanceId;
+            _manipulationOperationId = beginCandidate.OperationId;
             _dragDepth = interactionCamera.WorldToScreenPoint(
                 source.transform.position).z;
             _lastPointerPosition = pointer;
@@ -253,18 +251,20 @@ namespace VirtualLab.UnityAdapters.Input
                 dropAccepted = result.Outcome.IsAccepted;
             }
 
-            var releaseCandidate = _gateway
+            var completeCandidate = _gateway
                 .FindUnaryCandidates(source.EntityId)
-                .FirstOrDefault(value => string.Equals(
-                    value.ActionId,
-                    InteractionSemanticActionIds.Release,
-                    StringComparison.Ordinal));
-            var releaseAccepted = releaseCandidate != null
+                .FirstOrDefault(value =>
+                    IsDirectManipulationComplete(value)
+                    && string.Equals(
+                        value.OperationId,
+                        _manipulationOperationId,
+                        StringComparison.Ordinal));
+            var releaseAccepted = completeCandidate != null
                 && _gateway.Dispatch(
-                    NextCommandId(InteractionSemanticActionIds.Release),
-                    InteractionSemanticActionIds.Release,
+                    NextCommandId(completeCandidate.ActionId),
+                    completeCandidate.ActionId,
                     _manipulationOperationInstanceId,
-                    releaseCandidate.Phase,
+                    completeCandidate.Phase,
                     CurrentTimeSeconds(),
                     actorEntityId,
                     source.EntityId).Outcome.IsAccepted;
@@ -286,6 +286,7 @@ namespace VirtualLab.UnityAdapters.Input
 
                 _selected = null;
                 _manipulationOperationInstanceId = null;
+                _manipulationOperationId = null;
                 _lastPreviewKey = null;
                 CurrentDropAvailability = null;
                 return committed;
@@ -317,7 +318,11 @@ namespace VirtualLab.UnityAdapters.Input
 
             var candidates = _gateway.FindCandidates(
                 _selected.EntityId,
-                target.EntityId);
+                target.EntityId)
+                .Where(value => string.Equals(
+                    value.ExecutionModeId,
+                    CourseOperationExecutionModeIds.DirectManipulation,
+                    StringComparison.Ordinal));
             DropCandidateResolution firstDenied = null;
             foreach (var candidate in candidates)
             {
@@ -412,6 +417,24 @@ namespace VirtualLab.UnityAdapters.Input
             return interactionCamera != null
                    && interactionCamera.pixelRect.Contains(pointer);
         }
+
+        private static bool IsDirectManipulationStart(
+            SemanticActionCandidate candidate) =>
+            candidate.Lifecycle == SemanticActionLifecycle.Manipulation
+            && candidate.Phase == SemanticActionPhase.Start
+            && string.Equals(
+                candidate.ExecutionModeId,
+                CourseOperationExecutionModeIds.DirectManipulation,
+                StringComparison.Ordinal);
+
+        private static bool IsDirectManipulationComplete(
+            SemanticActionCandidate candidate) =>
+            candidate.Lifecycle == SemanticActionLifecycle.Manipulation
+            && candidate.Phase == SemanticActionPhase.Complete
+            && string.Equals(
+                candidate.ExecutionModeId,
+                CourseOperationExecutionModeIds.DirectManipulation,
+                StringComparison.Ordinal);
 
         private sealed class DropCandidateResolution
         {

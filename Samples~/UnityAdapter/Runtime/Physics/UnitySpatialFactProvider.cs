@@ -32,27 +32,27 @@ namespace VirtualLab.UnityAdapters.Physics
             _alignmentToleranceDegrees = alignmentToleranceDegrees;
         }
 
-        public SpatialFactSet Measure(SemanticInputIntent intent)
+        public SpatialFactSet Measure(SemanticInputObservation observation)
         {
-            if (intent == null)
+            if (observation == null)
             {
-                throw new ArgumentNullException(nameof(intent));
+                throw new ArgumentNullException(nameof(observation));
             }
 
-            if (!_views.TryGet(intent.SourceEntityId, out var source))
+            if (!_views.TryGet(observation.SourceEntityId, out var source))
             {
                 throw new InvalidOperationException(
-                    $"找不到来源实体视图“{intent.SourceEntityId}”。");
+                    $"找不到来源实体视图“{observation.SourceEntityId}”。");
             }
 
-            _views.TryGet(intent.TargetEntityId, out var target);
+            _views.TryGet(observation.TargetEntityId, out var target);
             var sourceAnchor = SelectAnchor(
                 source,
-                intent,
+                observation,
                 "来源锚点ID");
             var targetAnchor = target == null
                 ? null
-                : SelectAnchor(target, intent, "目标锚点ID");
+                : SelectAnchor(target, observation, "目标锚点ID");
             var sourceTransform = sourceAnchor == null
                 ? source.transform
                 : sourceAnchor.transform;
@@ -121,10 +121,10 @@ namespace VirtualLab.UnityAdapters.Physics
 
         private static SemanticAnchorMarker SelectAnchor(
             CourseEntityView view,
-            SemanticInputIntent intent,
+            SemanticInputObservation observation,
             string preferredParameter)
         {
-            if (intent.Parameters.TryGetValue(
+            if (observation.Parameters.TryGetValue(
                     preferredParameter,
                     out var preferred))
             {

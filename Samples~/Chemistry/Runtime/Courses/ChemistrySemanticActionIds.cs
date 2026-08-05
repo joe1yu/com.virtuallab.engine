@@ -13,5 +13,6 @@ namespace VirtualLab.Chemistry.Courses
         public const string EndHeating = "结束加热";
         public const string Shake = "振荡";
         public const string CollectGas = "收集气体";
+        public const string PickUpSolidMatter = "取出固体";
     }
 }

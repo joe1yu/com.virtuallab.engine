@@ -161,6 +161,20 @@ namespace VirtualLab.Chemistry.Courses
                     continue;
                 }
 
+                if (string.Equals(
+                        binding.CapabilityId,
+                        ChemistryCapabilityIds.SolidMatterCarrier,
+                        StringComparison.Ordinal))
+                {
+                    if (!entity.HasCapability<SolidMatterCarrierCapability>())
+                    {
+                        entity.AddCapability(
+                            new SolidMatterCarrierCapability());
+                    }
+
+                    continue;
+                }
+
                 throw new ArgumentException(
                     $"未注册化学能力“{binding.CapabilityId}”。",
                     nameof(configuration));
@@ -205,6 +219,8 @@ namespace VirtualLab.Chemistry.Courses
                                 new CombustibleCapability(),
                             ChemistryCapabilityIds.Shakeable =>
                                 new ShakeableCapability(),
+                            ChemistryCapabilityIds.SolidMatterCarrier =>
+                                new SolidMatterCarrierCapability(),
                             _ => null
                         };
                     if (capability != null)

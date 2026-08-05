@@ -34,7 +34,8 @@ namespace VirtualLab.Chemistry.Courses
             HeatingProcessOperations.EndOperationId,
             CombustionOperations.IgniteOperationId,
             CombustionOperations.ExtinguishOperationId,
-            ShakingOperations.OperationId
+            ShakingOperations.OperationId,
+            SolidMatterPickupOperations.OperationId
         };
     }
 
@@ -65,17 +66,21 @@ namespace VirtualLab.Chemistry.Courses
         private readonly CombustionOperations _combustionOperations;
         private readonly HeatingProcessOperations _heatingOperations;
         private readonly ShakingOperations _shakingOperations;
+        private readonly SolidMatterPickupOperations _solidPickupOperations;
 
         public ChemistryCourseRuntimeModule(
             MatterTransferOperations matterTransferOperations = null,
             CombustionOperations combustionOperations = null,
             HeatingProcessOperations heatingOperations = null,
-            ShakingOperations shakingOperations = null)
+            ShakingOperations shakingOperations = null,
+            SolidMatterPickupOperations solidPickupOperations = null)
         {
             _matterTransferOperations = matterTransferOperations;
             _combustionOperations = combustionOperations;
             _heatingOperations = heatingOperations;
             _shakingOperations = shakingOperations;
+            _solidPickupOperations = solidPickupOperations
+                ?? new SolidMatterPickupOperations();
         }
 
         public CourseModuleManifest Manifest => ModuleManifest;
@@ -106,6 +111,7 @@ namespace VirtualLab.Chemistry.Courses
                     _combustionOperations?.RegisterWith(registry);
                     _heatingOperations?.RegisterWith(registry);
                     _shakingOperations?.RegisterWith(registry);
+                    _solidPickupOperations.RegisterWith(registry);
                 });
             context.RegisterEventProjector(
                 "化学.事件投影.课程",

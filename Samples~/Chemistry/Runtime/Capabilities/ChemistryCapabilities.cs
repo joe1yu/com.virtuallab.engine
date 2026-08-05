@@ -61,4 +61,14 @@ namespace VirtualLab.Chemistry.Capabilities
     {
         public ShakeableCapability() : base(ChemistryCapabilityIds.Shakeable) { }
     }
+
+    /// <summary>
+    /// 标记药匙、镊子等可以携带少量固体的工具。实际数量由化学库存统一管理。
+    /// </summary>
+    public sealed class SolidMatterCarrierCapability :
+        ChemistryMarkerCapability
+    {
+        public SolidMatterCarrierCapability()
+            : base(ChemistryCapabilityIds.SolidMatterCarrier) { }
+    }
 }

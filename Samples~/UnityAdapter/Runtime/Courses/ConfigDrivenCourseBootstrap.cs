@@ -8,6 +8,7 @@ using VirtualLab.Application.Courses;
 using VirtualLab.Domain;
 using VirtualLab.Interaction.Courses;
 using VirtualLab.Presentation;
+using VirtualLab.UnityAdapters.Input;
 using VirtualLab.UnityAdapters.Presentation;
 
 namespace VirtualLab.UnityAdapters.Courses
@@ -145,14 +146,21 @@ namespace VirtualLab.UnityAdapters.Courses
         private CompiledCourseDefinition _domain;
         private CoursePresentationCoordinator _presentationCoordinator;
         private IConfiguredCoursePresentationSignalSource _signalSource;
+        private CourseOperationExecutorCatalog _operationExecutors;
+        private IReadOnlyList<ICourseOperationExecutor>
+            _configuredOperationExecutors;
 
         public CompiledCourseAsset Course => course;
         public string CourseId => courseId;
         public CompiledCourseDefinition Domain => _domain;
         public CourseRuntimeFacade Runtime => _runtime;
         public CourseSceneAssembly SceneAssembly { get; private set; }
+        public CourseOperationExecutorCatalog OperationExecutors =>
+            _operationExecutors;
         public bool IsInitialized =>
-            _runtime != null && _presentationCoordinator != null;
+            _runtime != null
+            && _presentationCoordinator != null
+            && _operationExecutors != null;
 
         public void ConfigureCourse(CompiledCourseAsset value)
         {
@@ -202,6 +210,19 @@ namespace VirtualLab.UnityAdapters.Courses
             uiSimulationMode = enabled;
         }
 
+        public void ConfigureOperationExecutors(
+            IEnumerable<ICourseOperationExecutor> executors)
+        {
+            if (IsInitialized)
+            {
+                throw new InvalidOperationException("课程已经初始化。");
+            }
+
+            _configuredOperationExecutors = (executors
+                    ?? throw new ArgumentNullException(nameof(executors)))
+                .ToArray();
+        }
+
         public void ConfigureRuntime(
             CourseRuntimeFacade runtime,
             PresentationReactionEngine reactions,
@@ -218,6 +239,7 @@ namespace VirtualLab.UnityAdapters.Courses
                     presenter ??
                     throw new ArgumentNullException(nameof(presenter)));
             _presentationCoordinator.InitializeOrRestore();
+            InitializeOperationExecutors();
         }
 
         public void Initialize()
@@ -240,6 +262,8 @@ namespace VirtualLab.UnityAdapters.Courses
             }
 
             _domain = domain;
+            InitializeOperationExecutors();
+            ValidateOperationExecutionModes(domain);
 
             var presentation =
                 CourseAssetDecoder.DecodePresentation(course);
@@ -336,7 +360,29 @@ namespace VirtualLab.UnityAdapters.Courses
                 throw new InvalidOperationException("课程尚未初始化。");
             }
 
+            var availability = _runtime.QueryAvailability(request);
+            if (availability.IsAllowed
+                && !_operationExecutors.TryGet(
+                    availability.Execution.ExecutionModeId,
+                    out _))
+            {
+                var rejected = CommandResult.Rejected(
+                    CourseOperationExecutorCatalog
+                        .MissingExecutorRejectionCode);
+                _presentationCoordinator.Present(request, rejected);
+                return new CourseDispatchResult(
+                    rejected,
+                    _presentationCoordinator.LastCommands);
+            }
+
             var outcome = _runtime.Execute(request);
+            if (outcome.IsAccepted)
+            {
+                _operationExecutors.TryGet(
+                    outcome.Execution.ExecutionModeId,
+                    out var executor);
+                executor.Execute(request, outcome.Execution);
+            }
             _presentationCoordinator.Present(request, outcome);
             return new CourseDispatchResult(
                 outcome,
@@ -380,6 +426,48 @@ namespace VirtualLab.UnityAdapters.Courses
         private void OnPresentationSignalProduced(PresentationSignal signal)
         {
             _presentationCoordinator.PresentSignal(signal);
+        }
+
+        private void InitializeOperationExecutors()
+        {
+            if (_operationExecutors != null)
+            {
+                return;
+            }
+
+            var configured = (_configuredOperationExecutors
+                              ?? GetComponents<MonoBehaviour>()
+                                  .OfType<ICourseOperationExecutor>()
+                                  .ToArray())
+                .ToArray();
+            var configuredModes = new HashSet<string>(
+                configured
+                    .Where(value => value != null
+                                    && !string.IsNullOrWhiteSpace(
+                                        value.ExecutionModeId))
+                    .Select(value => value.ExecutionModeId.Trim()),
+                StringComparer.Ordinal);
+            var executors = configured.Concat(
+                CourseOperationExecutors.CreateDefault().Where(value =>
+                    !configuredModes.Contains(value.ExecutionModeId)));
+            _operationExecutors = new CourseOperationExecutorCatalog(executors);
+        }
+
+        private void ValidateOperationExecutionModes(
+            CompiledCourseDefinition domain)
+        {
+            var missing = domain.ConfiguredActions
+                .Select(value => value.ExecutionModeId)
+                .Where(value => !_operationExecutors.TryGet(value, out _))
+                .Distinct(StringComparer.Ordinal)
+                .OrderBy(value => value, StringComparer.Ordinal)
+                .ToArray();
+            if (missing.Length > 0)
+            {
+                throw new InvalidOperationException(
+                    "课程引用了未注册的执行方式："
+                    + string.Join("、", missing));
+            }
         }
 
     }

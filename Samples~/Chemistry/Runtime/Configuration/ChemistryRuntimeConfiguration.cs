@@ -15,6 +15,7 @@ namespace VirtualLab.Chemistry.Configuration
         public const string Ignitable = "可点燃";
         public const string Combustible = "可燃烧";
         public const string Shakeable = "可振荡";
+        public const string SolidMatterCarrier = "可携带固体";
     }
 
     public enum ChemistryMolarMassUnit

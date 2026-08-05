@@ -5,6 +5,7 @@ using System.Linq;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
+using VirtualLab.Application.Commands;
 using VirtualLab.Application.Courses;
 using VirtualLab.Spatial.Courses;
 using VirtualLab.Domain;
@@ -24,7 +25,7 @@ namespace VirtualLab.Engine.PlayModeTests
     public sealed class SemanticInputFlowTests
     {
         [UnityTest]
-        public IEnumerator Pointer与测试输入对同一意图生成字段一致的语义命令()
+        public IEnumerator Pointer与测试输入对同一观测生成字段一致的语义命令()
         {
             var adapterObject = new GameObject("语义输入适配器");
             try
@@ -49,7 +50,7 @@ namespace VirtualLab.Engine.PlayModeTests
                         "抓取点",
                         StructuredValue.FromText("管口"))
                 };
-                var intent = new SemanticInputIntent(
+                var observation = new SemanticInputObservation(
                     "抓取",
                     "学生",
                     "器材.试管",
@@ -58,21 +59,21 @@ namespace VirtualLab.Engine.PlayModeTests
 
                 var pointerRequest = pointer.CreateRequest(
                     "命令.0001",
-                    intent.ActionId,
+                    observation.ActionId,
                     "操作.0001",
                     SemanticActionPhase.Complete,
                     1d,
-                    intent.ActorEntityId,
-                    intent.SourceEntityId,
-                    intent.TargetEntityId,
-                    intent.Parameters);
+                    observation.ActorEntityId,
+                    observation.SourceEntityId,
+                    observation.TargetEntityId,
+                    observation.Parameters);
                 var testRequest = mapper.Map(
                     "命令.0001",
                     "操作.0001",
                     SemanticActionPhase.Complete,
                     1d,
-                    intent,
-                    facts.Measure(intent));
+                    observation,
+                    facts.Measure(observation));
 
                 Assert.That(pointerRequest.ActionId,
                     Is.EqualTo(testRequest.ActionId));
@@ -155,7 +156,7 @@ namespace VirtualLab.Engine.PlayModeTests
                             "抓取",
                             "抓取",
                             SemanticActionLifecycle.Instant,
-                            "即时执行",
+                            CourseOperationExecutionModeIds.Immediate,
                             SemanticActionPhase.Complete,
                             Array.Empty<StructuredRuleDefinition>(),
                             Array.Empty<ConfiguredMutationDefinition>())
@@ -224,6 +225,9 @@ namespace VirtualLab.Engine.PlayModeTests
                 var bootstrap =
                     bootstrapObject.AddComponent<
                         ConfigDrivenCourseBootstrap>();
+                var executor = new RecordingOperationExecutor(
+                    CourseOperationExecutionModeIds.Immediate);
+                bootstrap.ConfigureOperationExecutors(new[] { executor });
                 bootstrap.ConfigureRuntime(
                     new CourseRuntimeFacade(session),
                     reactions,
@@ -233,7 +237,7 @@ namespace VirtualLab.Engine.PlayModeTests
                     "操作.抓取",
                     SemanticActionPhase.Complete,
                     3d,
-                    new SemanticInputIntent(
+                    new SemanticInputObservation(
                         "抓取",
                         "学生",
                         "器材.试管",
@@ -258,6 +262,8 @@ namespace VirtualLab.Engine.PlayModeTests
 
                 var result = bootstrap.Dispatch(request);
                 Assert.That(result.Outcome.IsAccepted, Is.True);
+                Assert.That(executor.ExecuteCount, Is.EqualTo(1));
+                Assert.That(executor.LastActionId, Is.EqualTo("抓取"));
                 Assert.That(
                     result.PresentationCommands.Single().EffectId,
                     Is.EqualTo("ui.message"));
@@ -336,6 +342,102 @@ namespace VirtualLab.Engine.PlayModeTests
             {
                 UnityEngine.Object.Destroy(parent);
                 UnityEngine.Object.Destroy(prefab);
+            }
+
+            yield return null;
+        }
+
+        [Test]
+        public void 同一执行方式注册多个执行器时立即报错()
+        {
+            Assert.Throws<InvalidOperationException>(() =>
+                new CourseOperationExecutorCatalog(new ICourseOperationExecutor[]
+                {
+                    new RecordingOperationExecutor(
+                        CourseOperationExecutionModeIds.Immediate),
+                    new RecordingOperationExecutor(
+                        CourseOperationExecutionModeIds.Immediate)
+                }));
+        }
+
+        [UnityTest]
+        public IEnumerator 执行方式未注册时不会提交Transform或科学状态()
+        {
+            var bootstrapObject = new GameObject("缺少执行器的课程启动器");
+            var source = new GameObject("器材.试管");
+            try
+            {
+                source.transform.position = new Vector3(1f, 2f, 3f);
+                var original = source.transform.localToWorldMatrix;
+                var world = new ExperimentWorld();
+                world.AddEntity(new ExperimentEntity(new EntityId("学生")));
+                world.AddEntity(
+                    new ExperimentEntity(new EntityId("器材.试管")));
+                var action = ConfiguredActionDefinition.CreateGeneric(
+                    "测试未注册执行方式",
+                    "测试操作",
+                    SemanticActionLifecycle.Instant,
+                    "未注册执行方式",
+                    SemanticActionPhase.Complete,
+                    Array.Empty<StructuredRuleDefinition>(),
+                    new[]
+                    {
+                        new ConfiguredMutationDefinition(
+                            "变化.写入科学状态",
+                            ConfiguredStateOperationIds.ScalarSet,
+                            new[]
+                            {
+                                Pair(
+                                    CourseConfigurationKeys.Mutation.StateKey,
+                                    StructuredValue.FromText("试管.测试状态")),
+                                Pair(
+                                    CourseConfigurationKeys.Mutation.Value,
+                                    StructuredValue.FromNumber(1d)),
+                                Pair(
+                                    CourseConfigurationKeys.Mutation.Unit,
+                                    StructuredValue.FromText("布尔"))
+                            })
+                    });
+                var session = InteractionCourseRegistrations.CreateSession(
+                    world,
+                    new[] { action });
+                var bootstrap = bootstrapObject.AddComponent<
+                    ConfigDrivenCourseBootstrap>();
+                bootstrap.ConfigureRuntime(
+                    new CourseRuntimeFacade(session),
+                    new PresentationReactionEngine(
+                        Array.Empty<PresentationRuleDefinition>(),
+                        Array.Empty<PresentationEffectDefinition>()),
+                    UnityPresentationDispatcher.CreateDefault(
+                        new CourseEntityViewRegistry()));
+
+                var result = bootstrap.Dispatch(
+                    new SemanticActionRequest(
+                        "命令.缺少执行器",
+                        "测试未注册执行方式",
+                        "操作.缺少执行器",
+                        SemanticActionPhase.Complete,
+                        0d,
+                        "学生",
+                        "器材.试管",
+                        null,
+                        Array.Empty<KeyValuePair<string, StructuredValue>>()));
+
+                Assert.That(result.Outcome.IsAccepted, Is.False);
+                Assert.That(
+                    result.Outcome.RejectionCodes,
+                    Does.Contain(CourseOperationExecutorCatalog
+                        .MissingExecutorRejectionCode));
+                Assert.That(
+                    world.TryGetScalar("试管.测试状态", out _),
+                    Is.False);
+                Assert.That(source.transform.localToWorldMatrix,
+                    Is.EqualTo(original));
+            }
+            finally
+            {
+                UnityEngine.Object.Destroy(bootstrapObject);
+                UnityEngine.Object.Destroy(source);
             }
 
             yield return null;
@@ -437,7 +539,7 @@ namespace VirtualLab.Engine.PlayModeTests
                 _facts = facts;
             }
 
-            public SpatialFactSet Measure(SemanticInputIntent intent)
+            public SpatialFactSet Measure(SemanticInputObservation observation)
             {
                 return _facts;
             }
@@ -473,6 +575,29 @@ namespace VirtualLab.Engine.PlayModeTests
                 SourceEntityId = sourceEntityId;
                 CanExecute = canExecute;
                 Kind = kind;
+            }
+        }
+
+        private sealed class RecordingOperationExecutor :
+            ICourseOperationExecutor
+        {
+            public RecordingOperationExecutor(string executionModeId)
+            {
+                ExecutionModeId = executionModeId;
+            }
+
+            public string ExecutionModeId { get; }
+
+            public int ExecuteCount { get; private set; }
+
+            public string LastActionId { get; private set; }
+
+            public void Execute(
+                SemanticActionRequest request,
+                SemanticActionExecution execution)
+            {
+                ExecuteCount++;
+                LastActionId = request.ActionId;
             }
         }
     }

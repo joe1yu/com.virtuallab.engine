@@ -41,6 +41,6 @@ namespace VirtualLab.UnityAdapters.Physics
 
     public interface ISpatialFactProvider
     {
-        SpatialFactSet Measure(SemanticInputIntent intent);
+        SpatialFactSet Measure(SemanticInputObservation observation);
     }
 }
