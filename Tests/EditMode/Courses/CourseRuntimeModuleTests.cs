@@ -6,6 +6,7 @@ using VirtualLab.Application.Courses;
 using VirtualLab.Application.Events;
 using VirtualLab.Domain;
 using VirtualLab.Domain.Capabilities;
+using VirtualLab.Domain.Entities;
 using VirtualLab.Domain.Processes;
 using VirtualLab.Domain.Relations;
 using VirtualLab.Interaction.Capabilities;
@@ -219,12 +220,11 @@ namespace VirtualLab.Engine.Tests.Courses
                 Is.EqualTo(new[]
                 {
                     CourseModuleIds.Core,
-                    TeachingModuleIds.Teaching
+                    TeachingProtocolIds.Module
                 }));
             Assert.That(
                 teaching.FactReaders.Select(value => value.Field),
                 Is.SupersetOf(TeachingStructuredFactFields.All));
-
             var interaction = InteractionCourseRegistrations
                 .CreateModuleScope();
             Assert.That(
@@ -252,6 +252,53 @@ namespace VirtualLab.Engine.Tests.Courses
                     InteractionCapabilityIds.Coverable,
                     InteractionCapabilityIds.Breakable
                 }));
+        }
+
+        [Test]
+        public void 教学模块统一负责命名状态的操作事实和存档()
+        {
+            var scope = TeachingCourseRegistrations.CreateModuleScope();
+            var world = new ExperimentWorld();
+            world.AddEntity(new ExperimentEntity(new EntityId("器材")));
+            scope.PrepareWorld(world);
+            var request = new SemanticActionRequest(
+                "命令.准备器材",
+                "准备",
+                "学生",
+                "器材",
+                null,
+                Array.Empty<KeyValuePair<string, StructuredValue>>());
+            var mutation = new ConfiguredMutationDefinition(
+                "变化.器材已准备",
+                TeachingConfiguredStateOperationIds.AddState,
+                new Dictionary<string, StructuredValue>
+                {
+                    [TeachingConfigurationKeys.EntityId] =
+                        StructuredValue.FromText("器材"),
+                    [TeachingConfigurationKeys.StateId] =
+                        StructuredValue.FromText("已准备")
+                });
+
+            scope.CreateStateOperationRegistry().ApplyAtomically(
+                request,
+                world,
+                new[] { mutation });
+
+            var reader = scope.FactReaders.Single(value =>
+                value.Field == TeachingStructuredFactFields.来源对象教学状态);
+            Assert.That(
+                reader.Read(new StructuredRuleContext(request, world)).TextList,
+                Is.EqualTo(new[] { "已准备" }));
+
+            var snapshot = scope.WorldStateCodecs.Capture(world);
+            var restored = new ExperimentWorld();
+            restored.AddEntity(new ExperimentEntity(new EntityId("器材")));
+            scope.PrepareWorld(restored);
+            scope.WorldStateCodecs.Restore(restored, snapshot);
+
+            Assert.That(
+                restored.RequireTeachingStates().StatesOf("器材"),
+                Is.EqualTo(new[] { "已准备" }));
         }
 
         [Test]

@@ -112,6 +112,18 @@ namespace VirtualLab.Application.Courses
                     return actual.TextList.Contains(
                         expected.Text,
                         StringComparer.Ordinal);
+                case StructuredRuleOperator.不包含:
+                    RequireKind(
+                        actual,
+                        StructuredValueKind.TextList,
+                        ruleOperator);
+                    RequireKind(
+                        expected,
+                        StructuredValueKind.Text,
+                        ruleOperator);
+                    return !actual.TextList.Contains(
+                        expected.Text,
+                        StringComparer.Ordinal);
                 case StructuredRuleOperator.为空:
                     return IsEmpty(actual);
                 case StructuredRuleOperator.不为空:

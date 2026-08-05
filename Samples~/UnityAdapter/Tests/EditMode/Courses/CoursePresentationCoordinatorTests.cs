@@ -313,9 +313,9 @@ namespace VirtualLab.Engine.Tests.Courses
                     new StructuredRuleDefinition(
                         "条件.外部进展",
                         0,
-                        TeachingStructuredFactFields.来源对象进度,
-                        StructuredRuleOperator.大于等于,
-                        StructuredValue.FromNumber(1),
+                        TeachingStructuredFactFields.来源对象教学状态,
+                        StructuredRuleOperator.包含,
+                        StructuredValue.FromText("外部过程已推进"),
                         "过程尚未推进")
                 });
             var coordinator = new CoursePresentationCoordinator(
@@ -325,12 +325,9 @@ namespace VirtualLab.Engine.Tests.Courses
                 dispatcher);
             coordinator.InitializeOrRestore();
             calls.Clear();
-            world.SetScalar(
-                TeachingStateKeys.EntityProgress("器材.试管"),
-                1,
-                new WorldScalarUnit("进度"),
-                0,
-                1);
+            world.RequireTeachingStates().Add(
+                "器材.试管",
+                "外部过程已推进");
 
             coordinator.PresentSignal(new PresentationSignal(
                 "课程.过程已推进",
@@ -359,7 +356,9 @@ namespace VirtualLab.Engine.Tests.Courses
                     new StructuredRuleEvaluator(new IStructuredFactReader[]
                     {
                         new 来源对象持有者FactReader(),
-                        new 来源对象进度FactReader()
+                        TeachingCourseRegistrations.CreateFactReaders()
+                            .Single(value => value.Field ==
+                                TeachingStructuredFactFields.来源对象教学状态)
                     }),
                     new ConfiguredStateOperationRegistry(),
                     new[]
@@ -582,6 +581,7 @@ namespace VirtualLab.Engine.Tests.Courses
                 new EntityId("器材.试管")));
             world.AddEntity(new ExperimentEntity(
                 new EntityId("学生")));
+            TeachingCourseRegistrations.CreateModuleScope().PrepareWorld(world);
             return world;
         }
 
@@ -608,21 +608,6 @@ namespace VirtualLab.Engine.Tests.Courses
                 return holder == null
                     ? StructuredValue.Null()
                     : StructuredValue.FromText(holder.Target.Value);
-            }
-        }
-
-        private sealed class 来源对象进度FactReader : IStructuredFactReader
-        {
-            public StructuredFactField Field =>
-                TeachingStructuredFactFields.来源对象进度;
-
-            public StructuredValue Read(StructuredRuleContext context)
-            {
-                var key = TeachingStateKeys.EntityProgress(
-                    context.Request.SourceEntityId);
-                return context.World.TryGetScalar(key, out var value)
-                    ? StructuredValue.FromNumber(value.Value)
-                    : StructuredValue.FromNumber(0);
             }
         }
 

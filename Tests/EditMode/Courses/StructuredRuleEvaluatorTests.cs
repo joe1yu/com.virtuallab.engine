@@ -11,8 +11,8 @@ namespace VirtualLab.Engine.Tests.Courses
 {
     public sealed class StructuredRuleEvaluatorTests
     {
-        private static readonly StructuredFactField ProgressField =
-            TeachingStructuredFactFields.来源对象进度;
+        private static readonly StructuredFactField NumericField =
+            new StructuredFactField("测试数值事实");
 
         [Test]
         public void 规则收集全部失败原因并选择首个主要原因()
@@ -61,7 +61,7 @@ namespace VirtualLab.Engine.Tests.Courses
                 new IStructuredFactReader[]
                 {
                     new StubFactReader(
-                        ProgressField,
+                        NumericField,
                         StructuredValue.FromNumber(25d)),
                     new StubFactReader(
                         SpatialStructuredFactFields.对象间距离,
@@ -73,7 +73,7 @@ namespace VirtualLab.Engine.Tests.Courses
                 {
                     Requirement(
                         10,
-                        ProgressField,
+                        NumericField,
                         StructuredRuleOperator.小于等于,
                         StructuredValue.FromNumber(30d),
                         "温度过高"),
@@ -88,6 +88,38 @@ namespace VirtualLab.Engine.Tests.Courses
 
             Assert.That(accepted.IsAccepted, Is.True);
             Assert.That(accepted.RejectionCodes, Is.Empty);
+        }
+
+        [Test]
+        public void 文本集合同时支持包含和不包含判断()
+        {
+            var field = new StructuredFactField("测试状态集合");
+            var evaluator = new StructuredRuleEvaluator(new[]
+            {
+                new StubFactReader(
+                    field,
+                    StructuredValue.FromTextList(new[] { "瓶盖已打开" }))
+            });
+
+            var decision = evaluator.Evaluate(
+                new[]
+                {
+                    Requirement(
+                        10,
+                        field,
+                        StructuredRuleOperator.包含,
+                        StructuredValue.FromText("瓶盖已打开"),
+                        "瓶盖尚未打开"),
+                    Requirement(
+                        20,
+                        field,
+                        StructuredRuleOperator.不包含,
+                        StructuredValue.FromText("瓶盖已关闭"),
+                        "瓶盖仍然关闭")
+                },
+                Context());
+
+            Assert.That(decision.IsAccepted, Is.True);
         }
 
         private static StructuredRuleDefinition Requirement(

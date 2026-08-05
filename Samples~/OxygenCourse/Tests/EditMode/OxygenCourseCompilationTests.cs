@@ -55,7 +55,7 @@ namespace VirtualLab.Engine.Tests.Courses
                     InteractionModuleIds.Interaction,
                     ChemistryModuleIds.Chemistry,
                     SpatialModuleIds.Spatial,
-                    TeachingModuleIds.Teaching
+                    TeachingProtocolIds.Module
                 }));
             var suckBack = result.Domain.ActionAssessments.Single(value =>
                 value.RiskId == "风险.冷凝水倒吸");
@@ -178,8 +178,8 @@ namespace VirtualLab.Engine.Tests.Courses
                 && value.TargetEntityId == "火柴");
             Assert.That(
                 lampIgnition.Rules.Select(value => value.Field.Id),
-                Does.Contain(TeachingStructuredFactFields.来源对象进度.Id)
-                    .And.Contain(TeachingStructuredFactFields.目标对象进度.Id)
+                Does.Contain(TeachingStructuredFactFields.来源对象教学状态.Id)
+                    .And.Contain(TeachingStructuredFactFields.目标对象教学状态.Id)
                     .And.Contain(InteractionStructuredFactFields.目标对象已被操作者拿起.Id));
         }
 

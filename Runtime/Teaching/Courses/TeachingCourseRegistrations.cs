@@ -5,41 +5,40 @@ using VirtualLab.Application.Courses;
 namespace VirtualLab.Teaching.Courses
 {
     /// <summary>
-    /// 教学运行时模块的稳定标识。
+    /// 教学运行时模块使用的稳定协议标识。
     /// </summary>
-    public static class TeachingModuleIds
+    public static class TeachingProtocolIds
     {
-        public const string Teaching = "教学";
+        public const string Module = "教学";
+        public const string StateOperationGroup = "教学.命名状态操作";
     }
 
     /// <summary>
-    /// 教学模块当前使用的状态键。键的解释和读取都留在教学模块内。
+    /// 教学配置协议集中定义在此处，课程表不依赖散落的字符串。
     /// </summary>
-    public static class TeachingStateKeys
+    public static class TeachingConfigurationKeys
     {
-        private const string EntityProgressSuffix = ".课程进度";
-
-        public static string EntityProgress(string entityId)
-        {
-            if (string.IsNullOrWhiteSpace(entityId))
-            {
-                throw new ArgumentException(
-                    "教学进度实体 ID 不能为空。",
-                    nameof(entityId));
-            }
-
-            return entityId.Trim() + EntityProgressSuffix;
-        }
+        public const string EntityId = CourseConfigurationKeys.Mutation.EntityId;
+        public const string StateId = "教学状态";
     }
 
     /// <summary>
-    /// 显式注册教学事实，最小课程内核不再默认安装课程进度语义。
+    /// 教学配置可调用的状态操作。
+    /// </summary>
+    public static class TeachingConfiguredStateOperationIds
+    {
+        public const string AddState = "添加教学状态";
+        public const string RemoveState = "移除教学状态";
+    }
+
+    /// <summary>
+    /// 显式安装命名教学状态；最小课程内核不解释任何教学语义。
     /// </summary>
     public sealed class TeachingCourseRuntimeModule : ICourseRuntimeModule
     {
         private static readonly CourseModuleManifest ModuleManifest =
             new CourseModuleManifest(
-                TeachingModuleIds.Teaching,
+                TeachingProtocolIds.Module,
                 "实验教学",
                 new Version(1, 0, 0),
                 new[]
@@ -53,11 +52,25 @@ namespace VirtualLab.Teaching.Courses
 
         public void Register(CourseModuleRegistrationContext context)
         {
-            foreach (var reader in TeachingCourseRegistrations
-                .CreateFactReaders())
+            context.RegisterWorldState(
+                TeachingWorldStateTypeIds.NamedStates,
+                world => new TeachingStateCollection(world.ContainsEntity));
+            context.RegisterWorldStateCodec(new TeachingStateCourseCodec());
+            context.RegisterStateOperations(
+                TeachingProtocolIds.StateOperationGroup,
+                RegisterStateOperations);
+
+            foreach (var reader in TeachingCourseRegistrations.CreateFactReaders())
             {
                 context.RegisterFactReader(reader);
             }
+        }
+
+        private static void RegisterStateOperations(
+            ConfiguredStateOperationRegistry registry)
+        {
+            registry.Register(new AddTeachingStateOperation());
+            registry.Register(new RemoveTeachingStateOperation());
         }
     }
 
@@ -72,20 +85,20 @@ namespace VirtualLab.Teaching.Courses
         {
             return new IStructuredFactReader[]
             {
-                new ProgressFactReader(
-                    TeachingStructuredFactFields.来源对象进度,
+                new TeachingStateFactReader(
+                    TeachingStructuredFactFields.来源对象教学状态,
                     context => context.Request.SourceEntityId),
-                new ProgressFactReader(
-                    TeachingStructuredFactFields.目标对象进度,
+                new TeachingStateFactReader(
+                    TeachingStructuredFactFields.目标对象教学状态,
                     context => context.Request.TargetEntityId)
             };
         }
 
-        private sealed class ProgressFactReader : IStructuredFactReader
+        private sealed class TeachingStateFactReader : IStructuredFactReader
         {
             private readonly Func<StructuredRuleContext, string> _idSelector;
 
-            public ProgressFactReader(
+            public TeachingStateFactReader(
                 StructuredFactField field,
                 Func<StructuredRuleContext, string> idSelector)
             {
@@ -97,17 +110,14 @@ namespace VirtualLab.Teaching.Courses
 
             public StructuredValue Read(StructuredRuleContext context)
             {
-                var selectedId = _idSelector(context);
-                if (string.IsNullOrWhiteSpace(selectedId))
+                var entityId = _idSelector(context);
+                if (string.IsNullOrWhiteSpace(entityId))
                 {
-                    return StructuredValue.FromNumber(0d);
+                    return StructuredValue.FromTextList(Array.Empty<string>());
                 }
 
-                return context.World.TryGetScalar(
-                        TeachingStateKeys.EntityProgress(selectedId),
-                        out var progress)
-                    ? StructuredValue.FromNumber(progress.Value)
-                    : StructuredValue.FromNumber(0d);
+                return StructuredValue.FromTextList(
+                    context.World.RequireTeachingStates().StatesOf(entityId));
             }
         }
     }

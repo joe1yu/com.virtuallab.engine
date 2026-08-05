@@ -22,7 +22,7 @@ namespace VirtualLab.Unity.Authoring.Recipes
             {
                 CourseModuleIds.Core,
                 InteractionModuleIds.Interaction,
-                TeachingModuleIds.Teaching
+                TeachingProtocolIds.Module
             };
 
         public RecipePackage Load()

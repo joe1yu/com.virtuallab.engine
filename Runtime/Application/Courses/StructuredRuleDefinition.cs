@@ -45,6 +45,7 @@ namespace VirtualLab.Application.Courses
         等于,
         不等于,
         包含,
+        不包含,
         为空,
         不为空,
         小于,

@@ -20,9 +20,10 @@ namespace VirtualLab.Engine.Tests.Courses
         public void 统一执行命令Tick目标评价观察和事件历史()
         {
             var world = World();
-            var readers = CoreCourseRegistrations.CreateFactReaders();
+            var modules = TeachingCourseRegistrations.CreateModuleScope();
+            var readers = modules.FactReaders;
             var runtime = new CourseRuntimeDefinition(
-                readers,
+                modules,
                 Actions(),
                 new[]
                 {
@@ -127,7 +128,8 @@ namespace VirtualLab.Engine.Tests.Courses
         {
             const string eventType = "实验风险.终止测试";
             var world = World();
-            var readers = CoreCourseRegistrations.CreateFactReaders();
+            var modules = TeachingCourseRegistrations.CreateModuleScope();
+            var readers = modules.FactReaders;
             var accident = ConfiguredActionDefinition.CreateGeneric(
                 "动作.造成事故",
                 Array.Empty<StructuredRuleDefinition>(),
@@ -146,7 +148,7 @@ namespace VirtualLab.Engine.Tests.Courses
                     Array.Empty<StructuredRuleDefinition>(),
                     Array.Empty<ConfiguredMutationDefinition>());
             var runtime = new CourseRuntimeDefinition(
-                readers,
+                modules,
                 new[] { accident, continueObservation },
                 new[]
                 {
@@ -279,13 +281,13 @@ namespace VirtualLab.Engine.Tests.Courses
                 new[]
                 {
                     new ConfiguredMutationDefinition(
-                        "变化.完成进度",
-                        "设置标量",
+                        "变化.标记课程完成",
+                        TeachingConfiguredStateOperationIds.AddState,
                         Parameters(
-                            ("状态键", StructuredValue.FromText(
-                                TeachingStateKeys.EntityProgress("器材"))),
-                            ("数值", StructuredValue.FromNumber(1d)),
-                            ("单位", StructuredValue.FromText("进度")))),
+                            (TeachingConfigurationKeys.EntityId,
+                                StructuredValue.FromText("器材")),
+                            (TeachingConfigurationKeys.StateId,
+                                StructuredValue.FromText("课程已完成")))),
                     new ConfiguredMutationDefinition(
                         "变化.发布完成事件",
                         "发布事件",
@@ -319,7 +321,7 @@ namespace VirtualLab.Engine.Tests.Courses
                 new[]
                 {
                     new CourseConditionDefinition(
-                        "条件.课程进度完成",
+                        "条件.课程完成",
                         "学生",
                         "器材",
                         null,
@@ -328,11 +330,11 @@ namespace VirtualLab.Engine.Tests.Courses
                         new[]
                         {
                             new StructuredRuleDefinition(
-                                "规则.课程进度完成",
+                                "规则.课程完成",
                                 10,
-                                TeachingStructuredFactFields.来源对象进度,
-                                StructuredRuleOperator.大于等于,
-                                StructuredValue.FromNumber(1d),
+                                TeachingStructuredFactFields.来源对象教学状态,
+                                StructuredRuleOperator.包含,
+                                StructuredValue.FromText("课程已完成"),
                                 "课程尚未完成")
                         })
                 });

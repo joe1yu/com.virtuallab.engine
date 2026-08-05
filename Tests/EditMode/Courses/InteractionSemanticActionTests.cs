@@ -300,7 +300,7 @@ namespace VirtualLab.Engine.Tests.Courses
         }
 
         [Test]
-        public void 目标持有和目标进度事实读取动作目标而不是来源()
+        public void 目标持有和目标教学状态事实读取动作目标而不是来源()
         {
             var world = WorldWith(
                 Entity("学生"),
@@ -310,19 +310,16 @@ namespace VirtualLab.Engine.Tests.Courses
                 InteractionRelationTypeIds.HeldBy,
                 "目标",
                 "学生"));
-            world.SetScalar(
-                TeachingStateKeys.EntityProgress("目标"),
-                2d,
-                new WorldScalarUnit("进度"),
-                null,
-                null);
+            var modules = CourseRuntimeModuleScope.Create(
+                new CoreCourseRuntimeModule(),
+                new InteractionCourseRuntimeModule(),
+                new TeachingCourseRuntimeModule());
+            modules.PrepareWorld(world);
+            world.RequireTeachingStates().Add("目标", "已准备");
             var context = new StructuredRuleContext(
                 Request("命令.检查目标事实", "test.inspect", "来源", "目标"),
                 world);
-            var readers = CourseRuntimeModuleScope.Create(
-                new CoreCourseRuntimeModule(),
-                new InteractionCourseRuntimeModule(),
-                new TeachingCourseRuntimeModule()).FactReaders;
+            var readers = modules.FactReaders;
 
             Assert.That(
                 readers.Single(value =>
@@ -331,9 +328,9 @@ namespace VirtualLab.Engine.Tests.Courses
                 Is.True);
             Assert.That(
                 readers.Single(value =>
-                        value.Field == TeachingStructuredFactFields.目标对象进度)
-                    .Read(context).Number,
-                Is.EqualTo(2d));
+                        value.Field == TeachingStructuredFactFields.目标对象教学状态)
+                    .Read(context).TextList,
+                Is.EqualTo(new[] { "已准备" }));
         }
 
         [Test]
