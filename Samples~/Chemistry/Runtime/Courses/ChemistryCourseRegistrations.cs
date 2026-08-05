@@ -218,6 +218,13 @@ namespace VirtualLab.Chemistry.Courses
                 new SourcePhaseMassFactReader(
                     ChemistryStructuredFactFields.来源固体质量,
                     MatterPhase.Solid),
+                new 来源对象包含物质FactReader(),
+                new IgnitedFactReader(
+                    ChemistryStructuredFactFields.来源对象已点燃,
+                    context => context.Request.SourceEntityId),
+                new IgnitedFactReader(
+                    ChemistryStructuredFactFields.目标对象已点燃,
+                    context => context.Request.TargetEntityId),
                 new RequestParameterFactReader(
                     ChemistryStructuredFactFields.倾倒角度,
                     SpatialRequestParameterKeys.TiltAngleDegrees,
@@ -242,7 +249,8 @@ namespace VirtualLab.Chemistry.Courses
 
             public StructuredValue Read(StructuredRuleContext context)
             {
-                var key = context.Request.SourceEntityId + ".温度";
+                var key = ChemistryWorldStateKeys.Temperature(
+                    context.Request.SourceEntityId);
                 return context.World.TryGetScalar(key, out var temperature)
                     ? StructuredValue.FromNumber(temperature.Value)
                     : StructuredValue.FromNumber(20d);
@@ -291,6 +299,56 @@ namespace VirtualLab.Chemistry.Courses
                         && value.Batch.Quantity.Unit == Unit.Gram)
                     .Sum(value => value.Batch.Quantity.Value);
                 return StructuredValue.FromNumber((double)total);
+            }
+        }
+
+        private sealed class 来源对象包含物质FactReader :
+            IStructuredFactReader
+        {
+            public StructuredFactField Field =>
+                ChemistryStructuredFactFields.来源对象包含物质;
+
+            public StructuredValue Read(StructuredRuleContext context)
+            {
+                var source = new EntityId(context.Request.SourceEntityId);
+                var substances = context.World.RequireMatterInventory().Entries
+                    .Where(value => value.LocationId == source
+                        && value.Batch.Quantity.Value > 0m)
+                    .Select(value => value.Batch.SubstanceId)
+                    .Distinct(StringComparer.Ordinal)
+                    .OrderBy(value => value, StringComparer.Ordinal);
+                return StructuredValue.FromTextList(substances);
+            }
+        }
+
+        private sealed class IgnitedFactReader : IStructuredFactReader
+        {
+            private readonly Func<StructuredRuleContext, string> _entitySelector;
+
+            public IgnitedFactReader(
+                StructuredFactField field,
+                Func<StructuredRuleContext, string> entitySelector)
+            {
+                Field = field;
+                _entitySelector = entitySelector
+                    ?? throw new ArgumentNullException(nameof(entitySelector));
+            }
+
+            public StructuredFactField Field { get; }
+
+            public StructuredValue Read(StructuredRuleContext context)
+            {
+                var entityId = _entitySelector(context);
+                if (string.IsNullOrWhiteSpace(entityId))
+                {
+                    return StructuredValue.FromBoolean(false);
+                }
+
+                return StructuredValue.FromBoolean(
+                    context.World.TryGetScalar(
+                        ChemistryWorldStateKeys.Ignited(entityId),
+                        out var ignited)
+                    && ignited.Value > 0.5d);
             }
         }
 

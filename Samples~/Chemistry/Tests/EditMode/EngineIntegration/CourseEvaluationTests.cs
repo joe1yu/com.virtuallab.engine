@@ -6,6 +6,7 @@ using VirtualLab.Application.Commands;
 using VirtualLab.Application.Courses;
 using VirtualLab.Application.Events;
 using VirtualLab.Chemistry.Courses;
+using VirtualLab.Chemistry.Matter;
 using VirtualLab.Domain;
 using VirtualLab.Domain.Capabilities;
 using VirtualLab.Domain.Entities;
@@ -15,11 +16,60 @@ using VirtualLab.Interaction.Capabilities;
 using VirtualLab.Interaction.Courses;
 using VirtualLab.Interaction.Relations;
 using VirtualLab.Kernel;
+using VirtualLab.Measurement;
 
 namespace VirtualLab.Engine.Tests.Courses
 {
     public sealed class CourseEvaluationTests
     {
+        [Test]
+        public void 化学事实直接读取物质库存和点燃标量()
+        {
+            var world = World();
+            Add(world, "药匙");
+            Add(world, "火柴");
+            ChemistryCourseRegistrations.CreateModuleScope().PrepareWorld(world);
+            world.RequireMatterInventory().Add(
+                new EntityId("药匙"),
+                new SubstanceBatch(
+                    "高锰酸钾",
+                    new Quantity(1m, Unit.Gram),
+                    MatterPhase.Solid,
+                    new Temperature(20m)));
+            world.SetScalar(
+                ChemistryWorldStateKeys.Ignited("火柴"),
+                1d,
+                new WorldScalarUnit("布尔"),
+                null,
+                null);
+            var request = new SemanticActionRequest(
+                "命令.读取化学事实",
+                ChemistrySemanticActionIds.BeginPour,
+                "学生",
+                "药匙",
+                "火柴",
+                Array.Empty<KeyValuePair<string, StructuredValue>>());
+            var context = new StructuredRuleContext(request, world);
+            var readers = ChemistryCourseRegistrations.CreateFactReaders()
+                .ToDictionary(value => value.Field);
+
+            Assert.That(
+                readers[ChemistryStructuredFactFields.来源对象包含物质]
+                    .Read(context).TextList,
+                Is.EqualTo(new[] { "高锰酸钾" }));
+            Assert.That(
+                readers[ChemistryStructuredFactFields.来源对象已点燃]
+                    .Read(context).Boolean,
+                Is.False);
+            Assert.That(
+                readers[ChemistryStructuredFactFields.目标对象已点燃]
+                    .Read(context).Boolean,
+                Is.True);
+            Assert.That(
+                readers.Keys,
+                Is.SupersetOf(ChemistryStructuredFactFields.All));
+        }
+
         [Test]
         public void 已执行动作产生风险事件时记录评价而不是伪装成动作拒绝()
         {

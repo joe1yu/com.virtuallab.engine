@@ -59,7 +59,8 @@ namespace VirtualLab.Chemistry.Courses
                 .OrderBy(value => value.EntityId.Value, StringComparer.Ordinal)
                 .ToArray())
             {
-                var key = process.EntityId.Value + ".温度";
+                var key = ChemistryWorldStateKeys.Temperature(
+                    process.EntityId.Value);
                 var ambient = process.NumberParameters[ChemistryConfigurationKeys.Heating.AmbientTemperatureCelsius];
                 var current = world.TryGetScalar(key, out var value)
                     ? value.Value

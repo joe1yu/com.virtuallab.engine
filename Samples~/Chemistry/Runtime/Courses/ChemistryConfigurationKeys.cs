@@ -139,4 +139,31 @@ namespace VirtualLab.Chemistry.Courses
             public const string ProcessStopped = "过程已停止";
         }
     }
+
+    /// <summary>
+    /// 化学模块拥有的世界标量键。统一构造规则，避免事实读取器和课程运行时各自拼接。
+    /// </summary>
+    public static class ChemistryWorldStateKeys
+    {
+        private const string IgnitedSuffix = ".已点燃";
+        private const string TemperatureSuffix = ".温度";
+
+        public static string Ignited(string entityId) =>
+            EntityScoped(entityId, IgnitedSuffix);
+
+        public static string Temperature(string entityId) =>
+            EntityScoped(entityId, TemperatureSuffix);
+
+        private static string EntityScoped(string entityId, string suffix)
+        {
+            if (string.IsNullOrWhiteSpace(entityId))
+            {
+                throw new System.ArgumentException(
+                    "实体标识不能为空。",
+                    nameof(entityId));
+            }
+
+            return entityId.Trim() + suffix;
+        }
+    }
 }

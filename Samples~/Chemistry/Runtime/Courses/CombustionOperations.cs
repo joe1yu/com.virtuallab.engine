@@ -275,7 +275,7 @@ namespace VirtualLab.Chemistry.Courses
             string fuelId)
         {
             if (world.TryGetScalar(
-                    source.Value + ".温度",
+                    ChemistryWorldStateKeys.Temperature(source.Value),
                     out var configuredTemperature))
             {
                 if (!configuredTemperature.Unit.Equals(
