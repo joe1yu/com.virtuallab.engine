@@ -88,6 +88,7 @@ namespace VirtualLab.Unity.Authoring.Csv
         }
 
         public IReadOnlyList<string> Headers => _headers;
+        public IReadOnlyList<string> ConfiguredHeaders => _configuredHeaders;
         public IReadOnlyList<EditableCsvRow> Rows => _rows;
         public string SourcePath => _sourcePath;
         public bool IsModified => !string.Equals(
@@ -145,6 +146,37 @@ namespace VirtualLab.Unity.Authoring.Csv
             var row = new EditableCsvRow(_headers, values);
             _rows.Add(row);
             return row;
+        }
+
+        /// <summary>
+        /// 按作者实际看到的中文表头增加一行，不经过旧运行时表头词汇转换。
+        /// </summary>
+        public EditableCsvRow AddConfiguredRow(
+            IEnumerable<KeyValuePair<string, string>> initialValues = null)
+        {
+            var translated = (initialValues
+                              ?? Array.Empty<KeyValuePair<string, string>>())
+                .Select(value => new KeyValuePair<string, string>(
+                    RuntimeHeader(value.Key),
+                    value.Value));
+            return AddRow(translated);
+        }
+
+        public string ConfiguredValue(
+            EditableCsvRow row,
+            string configuredHeader)
+        {
+            EnsureOwnedRow(row);
+            return row[RuntimeHeader(configuredHeader)];
+        }
+
+        public void SetConfiguredValue(
+            EditableCsvRow row,
+            string configuredHeader,
+            string value)
+        {
+            EnsureOwnedRow(row);
+            row[RuntimeHeader(configuredHeader)] = value;
         }
 
         public void RemoveRow(EditableCsvRow row)
@@ -320,6 +352,35 @@ namespace VirtualLab.Unity.Authoring.Csv
             }
 
             target.Append("\r\n");
+        }
+
+        private string RuntimeHeader(string configuredHeader)
+        {
+            var index = _configuredHeaders.FindIndex(value =>
+                string.Equals(value, configuredHeader, StringComparison.Ordinal));
+            if (index < 0)
+            {
+                throw new ArgumentException(
+                    $"配置表头“{configuredHeader}”不属于当前 CSV 文档。",
+                    nameof(configuredHeader));
+            }
+
+            return _headers[index];
+        }
+
+        private void EnsureOwnedRow(EditableCsvRow row)
+        {
+            if (row == null)
+            {
+                throw new ArgumentNullException(nameof(row));
+            }
+
+            if (!_rows.Contains(row))
+            {
+                throw new ArgumentException(
+                    "要访问的行不属于当前 CSV 文档。",
+                    nameof(row));
+            }
         }
 
         internal void RestoreSavedState(

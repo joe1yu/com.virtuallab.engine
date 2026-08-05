@@ -111,6 +111,51 @@ namespace VirtualLab.Unity.Authoring.Workbench
                 Path.Combine(AuthoringDirectory, fileName));
         }
 
+        /// <summary>
+        /// 新课程会话必须恰好包含指定职责表，防止旧表或损坏表被悄悄带入保存。
+        /// </summary>
+        public void EnsureExactDocuments(IEnumerable<string> requiredFileNames)
+        {
+            if (requiredFileNames == null)
+            {
+                throw new ArgumentNullException(nameof(requiredFileNames));
+            }
+
+            var required = new HashSet<string>(
+                requiredFileNames,
+                StringComparer.Ordinal);
+            var actual = new HashSet<string>(
+                _documents.Keys.Concat(_rawDocuments.Keys),
+                StringComparer.Ordinal);
+            var missing = required.Except(actual).OrderBy(
+                value => value,
+                StringComparer.Ordinal).ToArray();
+            var unexpected = actual.Except(required).OrderBy(
+                value => value,
+                StringComparer.Ordinal).ToArray();
+            if (missing.Length > 0 || unexpected.Length > 0
+                || _rawDocuments.Count > 0)
+            {
+                throw new InvalidDataException(string.Join(
+                    Environment.NewLine,
+                    new[]
+                    {
+                        missing.Length == 0
+                            ? string.Empty
+                            : "缺少职责表：" + string.Join("、", missing),
+                        unexpected.Length == 0
+                            ? string.Empty
+                            : "包含协议外表：" + string.Join("、", unexpected),
+                        _rawDocuments.Count == 0
+                            ? string.Empty
+                            : "存在无法解析的职责表："
+                              + string.Join("、", _rawDocuments.Keys.OrderBy(
+                                  value => value,
+                                  StringComparer.Ordinal))
+                    }.Where(value => value.Length > 0)));
+            }
+        }
+
         public CourseBlueprintSource CreateBlueprintSource()
         {
             var editable = _documents.Select(pair =>
