@@ -115,7 +115,7 @@ namespace VirtualLab.Application.Courses
             _eventProjectors = (eventProjectors
                 ?? Array.Empty<ICourseEventProjector>()).ToArray();
             _processAdvancerFactory = processAdvancerFactory;
-            _worldPreparation = worldPreparation ?? FreezeRegisteredRelations;
+            _worldPreparation = worldPreparation ?? FreezeRegisteredWorldContracts;
             _capabilityStateCodecs = capabilityStateCodecs
                 ?? new CourseCapabilityStateCodecRegistry();
         }
@@ -147,11 +147,16 @@ namespace VirtualLab.Application.Courses
                 world ?? throw new ArgumentNullException(nameof(world)));
         }
 
-        private static void FreezeRegisteredRelations(ExperimentWorld world)
+        private static void FreezeRegisteredWorldContracts(ExperimentWorld world)
         {
             if (!world.RelationSchemasFrozen)
             {
                 world.FreezeRelationSchemas();
+            }
+
+            if (!world.WorldStateTypesFrozen)
+            {
+                world.FreezeWorldStateTypes();
             }
         }
 

@@ -5,6 +5,7 @@ using System.Linq;
 using VirtualLab.Domain.Entities;
 using VirtualLab.Domain.Matter;
 using VirtualLab.Domain.Relations;
+using VirtualLab.Domain.WorldStates;
 using VirtualLab.Kernel;
 using VirtualLab.Measurement;
 
@@ -72,15 +73,41 @@ namespace VirtualLab.Domain
             new Dictionary<string, WorldScalarValue>(StringComparer.Ordinal);
         private readonly Dictionary<string, WorldProcessState> _activeProcesses =
             new Dictionary<string, WorldProcessState>(StringComparer.Ordinal);
+        private readonly Dictionary<WorldStateTypeId, IWorldStateExtension>
+            _stateExtensions =
+                new Dictionary<WorldStateTypeId, IWorldStateExtension>();
+        private bool _worldStateTypesFrozen;
         private bool _transactionActive;
 
         public ExperimentWorld(IEnumerable<RelationSchema> relationSchemas = null)
+            : this(relationSchemas, true)
         {
-            _relationGraph = new RelationGraph(relationSchemas);
-            Matter = new MatterInventory(ContainsEntity);
         }
 
-        public MatterInventory Matter { get; }
+        private ExperimentWorld(
+            IEnumerable<RelationSchema> relationSchemas,
+            bool installTransitionalMatterState)
+        {
+            _relationGraph = new RelationGraph(relationSchemas);
+            if (installTransitionalMatterState)
+            {
+                RegisterWorldState(new MatterInventory(ContainsEntity));
+            }
+        }
+
+        /// <summary>
+        /// 迁移期间保留的物质库存访问入口；库存生命周期已经由通用世界状态契约托管。
+        /// </summary>
+        public MatterInventory Matter => RequireWorldState<MatterInventory>(
+            MatterWorldStateTypeIds.Inventory);
+
+        public IReadOnlyCollection<WorldStateTypeId> WorldStateTypes =>
+            new ReadOnlyCollection<WorldStateTypeId>(
+                _stateExtensions.Keys
+                    .OrderBy(value => value.Value, StringComparer.Ordinal)
+                    .ToArray());
+
+        public bool WorldStateTypesFrozen => _worldStateTypesFrozen;
 
         public IReadOnlyCollection<ExperimentEntity> Entities =>
             new ReadOnlyCollection<ExperimentEntity>(
@@ -131,16 +158,99 @@ namespace VirtualLab.Domain
             _entities.Add(entity.Id, entity);
         }
 
+        /// <summary>
+        /// 安装一个由模块拥有的世界状态。相同状态类型不能重复注册。
+        /// </summary>
+        public void RegisterWorldState(IWorldStateExtension state)
+        {
+            if (state == null)
+            {
+                throw new ArgumentNullException(nameof(state));
+            }
+
+            if (_transactionActive)
+            {
+                throw new InvalidOperationException("世界事务执行期间不能注册新的状态类型。");
+            }
+
+            if (_worldStateTypesFrozen)
+            {
+                throw new InvalidOperationException("世界状态类型注册表已冻结。");
+            }
+
+            var typeId = state.TypeId;
+            if (string.IsNullOrWhiteSpace(typeId.Value))
+            {
+                throw new ArgumentException("世界状态类型标识不能为空。", nameof(state));
+            }
+
+            if (!_stateExtensions.TryAdd(typeId, state))
+            {
+                throw new InvalidOperationException(
+                    $"世界状态类型“{typeId}”已经注册。");
+            }
+        }
+
+        /// <summary>
+        /// 冻结已安装的状态类型。之后仍可修改状态内容，但不能改变世界的模块组成。
+        /// </summary>
+        public void FreezeWorldStateTypes()
+        {
+            _worldStateTypesFrozen = true;
+        }
+
+        public bool TryGetWorldState<TState>(
+            WorldStateTypeId typeId,
+            out TState state)
+            where TState : class, IWorldStateExtension
+        {
+            if (_stateExtensions.TryGetValue(typeId, out var registered)
+                && registered is TState typed)
+            {
+                state = typed;
+                return true;
+            }
+
+            state = null;
+            return false;
+        }
+
+        public TState RequireWorldState<TState>(WorldStateTypeId typeId)
+            where TState : class, IWorldStateExtension
+        {
+            if (!_stateExtensions.TryGetValue(typeId, out var registered))
+            {
+                throw new InvalidOperationException(
+                    $"世界尚未安装状态类型“{typeId}”。");
+            }
+
+            if (!(registered is TState typed))
+            {
+                throw new InvalidOperationException(
+                    $"世界状态“{typeId}”不是请求的类型“{typeof(TState).FullName}”。");
+            }
+
+            return typed;
+        }
+
         public bool RemoveEntity(EntityId entityId)
         {
-            Matter.EnsureCanMutate();
-            if (!_entities.Remove(entityId))
+            if (!_entities.ContainsKey(entityId))
             {
                 return false;
             }
 
+            // 先在全部独立副本上完成清理和校验，任一模块失败都不会改变当前世界。
+            var preparedStates = CopyWorldStates(ContainsEntity);
+            foreach (var state in preparedStates.Values)
+            {
+                state.RemoveEntityReferences(entityId);
+            }
+
+            ValidateWorldStateReplacements(preparedStates);
+            _entities.Remove(entityId);
             _relationGraph.RemoveAllFor(entityId);
-            Matter.RemoveLocation(entityId);
+            ReplaceWorldStatesFrom(preparedStates);
             return true;
         }
 
@@ -285,7 +395,7 @@ namespace VirtualLab.Domain
         }
 
         /// <summary>
-        /// 在临时世界中执行变更，全部成功后才提交关系、物质和过程状态。
+        /// 在临时世界中执行变更，全部成功后才提交关系、模块状态和过程状态。
         /// </summary>
         public void CommitAtomically(Action<ExperimentWorld> prepare)
         {
@@ -306,8 +416,10 @@ namespace VirtualLab.Domain
                 var prepared = CreateTransactionalCopy();
                 prepare(prepared);
                 EnsureEntityTopologyUnchanged(prepared);
+                EnsureWorldStateTopologyUnchanged(prepared);
+                ValidateWorldStateReplacements(prepared._stateExtensions);
                 ReplaceRelationsFrom(prepared);
-                Matter.ReplaceStateFrom(prepared.Matter);
+                ReplaceWorldStatesFrom(prepared._stateExtensions);
                 ReplaceConfiguredStateFrom(prepared);
             }
             finally
@@ -318,7 +430,7 @@ namespace VirtualLab.Domain
 
         /// <summary>
         /// 创建仅供应用层事务恢复使用的世界检查点。能力定义不可变，检查点
-        /// 复制关系、物质、标量和持续过程，不携带 Unity 表现状态。
+        /// 复制关系、模块状态、标量和持续过程，不携带 Unity 表现状态。
         /// </summary>
         public ExperimentWorld CreateCheckpoint() => CreateTransactionalCopy();
 
@@ -334,14 +446,16 @@ namespace VirtualLab.Domain
             }
 
             EnsureEntityTopologyUnchanged(checkpoint);
+            EnsureWorldStateTopologyUnchanged(checkpoint);
+            ValidateWorldStateReplacements(checkpoint._stateExtensions);
             ReplaceRelationsFrom(checkpoint);
-            Matter.ReplaceStateFrom(checkpoint.Matter);
+            ReplaceWorldStatesFrom(checkpoint._stateExtensions);
             ReplaceConfiguredStateFrom(checkpoint);
         }
 
         private ExperimentWorld CreateTransactionalCopy()
         {
-            var copy = new ExperimentWorld(RelationSchemas);
+            var copy = new ExperimentWorld(RelationSchemas, false);
             if (RelationSchemasFrozen)
             {
                 copy.FreezeRelationSchemas();
@@ -358,14 +472,14 @@ namespace VirtualLab.Domain
                 copy.AddEntity(entityCopy);
             }
 
-            foreach (var unit in Matter.KnownUnits)
+            foreach (var state in _stateExtensions.Values)
             {
-                copy.Matter.RegisterUnit(unit.Key, unit.Value);
+                copy.RegisterWorldState(state.CreateCopy(copy.ContainsEntity));
             }
 
-            foreach (var entry in Matter.Entries)
+            if (WorldStateTypesFrozen)
             {
-                copy.Matter.Add(entry.LocationId, entry.Batch);
+                copy.FreezeWorldStateTypes();
             }
 
             foreach (var relation in Relations)
@@ -392,6 +506,14 @@ namespace VirtualLab.Domain
             return copy;
         }
 
+        private Dictionary<WorldStateTypeId, IWorldStateExtension>
+            CopyWorldStates(Func<EntityId, bool> entityExists)
+        {
+            return _stateExtensions.ToDictionary(
+                value => value.Key,
+                value => value.Value.CreateCopy(entityExists));
+        }
+
         private void EnsureEntityTopologyUnchanged(ExperimentWorld prepared)
         {
             if (_entities.Count != prepared._entities.Count
@@ -400,6 +522,41 @@ namespace VirtualLab.Domain
             {
                 throw new InvalidOperationException(
                     "Configured state operations cannot add or remove entities.");
+            }
+        }
+
+        private void EnsureWorldStateTopologyUnchanged(ExperimentWorld prepared)
+        {
+            if (_stateExtensions.Count != prepared._stateExtensions.Count
+                || _stateExtensions.Keys.Any(
+                    typeId => !prepared._stateExtensions.ContainsKey(typeId)))
+            {
+                throw new InvalidOperationException(
+                    "世界状态事务不能安装或移除状态类型。");
+            }
+        }
+
+        private void ValidateWorldStateReplacements(
+            IReadOnlyDictionary<WorldStateTypeId, IWorldStateExtension> source)
+        {
+            foreach (var current in _stateExtensions)
+            {
+                if (!source.TryGetValue(current.Key, out var replacement))
+                {
+                    throw new InvalidOperationException(
+                        $"替换状态中缺少世界状态类型“{current.Key}”。");
+                }
+
+                current.Value.ValidateReplacement(replacement);
+            }
+        }
+
+        private void ReplaceWorldStatesFrom(
+            IReadOnlyDictionary<WorldStateTypeId, IWorldStateExtension> source)
+        {
+            foreach (var current in _stateExtensions)
+            {
+                current.Value.ReplaceStateFrom(source[current.Key]);
             }
         }
 

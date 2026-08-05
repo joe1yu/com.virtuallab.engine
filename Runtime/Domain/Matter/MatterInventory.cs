@@ -3,12 +3,22 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using VirtualLab.Domain.Events;
 using VirtualLab.Domain.Processes;
+using VirtualLab.Domain.WorldStates;
 using VirtualLab.Kernel;
 using VirtualLab.Measurement;
 
 namespace VirtualLab.Domain.Matter
 {
-    public sealed class MatterInventory
+    /// <summary>
+    /// 物质模块拥有的世界状态类型标识，迁移到化学程序集时随库存一起移动。
+    /// </summary>
+    public static class MatterWorldStateTypeIds
+    {
+        public static readonly WorldStateTypeId Inventory =
+            new WorldStateTypeId("化学.状态.物质库存");
+    }
+
+    public sealed class MatterInventory : IWorldStateExtension
     {
         private readonly Func<EntityId, bool> _locationExists;
         private InventoryState _state = InventoryState.Empty();
@@ -259,6 +269,40 @@ namespace VirtualLab.Domain.Matter
             EnsureCanMutate();
             source.EnsureCanMutate();
             _state = source._state.Clone();
+        }
+
+        WorldStateTypeId IWorldStateExtension.TypeId =>
+            MatterWorldStateTypeIds.Inventory;
+
+        IWorldStateExtension IWorldStateExtension.CreateCopy(
+            Func<EntityId, bool> entityExists)
+        {
+            var copy = new MatterInventory(entityExists);
+            copy._state = _state.Clone();
+            return copy;
+        }
+
+        void IWorldStateExtension.ValidateReplacement(
+            IWorldStateExtension source)
+        {
+            if (!(source is MatterInventory inventory))
+            {
+                throw new InvalidOperationException("物质库存只能从相同类型的世界状态恢复。");
+            }
+
+            EnsureCanMutate();
+            inventory.EnsureCanMutate();
+        }
+
+        void IWorldStateExtension.ReplaceStateFrom(
+            IWorldStateExtension source)
+        {
+            ReplaceStateFrom((MatterInventory)source);
+        }
+
+        void IWorldStateExtension.RemoveEntityReferences(EntityId entityId)
+        {
+            RemoveLocation(entityId);
         }
 
         private void ExecuteStandalone(Action<MatterInventoryTransaction> prepare)

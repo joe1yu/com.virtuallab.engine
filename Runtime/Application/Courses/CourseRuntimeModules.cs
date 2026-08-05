@@ -232,8 +232,8 @@ namespace VirtualLab.Application.Courses
         }
 
         /// <summary>
-        /// 把模块已冻结的关系模式安装到世界并冻结世界注册表。
-        /// 世界工厂可以提前安装同一模式以建立初始关系。
+        /// 把模块已冻结的关系模式安装到世界，并冻结关系模式与世界状态类型注册表。
+        /// 世界工厂可以提前安装同一关系模式和模块状态以建立初始世界。
         /// </summary>
         public void PrepareWorld(ExperimentWorld world)
         {
@@ -246,16 +246,22 @@ namespace VirtualLab.Application.Courses
             {
                 world.RegisterRelationSchemas(RelationSchemas);
                 world.FreezeRelationSchemas();
-                return;
+            }
+            else
+            {
+                foreach (var schema in RelationSchemas)
+                {
+                    if (!world.RequireRelationSchema(schema.TypeId).Equals(schema))
+                    {
+                        throw new InvalidOperationException(
+                            $"世界中的关系模式“{schema.TypeId}”与模块注册不一致。");
+                    }
+                }
             }
 
-            foreach (var schema in RelationSchemas)
+            if (!world.WorldStateTypesFrozen)
             {
-                if (!world.RequireRelationSchema(schema.TypeId).Equals(schema))
-                {
-                    throw new InvalidOperationException(
-                        $"世界中的关系模式“{schema.TypeId}”与模块注册不一致。");
-                }
+                world.FreezeWorldStateTypes();
             }
         }
 
