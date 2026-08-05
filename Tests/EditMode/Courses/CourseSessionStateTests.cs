@@ -66,7 +66,7 @@ namespace VirtualLab.Engine.Tests.Courses
             Assert.That(
                 restored.ExportState().Entities
                     .Single(value => value.EntityId == "端口.来源")
-                    .Capabilities.Single().ConnectorPorts.Single().PortId,
+                    .Capabilities.Single().TextProperties.Single().Key,
                 Is.EqualTo("默认端口"));
             Assert.That(replay.IsAccepted, Is.True);
             Assert.That(replay.Events, Has.Count.EqualTo(1));

@@ -397,33 +397,39 @@ namespace VirtualLab.Infrastructure.Persistence
             [JsonProperty(Required = Required.Always)]
             public decimal NumberValue { get; set; }
             public string TextValue { get; set; }
-            public List<ConnectorPortDocument> ConnectorPorts { get; set; }
+            public List<CapabilityTextPropertyDocument> TextProperties
+            {
+                get;
+                set;
+            }
 
             public CourseCapabilityState ToState()
             {
-                var ports = ConnectorPorts
-                    ?? new List<ConnectorPortDocument>();
+                var properties = TextProperties
+                    ?? new List<CapabilityTextPropertyDocument>();
                 Count(
-                    ports,
-                    SessionArchiveReadLimits.MaxEntities,
-                    "connectorPorts");
+                    properties,
+                    SessionArchiveReadLimits.MaxParameters,
+                    "capability text properties");
                 return new CourseCapabilityState(
                     CapabilityId,
                     NumberValue,
                     TextValue,
-                    ports.Select(value =>
-                        Require(value, "connector port").ToState()));
+                    properties.Select(value =>
+                        Require(
+                            value,
+                            "capability text property").ToState()));
             }
         }
 
-        private sealed class ConnectorPortDocument
+        private sealed class CapabilityTextPropertyDocument
         {
             [JsonProperty(Required = Required.Always)]
-            public string PortId { get; set; }
-            public string CompatibilityGroup { get; set; }
+            public string Key { get; set; }
+            public string Value { get; set; }
 
-            public CourseConnectorPortState ToState() =>
-                new CourseConnectorPortState(PortId, CompatibilityGroup);
+            public KeyValuePair<string, string> ToState() =>
+                new KeyValuePair<string, string>(Key, Value);
         }
 
         private sealed class EntityDocument
@@ -443,12 +449,11 @@ namespace VirtualLab.Infrastructure.Persistence
                             CapabilityId = item.CapabilityId,
                             NumberValue = item.NumberValue,
                             TextValue = item.TextValue,
-                            ConnectorPorts = item.ConnectorPorts.Select(port =>
-                                new ConnectorPortDocument
+                            TextProperties = item.TextProperties.Select(property =>
+                                new CapabilityTextPropertyDocument
                                 {
-                                    PortId = port.PortId,
-                                    CompatibilityGroup =
-                                        port.CompatibilityGroup
+                                    Key = property.Key,
+                                    Value = property.Value
                                 }).ToList()
                         }).ToList()
                 };

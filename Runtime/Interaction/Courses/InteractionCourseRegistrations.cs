@@ -47,6 +47,11 @@ namespace VirtualLab.Interaction.Courses
             {
                 context.RegisterFactReader(reader);
             }
+
+            foreach (var codec in InteractionCapabilityStateCodecs.All)
+            {
+                context.RegisterCapabilityStateCodec(codec);
+            }
         }
     }
 

@@ -5,11 +5,9 @@ using System.Globalization;
 using System.Linq;
 using VirtualLab.Application.Commands;
 using VirtualLab.Domain;
-using VirtualLab.Domain.Capabilities;
 using VirtualLab.Domain.Entities;
 using VirtualLab.Domain.Matter;
 using VirtualLab.Domain.Relations;
-using VirtualLab.Interaction.Capabilities;
 using VirtualLab.Kernel;
 
 namespace VirtualLab.Application.Courses
@@ -37,6 +35,8 @@ namespace VirtualLab.Application.Courses
         private readonly Func<ExperimentWorld, ICourseProcessAdvancer>
             _processAdvancerFactory;
         private readonly Action<ExperimentWorld> _worldPreparation;
+        private readonly CourseCapabilityStateCodecRegistry
+            _capabilityStateCodecs;
 
         public CourseRuntimeDefinition(
             CourseRuntimeModuleScope modules,
@@ -52,7 +52,8 @@ namespace VirtualLab.Application.Courses
                 modules.CreateStateOperationRegistry,
                 modules.EventProjectors,
                 modules.CreateProcessAdvancer,
-                modules.PrepareWorld)
+                modules.PrepareWorld,
+                modules.CapabilityStateCodecs)
         {
         }
 
@@ -92,7 +93,8 @@ namespace VirtualLab.Application.Courses
             IEnumerable<ICourseEventProjector> eventProjectors = null,
             Func<ExperimentWorld, ICourseProcessAdvancer>
                 processAdvancerFactory = null,
-            Action<ExperimentWorld> worldPreparation = null)
+            Action<ExperimentWorld> worldPreparation = null,
+            CourseCapabilityStateCodecRegistry capabilityStateCodecs = null)
         {
             _readers = (readers
                 ?? throw new ArgumentNullException(nameof(readers))).ToArray();
@@ -113,6 +115,8 @@ namespace VirtualLab.Application.Courses
                 ?? Array.Empty<ICourseEventProjector>()).ToArray();
             _processAdvancerFactory = processAdvancerFactory;
             _worldPreparation = worldPreparation ?? FreezeRegisteredRelations;
+            _capabilityStateCodecs = capabilityStateCodecs
+                ?? new CourseCapabilityStateCodecRegistry();
         }
 
         public ConfigDrivenCourseSession CreateSession(ExperimentWorld world)
@@ -121,6 +125,9 @@ namespace VirtualLab.Application.Courses
         }
 
         public IReadOnlyList<IStructuredFactReader> FactReaders => _readers;
+
+        internal CourseCapabilityStateCodecRegistry CapabilityStateCodecs =>
+            _capabilityStateCodecs;
 
         public ICourseProcessAdvancer CreateProcessAdvancer(
             ExperimentWorld world)
@@ -163,23 +170,9 @@ namespace VirtualLab.Application.Courses
                 new CourseAssessmentEvaluator(evaluator),
                 _actionAssessments,
                 _maximumScore,
-                new CourseEventStream(initialEvents, _eventProjectors));
+                new CourseEventStream(initialEvents, _eventProjectors),
+                _capabilityStateCodecs);
         }
-    }
-
-    public sealed class CourseConnectorPortState
-    {
-        public CourseConnectorPortState(
-            string portId,
-            string compatibilityGroup)
-        {
-            PortId = CourseContractGuard.Required(portId, "连接端口 ID");
-            CompatibilityGroup = CourseContractGuard.Optional(
-                compatibilityGroup);
-        }
-
-        public string PortId { get; }
-        public string CompatibilityGroup { get; }
     }
 
     public sealed class CourseCapabilityState
@@ -188,30 +181,41 @@ namespace VirtualLab.Application.Courses
             string capabilityId,
             decimal numberValue = 0m,
             string textValue = null,
-            IEnumerable<CourseConnectorPortState> connectorPorts = null)
+            IEnumerable<KeyValuePair<string, string>> textProperties = null)
         {
-            CapabilityId = capabilityId;
+            CapabilityId = CourseContractGuard.Required(
+                capabilityId,
+                "能力标识");
             NumberValue = numberValue;
-            TextValue = textValue;
-            var ports = (connectorPorts
-                         ?? Array.Empty<CourseConnectorPortState>()).ToArray();
-            if (ports.Any(value => value == null)
-                || ports.GroupBy(value => value.PortId, StringComparer.Ordinal)
+            TextValue = CourseContractGuard.Optional(textValue);
+            var properties = (textProperties
+                    ?? Array.Empty<KeyValuePair<string, string>>())
+                .Select(value => new KeyValuePair<string, string>(
+                    CourseContractGuard.Required(
+                        value.Key,
+                        "能力文本属性键"),
+                    CourseContractGuard.Optional(value.Value)))
+                .ToArray();
+            if (properties
+                    .GroupBy(value => value.Key, StringComparer.Ordinal)
                     .Any(value => value.Count() > 1))
             {
                 throw new ArgumentException(
-                    "连接端口状态不能包含空项或重复 ID。",
-                    nameof(connectorPorts));
+                    "能力文本属性不能包含重复键。",
+                    nameof(textProperties));
             }
 
-            ConnectorPorts =
-                new ReadOnlyCollection<CourseConnectorPortState>(ports);
+            TextProperties = new ReadOnlyDictionary<string, string>(
+                properties.ToDictionary(
+                    value => value.Key,
+                    value => value.Value,
+                    StringComparer.Ordinal));
         }
 
         public string CapabilityId { get; }
         public decimal NumberValue { get; }
         public string TextValue { get; }
-        public IReadOnlyList<CourseConnectorPortState> ConnectorPorts { get; }
+        public IReadOnlyDictionary<string, string> TextProperties { get; }
     }
 
     public sealed class CourseEntityState
@@ -569,6 +573,7 @@ namespace VirtualLab.Application.Courses
 
         internal static CourseSessionState Capture(
             ExperimentWorld world,
+            CourseCapabilityStateCodecRegistry capabilityStateCodecs,
             IEnumerable<CourseEventState> events,
             IEnumerable<CourseExecutedCommandState> commands,
             long nextEventSequence,
@@ -577,10 +582,16 @@ namespace VirtualLab.Application.Courses
             IEnumerable<string> observations,
             IEnumerable<CourseSpatialPoseState> spatialPoses = null)
         {
+            if (capabilityStateCodecs == null)
+            {
+                throw new ArgumentNullException(nameof(capabilityStateCodecs));
+            }
+
             return new CourseSessionState(
                 world.Entities.Select(value => new CourseEntityState(
                     value.Id.Value,
-                    value.Capabilities.Select(CaptureCapability))),
+                    value.Capabilities.Select(
+                        capabilityStateCodecs.Capture))),
                 world.Relations.Select(value => new CourseRelationState(
                     value.TypeId,
                     value.Source.Value,
@@ -610,10 +621,13 @@ namespace VirtualLab.Application.Courses
         }
 
         internal ExperimentWorld RestoreWorld(
-            Action<ExperimentWorld> prepareWorld = null)
+            Action<ExperimentWorld> prepareWorld = null,
+            CourseCapabilityStateCodecRegistry capabilityStateCodecs = null)
         {
             try
             {
+                var codecs = capabilityStateCodecs
+                    ?? new CourseCapabilityStateCodecRegistry();
                 ValidateJournal();
                 var world = prepareWorld == null
                     ? new ExperimentWorld(Relations
@@ -631,7 +645,7 @@ namespace VirtualLab.Application.Courses
                         new EntityId(entityState.EntityId));
                     foreach (var capability in entityState.Capabilities)
                     {
-                        entity.AddCapability(RestoreCapability(capability));
+                        entity.AddCapability(codecs.Restore(capability));
                     }
 
                     world.AddEntity(entity);
@@ -827,11 +841,9 @@ namespace VirtualLab.Application.Courses
             $"{Token(state.CapabilityId)}:{state.NumberValue.ToString(CultureInfo.InvariantCulture)}:{Token(state.TextValue)}"
             + string.Join(
                 string.Empty,
-                state.ConnectorPorts
-                    .OrderBy(value => value.PortId, StringComparer.Ordinal)
-                    .Select(value =>
-                        Token(value.PortId)
-                        + Token(value.CompatibilityGroup)));
+                state.TextProperties
+                    .OrderBy(value => value.Key, StringComparer.Ordinal)
+                    .Select(value => Token(value.Key) + Token(value.Value)));
 
         private static string CommandCanonical(
             CourseExecutedCommandState state)
@@ -883,59 +895,5 @@ namespace VirtualLab.Application.Courses
                 _ => throw new ArgumentOutOfRangeException()
             };
 
-        private static CourseCapabilityState CaptureCapability(ICapability value) =>
-            value switch
-            {
-                ContainerCapability x => new CourseCapabilityState(
-                    InteractionCapabilityIds.Container,
-                    x.CapacityMillilitres),
-                ConnectorCapability x => new CourseCapabilityState(
-                    InteractionCapabilityIds.Connector,
-                    0m,
-                    x.CompatibilityGroup,
-                    x.Ports.Select(port => new CourseConnectorPortState(
-                        port.PortId,
-                        port.CompatibilityGroup))),
-                GrabbableCapability _ => new CourseCapabilityState(
-                    InteractionCapabilityIds.Grabbable),
-                ObservableCapability _ => new CourseCapabilityState(
-                    InteractionCapabilityIds.Observable),
-                ClampableCapability _ => new CourseCapabilityState(
-                    InteractionCapabilityIds.Clampable),
-                CoverableCapability _ => new CourseCapabilityState(
-                    InteractionCapabilityIds.Coverable),
-                BreakableCapability _ => new CourseCapabilityState(
-                    InteractionCapabilityIds.Breakable),
-                IConfiguredCapability configured =>
-                    new CourseCapabilityState(
-                        configured.CapabilityId,
-                        configured.NumberValue,
-                        configured.TextValue),
-                _ => throw new InvalidOperationException(
-                    $"能力“{value.GetType().FullName}”未注册状态编解码。")
-            };
-
-        private static ICapability RestoreCapability(CourseCapabilityState value) =>
-            value.CapabilityId switch
-            {
-                InteractionCapabilityIds.Container =>
-                    new ContainerCapability((decimal)value.NumberValue),
-                InteractionCapabilityIds.Connector =>
-                    value.ConnectorPorts.Count > 0
-                        ? new ConnectorCapability(value.ConnectorPorts.Select(port =>
-                            new ConnectionPortDefinition(
-                                port.PortId,
-                                port.CompatibilityGroup)))
-                        : new ConnectorCapability(value.TextValue),
-                InteractionCapabilityIds.Grabbable => new GrabbableCapability(),
-                InteractionCapabilityIds.Observable => new ObservableCapability(),
-                InteractionCapabilityIds.Clampable => new ClampableCapability(),
-                InteractionCapabilityIds.Coverable => new CoverableCapability(),
-                InteractionCapabilityIds.Breakable => new BreakableCapability(),
-                _ => new ConfiguredCapability(
-                    value.CapabilityId,
-                    value.NumberValue,
-                    value.TextValue)
-            };
     }
 }

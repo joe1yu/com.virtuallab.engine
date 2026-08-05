@@ -5,8 +5,10 @@ using NUnit.Framework;
 using VirtualLab.Application.Courses;
 using VirtualLab.Application.Events;
 using VirtualLab.Domain;
+using VirtualLab.Domain.Capabilities;
 using VirtualLab.Domain.Processes;
 using VirtualLab.Domain.Relations;
+using VirtualLab.Interaction.Capabilities;
 using VirtualLab.Interaction.Courses;
 using VirtualLab.Interaction.Relations;
 using VirtualLab.Kernel;
@@ -68,7 +70,7 @@ namespace VirtualLab.Engine.Tests.Courses
         }
 
         [Test]
-        public void 不同模块不能重复注册同一事实状态操作或关系模式()
+        public void 不同模块不能重复注册同一事实状态操作关系模式或能力编解码器()
         {
             var fact = new StructuredFactField("测试事实");
             var firstFactModule = Module(
@@ -121,6 +123,23 @@ namespace VirtualLab.Engine.Tests.Courses
                 CourseRuntimeModuleScope.Create(
                     firstRelationModule,
                     secondRelationModule));
+
+            var firstCodecModule = Module(
+                "甲",
+                "甲模块",
+                new Version(1, 0, 0),
+                context => context.RegisterCapabilityStateCodec(
+                    new StubCapabilityStateCodec("测试能力")));
+            var secondCodecModule = Module(
+                "乙",
+                "乙模块",
+                new Version(1, 0, 0),
+                context => context.RegisterCapabilityStateCodec(
+                    new StubCapabilityStateCodec("测试能力")));
+            Assert.Throws<InvalidOperationException>(() =>
+                CourseRuntimeModuleScope.Create(
+                    firstCodecModule,
+                    secondCodecModule));
         }
 
         [Test]
@@ -187,6 +206,18 @@ namespace VirtualLab.Engine.Tests.Courses
             Assert.That(
                 interaction.FactReaders.Select(value => value.Field),
                 Is.SupersetOf(InteractionStructuredFactFields.All));
+            Assert.That(
+                interaction.CapabilityStateCodecs.CapabilityIds,
+                Is.EquivalentTo(new[]
+                {
+                    InteractionCapabilityIds.Grabbable,
+                    InteractionCapabilityIds.Container,
+                    InteractionCapabilityIds.Connector,
+                    InteractionCapabilityIds.Observable,
+                    InteractionCapabilityIds.Clampable,
+                    InteractionCapabilityIds.Coverable,
+                    InteractionCapabilityIds.Breakable
+                }));
         }
 
         [Test]
@@ -311,6 +342,23 @@ namespace VirtualLab.Engine.Tests.Courses
                 ConfiguredMutationDefinition mutation)
             {
             }
+        }
+
+        private sealed class StubCapabilityStateCodec :
+            ICourseCapabilityStateCodec
+        {
+            public StubCapabilityStateCodec(string capabilityId)
+            {
+                CapabilityId = capabilityId;
+            }
+
+            public string CapabilityId { get; }
+
+            public CourseCapabilityState Capture(ICapability capability) =>
+                new CourseCapabilityState(CapabilityId);
+
+            public ICapability Restore(CourseCapabilityState state) =>
+                new ConfiguredCapability(CapabilityId);
         }
 
         private sealed class RecordingProcessAdvancer :

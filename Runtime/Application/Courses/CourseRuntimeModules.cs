@@ -123,6 +123,12 @@ namespace VirtualLab.Application.Courses
             _builder.RegisterRelationSchema(ModuleId, schema);
         }
 
+        public void RegisterCapabilityStateCodec(
+            ICourseCapabilityStateCodec codec)
+        {
+            _builder.RegisterCapabilityStateCodec(ModuleId, codec);
+        }
+
         public void RegisterStateOperations(
             string registrationId,
             Action<ConfiguredStateOperationRegistry> registration)
@@ -170,6 +176,7 @@ namespace VirtualLab.Application.Courses
             IEnumerable<CourseModuleManifest> manifests,
             IEnumerable<RelationSchema> relationSchemas,
             IEnumerable<IStructuredFactReader> factReaders,
+            IEnumerable<ICourseCapabilityStateCodec> capabilityStateCodecs,
             IEnumerable<Action<ConfiguredStateOperationRegistry>> stateRegistrations,
             IEnumerable<ICourseEventProjector> eventProjectors,
             IEnumerable<Func<ExperimentWorld, ICourseProcessAdvancer>>
@@ -181,6 +188,8 @@ namespace VirtualLab.Application.Courses
                 relationSchemas.ToArray());
             FactReaders = new ReadOnlyCollection<IStructuredFactReader>(
                 factReaders.ToArray());
+            CapabilityStateCodecs = new CourseCapabilityStateCodecRegistry(
+                capabilityStateCodecs);
             EventProjectors = new ReadOnlyCollection<ICourseEventProjector>(
                 eventProjectors.ToArray());
             _stateRegistrations = new ReadOnlyCollection<
@@ -196,6 +205,11 @@ namespace VirtualLab.Application.Courses
         public IReadOnlyList<RelationSchema> RelationSchemas { get; }
 
         public IReadOnlyList<IStructuredFactReader> FactReaders { get; }
+
+        public CourseCapabilityStateCodecRegistry CapabilityStateCodecs
+        {
+            get;
+        }
 
         public IReadOnlyList<ICourseEventProjector> EventProjectors { get; }
 
@@ -318,6 +332,10 @@ namespace VirtualLab.Application.Courses
             _factReaders = new Dictionary<StructuredFactField, OwnedFactReader>();
         private readonly Dictionary<RelationTypeId, OwnedRelationSchema>
             _relationSchemas = new Dictionary<RelationTypeId, OwnedRelationSchema>();
+        private readonly Dictionary<string, OwnedCapabilityStateCodec>
+            _capabilityStateCodecs = new Dictionary<
+                string,
+                OwnedCapabilityStateCodec>(StringComparer.Ordinal);
         private readonly Dictionary<string, OwnedStateRegistration>
             _stateRegistrations = new Dictionary<string, OwnedStateRegistration>(
                 StringComparer.Ordinal);
@@ -387,6 +405,9 @@ namespace VirtualLab.Application.Courses
                 builder._factReaders
                     .OrderBy(value => value.Key.Id, StringComparer.Ordinal)
                     .Select(value => value.Value.Reader),
+                builder._capabilityStateCodecs
+                    .OrderBy(value => value.Key, StringComparer.Ordinal)
+                    .Select(value => value.Value.Codec),
                 builder._stateRegistrations
                     .OrderBy(value => value.Key, StringComparer.Ordinal)
                     .Select(value => value.Value.Registration),
@@ -434,6 +455,30 @@ namespace VirtualLab.Application.Courses
                 var owner = _relationSchemas[schema.TypeId].ModuleId;
                 throw new InvalidOperationException(
                     $"关系模式“{schema.TypeId}”已由模块“{owner}”注册，"
+                    + $"模块“{moduleId}”不能重复注册。");
+            }
+        }
+
+        public void RegisterCapabilityStateCodec(
+            string moduleId,
+            ICourseCapabilityStateCodec codec)
+        {
+            EnsureMutable();
+            if (codec == null)
+            {
+                throw new ArgumentNullException(nameof(codec));
+            }
+
+            var capabilityId = CourseContractGuard.Required(
+                codec.CapabilityId,
+                "能力状态编解码器的能力标识");
+            if (!_capabilityStateCodecs.TryAdd(
+                    capabilityId,
+                    new OwnedCapabilityStateCodec(moduleId, codec)))
+            {
+                var owner = _capabilityStateCodecs[capabilityId].ModuleId;
+                throw new InvalidOperationException(
+                    $"能力“{capabilityId}”的状态编解码器已由模块“{owner}”注册，"
                     + $"模块“{moduleId}”不能重复注册。");
             }
         }
@@ -605,6 +650,20 @@ namespace VirtualLab.Application.Courses
 
             public string ModuleId { get; }
             public RelationSchema Schema { get; }
+        }
+
+        private sealed class OwnedCapabilityStateCodec
+        {
+            public OwnedCapabilityStateCodec(
+                string moduleId,
+                ICourseCapabilityStateCodec codec)
+            {
+                ModuleId = moduleId;
+                Codec = codec;
+            }
+
+            public string ModuleId { get; }
+            public ICourseCapabilityStateCodec Codec { get; }
         }
 
         private sealed class OwnedStateRegistration : IOwnedRegistration

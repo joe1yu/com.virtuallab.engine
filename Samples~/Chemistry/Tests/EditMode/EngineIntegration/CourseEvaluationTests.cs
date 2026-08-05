@@ -278,9 +278,7 @@ namespace VirtualLab.Engine.Tests.Courses
                 },
                 Array.Empty<ConfiguredMutationDefinition>());
             var runtime = new CourseRuntimeDefinition(
-                InteractionCourseRegistrations
-                    .CreateModuleScope().FactReaders
-                    .Concat(ChemistryCourseRegistrations.CreateFactReaders()),
+                ChemistryCourseRegistrations.CreateModuleScope(),
                 new[] { action },
                 new[]
                 {

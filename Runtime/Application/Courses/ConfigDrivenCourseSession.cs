@@ -228,6 +228,8 @@ namespace VirtualLab.Application.Courses
             new Dictionary<string, CourseExecutedCommandState>(
                 StringComparer.Ordinal);
         private readonly CourseEventStream _eventStream;
+        private readonly CourseCapabilityStateCodecRegistry
+            _capabilityStateCodecs;
         private CourseGoalEvaluationResult _goalEvaluation =
             new CourseGoalEvaluationResult(Array.Empty<string>());
         private CourseAssessmentEvaluationResult _assessmentEvaluation =
@@ -246,7 +248,8 @@ namespace VirtualLab.Application.Courses
             IEnumerable<CourseActionAssessmentDefinition>
                 actionAssessments = null,
             int maximumScore = 0,
-            CourseEventStream eventStream = null)
+            CourseEventStream eventStream = null,
+            CourseCapabilityStateCodecRegistry capabilityStateCodecs = null)
         {
             _world = world ?? throw new ArgumentNullException(nameof(world));
             _ruleEvaluator = ruleEvaluator
@@ -264,6 +267,8 @@ namespace VirtualLab.Application.Courses
 
             _maximumScore = maximumScore;
             _eventStream = eventStream ?? new CourseEventStream();
+            _capabilityStateCodecs = capabilityStateCodecs
+                ?? new CourseCapabilityStateCodecRegistry();
             _assessmentEvaluation = new CourseAssessmentEvaluationResult(
                 maximumScore,
                 Array.Empty<string>(),
@@ -557,6 +562,7 @@ namespace VirtualLab.Application.Courses
         {
             return CourseSessionState.Capture(
                 _world,
+                _capabilityStateCodecs,
                 _eventStream.States,
                 _commands.Values,
                 _eventStream.NextSequence,
@@ -581,7 +587,9 @@ namespace VirtualLab.Application.Courses
             }
 
             var session = runtime.CreateSession(
-                state.RestoreWorld(runtime.PrepareWorld),
+                state.RestoreWorld(
+                    runtime.PrepareWorld,
+                    runtime.CapabilityStateCodecs),
                 state.Events);
             if (session._eventStream.NextSequence != state.NextEventSequence)
             {

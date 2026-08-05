@@ -139,7 +139,19 @@ namespace VirtualLab.Engine.Tests.Infrastructure
                 {
                     new CourseEntityState(
                         "学生",
-                        Array.Empty<CourseCapabilityState>())
+                        new[]
+                        {
+                            new CourseCapabilityState(
+                                "测试.带文本属性",
+                                1m,
+                                "文本载荷",
+                                new[]
+                                {
+                                    new KeyValuePair<string, string>(
+                                        "属性",
+                                        "属性值")
+                                })
+                        })
                 },
                 Array.Empty<CourseRelationState>(),
                 Array.Empty<CourseMatterState>(),
