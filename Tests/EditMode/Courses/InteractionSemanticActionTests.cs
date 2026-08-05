@@ -661,6 +661,10 @@ namespace VirtualLab.Engine.Tests.Courses
         {
             return ConfiguredActionDefinition.CreateGeneric(
                 actionId,
+                actionId,
+                SemanticActionLifecycle.Instant,
+                "即时执行",
+                SemanticActionPhase.Complete,
                 rules,
                 mutations);
         }
@@ -703,6 +707,9 @@ namespace VirtualLab.Engine.Tests.Courses
             return new SemanticActionRequest(
                 commandId,
                 actionId,
+                "操作." + commandId,
+                SemanticActionPhase.Complete,
+                0d,
                 actor,
                 source,
                 target,

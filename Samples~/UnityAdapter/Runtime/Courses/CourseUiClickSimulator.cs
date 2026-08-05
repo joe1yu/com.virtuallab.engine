@@ -150,9 +150,21 @@ namespace VirtualLab.UnityAdapters.Courses
                     "UI.{0}.{1}",
                     step.StepId,
                     ++_commandSequence);
+                var configuredAction = _bootstrap.Domain.ConfiguredActions
+                    .Where(value => value.ActionId == step.ActionId)
+                    .Where(value => value.MatchesAnyEntities
+                        || (value.SourceEntityId == step.SourceEntityId
+                            && value.TargetEntityId == step.TargetEntityId))
+                    .OrderByDescending(value => value.Priority)
+                    .FirstOrDefault()
+                    ?? throw new InvalidOperationException(
+                        $"UI 步骤“{step.StepId}”没有匹配的动作定义。");
                 var request = new SemanticActionRequest(
                     commandId,
                     step.ActionId,
+                    "UI操作." + step.StepId + "." + _commandSequence,
+                    configuredAction.Phase,
+                    0d,
                     _bootstrap.Domain.ActorEntityId,
                     step.SourceEntityId,
                     step.TargetEntityId,

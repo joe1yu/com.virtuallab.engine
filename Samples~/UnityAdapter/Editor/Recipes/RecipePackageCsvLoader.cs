@@ -186,6 +186,10 @@ namespace VirtualLab.Unity.Authoring.Recipes
                             .Select(value => value.ConditionId),
                         Split(row["状态变化"]),
                         Split(row["表现反馈"]),
+                        RequiredProtocol(row["抽象操作"], "抽象操作"),
+                        ActionLifecycle(row["生命周期"]),
+                        RequiredProtocol(row["执行方式"], "执行方式"),
+                        ActionPhase(row["阶段"]),
                         SemanticCommand(row["操作指令"]),
                         Integer(row["优先级"]),
                         row["审核结果"].Trim(),
@@ -311,6 +315,38 @@ namespace VirtualLab.Unity.Authoring.Recipes
 
             return name;
         }
+
+        private static string RequiredProtocol(string value, string name)
+        {
+            var configured = value.Trim();
+            if (configured.Length == 0)
+            {
+                throw new InvalidOperationException($"{name}不能为空。");
+            }
+
+            return configured;
+        }
+
+        private static SemanticActionLifecycle ActionLifecycle(string value) =>
+            value.Trim() switch
+            {
+                "即时" => SemanticActionLifecycle.Instant,
+                "持续" => SemanticActionLifecycle.Continuous,
+                "操纵" => SemanticActionLifecycle.Manipulation,
+                _ => throw new InvalidOperationException(
+                    $"未注册操作生命周期“{value}”；只允许即时、持续或操纵。")
+            };
+
+        private static SemanticActionPhase ActionPhase(string value) =>
+            value.Trim() switch
+            {
+                "开始" => SemanticActionPhase.Start,
+                "观测" => SemanticActionPhase.Observe,
+                "完成" => SemanticActionPhase.Complete,
+                "取消" => SemanticActionPhase.Cancel,
+                _ => throw new InvalidOperationException(
+                    $"未注册操作阶段“{value}”；只允许开始、观测、完成或取消。")
+            };
 
         private static string StateOperation(string value)
         {

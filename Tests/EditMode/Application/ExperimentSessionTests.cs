@@ -333,7 +333,10 @@ namespace VirtualLab.Engine.Tests.Application
         [Test]
         public void Command_result_rejects_null_events_and_normalizes_rejection_codes()
         {
-            Assert.That(() => CommandResult.Accepted(new DomainEventEnvelope[] { null }), Throws.ArgumentException);
+            Assert.That(
+                () => CommandResult.AcceptedWithoutExecution(
+                    new DomainEventEnvelope[] { null }),
+                Throws.ArgumentException);
             Assert.That(CommandResult.Rejected(" capability.required ").RejectionCode, Is.EqualTo("capability.required"));
         }
 

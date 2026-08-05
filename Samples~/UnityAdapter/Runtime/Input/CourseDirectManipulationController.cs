@@ -32,6 +32,7 @@ namespace VirtualLab.UnityAdapters.Input
         private Vector3 _lastPointerPosition;
         private int _commandSequence;
         private string _lastPreviewKey;
+        private string _manipulationOperationInstanceId;
         private readonly CourseManipulationPreview _preview =
             new CourseManipulationPreview();
 
@@ -125,10 +126,24 @@ namespace VirtualLab.UnityAdapters.Input
                 return false;
             }
 
+            var grabCandidate = _gateway.FindUnaryCandidates(source.EntityId)
+                .FirstOrDefault(value => string.Equals(
+                    value.ActionId,
+                    InteractionSemanticActionIds.Grab,
+                    StringComparison.Ordinal));
+            if (grabCandidate == null)
+            {
+                return false;
+            }
+
             _preview.Begin(source);
+            var operationInstanceId = NextCommandId("抓取操作");
             var result = _gateway.Dispatch(
                 NextCommandId(InteractionSemanticActionIds.Grab),
                 InteractionSemanticActionIds.Grab,
+                operationInstanceId,
+                grabCandidate.Phase,
+                CurrentTimeSeconds(),
                 actorEntityId,
                 source.EntityId);
             if (!result.Outcome.IsAccepted)
@@ -138,6 +153,7 @@ namespace VirtualLab.UnityAdapters.Input
             }
 
             _selected = source;
+            _manipulationOperationInstanceId = operationInstanceId;
             _dragDepth = interactionCamera.WorldToScreenPoint(
                 source.transform.position).z;
             _lastPointerPosition = pointer;
@@ -201,6 +217,9 @@ namespace VirtualLab.UnityAdapters.Input
             CurrentDropAvailability = _gateway.QueryAvailability(
                 NextCommandId("预判"),
                 resolution.Candidate.ActionId,
+                NextCommandId("预判操作"),
+                resolution.Candidate.Phase,
+                CurrentTimeSeconds(),
                 actorEntityId,
                 resolution.Candidate.SourceEntityId,
                 resolution.Candidate.TargetEntityId).Availability;
@@ -225,23 +244,36 @@ namespace VirtualLab.UnityAdapters.Input
                 var result = _gateway.Dispatch(
                     NextCommandId("落点"),
                     resolution.Candidate.ActionId,
+                    NextCommandId("落点操作"),
+                    resolution.Candidate.Phase,
+                    CurrentTimeSeconds(),
                     actorEntityId,
                     resolution.Candidate.SourceEntityId,
                     resolution.Candidate.TargetEntityId);
                 dropAccepted = result.Outcome.IsAccepted;
             }
 
-            var release = _gateway.Dispatch(
-                NextCommandId(InteractionSemanticActionIds.Release),
-                InteractionSemanticActionIds.Release,
-                actorEntityId,
-                source.EntityId);
+            var releaseCandidate = _gateway
+                .FindUnaryCandidates(source.EntityId)
+                .FirstOrDefault(value => string.Equals(
+                    value.ActionId,
+                    InteractionSemanticActionIds.Release,
+                    StringComparison.Ordinal));
+            var releaseAccepted = releaseCandidate != null
+                && _gateway.Dispatch(
+                    NextCommandId(InteractionSemanticActionIds.Release),
+                    InteractionSemanticActionIds.Release,
+                    _manipulationOperationInstanceId,
+                    releaseCandidate.Phase,
+                    CurrentTimeSeconds(),
+                    actorEntityId,
+                    source.EntityId).Outcome.IsAccepted;
             var freePlacement = resolution == null
                                 && target == null
                                 && IsPointerInsideViewport(pointer);
-            var committed = release.Outcome.IsAccepted
+            var committed = releaseAccepted
                             && (dropAccepted || freePlacement);
-            if (release.Outcome.IsAccepted)
+            if (releaseAccepted)
             {
                 if (committed)
                 {
@@ -253,6 +285,7 @@ namespace VirtualLab.UnityAdapters.Input
                 }
 
                 _selected = null;
+                _manipulationOperationInstanceId = null;
                 _lastPreviewKey = null;
                 CurrentDropAvailability = null;
                 return committed;
@@ -291,6 +324,9 @@ namespace VirtualLab.UnityAdapters.Input
                 var availability = _gateway.ProbeAvailability(
                     NextCommandId("探测"),
                     candidate.ActionId,
+                    NextCommandId("探测操作"),
+                    candidate.Phase,
+                    CurrentTimeSeconds(),
                     actorEntityId,
                     candidate.SourceEntityId,
                     candidate.TargetEntityId);
@@ -332,6 +368,9 @@ namespace VirtualLab.UnityAdapters.Input
             return $"直接操纵.{GetInstanceID()}.{operation}.{_commandSequence}";
         }
 
+        private static double CurrentTimeSeconds() =>
+            Time.realtimeSinceStartup;
+
         /// <summary>
         /// 供鼠标、触控、VR 等设备适配器提交单对象语义手势。动作是否合法仍由
         /// 课程内核裁决，本方法不直接改变科学状态。
@@ -345,9 +384,23 @@ namespace VirtualLab.UnityAdapters.Input
                 throw new InvalidOperationException("当前没有正在操作的实验对象。");
             }
 
+            var candidate = _gateway.FindUnaryCandidates(_selected.EntityId)
+                .FirstOrDefault(value => string.Equals(
+                    value.ActionId,
+                    actionId,
+                    StringComparison.Ordinal));
+            if (candidate == null)
+            {
+                throw new InvalidOperationException(
+                    $"当前对象没有可用的语义动作“{actionId}”。");
+            }
+
             return _gateway.Dispatch(
                 NextCommandId("单对象手势"),
                 actionId,
+                NextCommandId("单对象操作"),
+                candidate.Phase,
+                CurrentTimeSeconds(),
                 actorEntityId,
                 _selected.EntityId,
                 null,

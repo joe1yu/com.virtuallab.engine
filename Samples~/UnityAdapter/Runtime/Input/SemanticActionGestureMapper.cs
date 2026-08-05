@@ -63,6 +63,9 @@ namespace VirtualLab.UnityAdapters.Input
     {
         public SemanticActionRequest Map(
             string commandId,
+            string operationInstanceId,
+            SemanticActionPhase phase,
+            double occurredAtSeconds,
             SemanticInputIntent intent,
             SpatialFactSet spatialFacts)
         {
@@ -87,6 +90,9 @@ namespace VirtualLab.UnityAdapters.Input
             return new SemanticActionRequest(
                 commandId,
                 intent.ActionId,
+                operationInstanceId,
+                phase,
+                occurredAtSeconds,
                 intent.ActorEntityId,
                 intent.SourceEntityId,
                 intent.TargetEntityId,

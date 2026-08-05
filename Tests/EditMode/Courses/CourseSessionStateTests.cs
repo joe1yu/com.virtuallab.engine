@@ -26,6 +26,9 @@ namespace VirtualLab.Engine.Tests.Courses
             var rejectedRequest = new SemanticActionRequest(
                 "命令.未配置",
                 "测试.未配置",
+                "操作.未配置",
+                SemanticActionPhase.Complete,
+                0d,
                 "学生",
                 "器材.试管",
                 null,
@@ -53,6 +56,9 @@ namespace VirtualLab.Engine.Tests.Courses
             var conflict = restored.Execute(new SemanticActionRequest(
                 "命令.未配置",
                 "测试.记录状态",
+                "操作.冲突",
+                SemanticActionPhase.Complete,
+                0d,
                 "学生",
                 "端口.来源",
                 "端口.目标",
@@ -119,6 +125,10 @@ namespace VirtualLab.Engine.Tests.Courses
         {
             var action = ConfiguredActionDefinition.CreateGeneric(
                 "测试.记录状态",
+                "记录状态",
+                SemanticActionLifecycle.Instant,
+                "即时执行",
+                SemanticActionPhase.Complete,
                 Array.Empty<StructuredRuleDefinition>(),
                 new[]
                 {
@@ -161,6 +171,9 @@ namespace VirtualLab.Engine.Tests.Courses
             return new SemanticActionRequest(
                 commandId,
                 "测试.记录状态",
+                "操作." + commandId,
+                SemanticActionPhase.Complete,
+                0d,
                 "学生",
                 "端口.来源",
                 "端口.目标",

@@ -75,6 +75,10 @@ namespace VirtualLab.Chemistry.Tests.Courses
         {
             return ConfiguredActionDefinition.CreateGeneric(
                 ChemistrySemanticActionIds.Shake,
+                "振荡",
+                SemanticActionLifecycle.Continuous,
+                "持续振荡",
+                SemanticActionPhase.Observe,
                 Array.Empty<StructuredRuleDefinition>(),
                 new[]
                 {
@@ -103,6 +107,9 @@ namespace VirtualLab.Chemistry.Tests.Courses
             return new SemanticActionRequest(
                 commandId,
                 ChemistrySemanticActionIds.Shake,
+                "操作." + commandId,
+                SemanticActionPhase.Observe,
+                duration,
                 "学生",
                 "器材.锥形瓶",
                 null,

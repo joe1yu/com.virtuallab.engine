@@ -513,6 +513,10 @@ namespace VirtualLab.Unity.Authoring.Blueprints
                     ConfiguredActionDefinition.CreatePolicy(
                         action.PolicyId,
                         RuntimeActionId(action.ActionId),
+                        action.OperationId,
+                        action.Lifecycle,
+                        action.ExecutionModeId,
+                        action.Phase,
                         action.SourceEntityId,
                         action.TargetEntityId,
                         action.Priority,
@@ -543,6 +547,10 @@ namespace VirtualLab.Unity.Authoring.Blueprints
                 new ActionPolicyDefinition(
                     value.Definition.PolicyId,
                     RuntimeActionId(value.Definition.ActionId),
+                    value.Definition.OperationId,
+                    value.Definition.Lifecycle,
+                    value.Definition.ExecutionModeId,
+                    value.Definition.Phase,
                     value.Definition.SourceEntityId,
                     value.Definition.TargetEntityId,
                     value.Definition.RuleIds)).ToArray();

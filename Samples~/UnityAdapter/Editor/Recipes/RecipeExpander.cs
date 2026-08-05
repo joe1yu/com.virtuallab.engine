@@ -258,6 +258,7 @@ namespace VirtualLab.Unity.Authoring.Recipes
             CompileAcceptanceScenarios(
                 blueprint.AcceptanceRecords,
                 blueprint.Course.ActorEntityId,
+                actions,
                 acceptanceScenarios,
                 diagnostics);
 
@@ -718,6 +719,8 @@ namespace VirtualLab.Unity.Authoring.Recipes
         private static void CompileAcceptanceScenarios(
             IReadOnlyList<CourseAcceptanceRecordBlueprint> records,
             string actorEntityId,
+            IReadOnlyCollection<NormalizedItem<NormalizedActionDefinition>>
+                actions,
             ICollection<NormalizedItem<NormalizedAcceptanceScenarioDefinition>>
                 scenarios,
             ICollection<CourseCompilationDiagnostic> diagnostics)
@@ -789,9 +792,29 @@ namespace VirtualLab.Unity.Authoring.Recipes
                         var first = rows[0];
                         try
                         {
+                            var actionId = ActionId(first.ActionId);
+                            var phases = actions
+                                .Where(value =>
+                                    value.Definition.ActionId == actionId
+                                    && value.Definition.SourceEntityId
+                                    == first.SourceEntityId
+                                    && value.Definition.TargetEntityId
+                                    == first.TargetEntityId)
+                                .Select(value => value.Definition.Phase)
+                                .Distinct()
+                                .ToArray();
+                            if (phases.Length != 1)
+                            {
+                                throw new InvalidOperationException(
+                                    $"验收动作“{first.ActionId}”没有唯一的操作阶段。");
+                            }
+
                             var request = new SemanticActionRequest(
                                 $"验收.{scenarioGroup.Key}.{stepGroup.Key}",
-                                ActionId(first.ActionId),
+                                actionId,
+                                $"验收操作.{scenarioGroup.Key}.{stepGroup.Key}",
+                                phases[0],
+                                stepGroup.Key,
                                 actorEntityId,
                                 first.SourceEntityId,
                                 first.TargetEntityId,
@@ -1222,6 +1245,10 @@ namespace VirtualLab.Unity.Authoring.Recipes
                     new NormalizedActionDefinition(
                         policyId,
                         item.SemanticCommandId,
+                        item.OperationId,
+                        item.Lifecycle,
+                        item.ExecutionModeId,
+                        item.Phase,
                         courseObject.EntityId,
                         string.Empty,
                         ruleIds,
@@ -1708,6 +1735,10 @@ namespace VirtualLab.Unity.Authoring.Recipes
                     new NormalizedActionDefinition(
                         policyId,
                         item.SemanticCommandId,
+                        item.OperationId,
+                        item.Lifecycle,
+                        item.ExecutionModeId,
+                        item.Phase,
                         sourceObject.EntityId,
                         targetObject.EntityId,
                         ruleIds,

@@ -738,10 +738,31 @@ namespace VirtualLab.Engine.PlayModeTests
             return new SemanticActionRequest(
                 commandId,
                 actionId,
+                "操作." + commandId,
+                Phase(actionId),
+                0d,
                 "学生",
                 sourceEntityId,
                 targetEntityId,
                 values);
+        }
+
+        private static SemanticActionPhase Phase(string actionId)
+        {
+            if (actionId == InteractionSemanticActionIds.Grab
+                || actionId == ChemistrySemanticActionIds.BeginPour
+                || actionId == ChemistrySemanticActionIds.BeginHeating)
+            {
+                return SemanticActionPhase.Start;
+            }
+
+            if (actionId == ChemistrySemanticActionIds.Shake
+                || actionId == ChemistrySemanticActionIds.CollectGas)
+            {
+                return SemanticActionPhase.Observe;
+            }
+
+            return SemanticActionPhase.Complete;
         }
     }
 }

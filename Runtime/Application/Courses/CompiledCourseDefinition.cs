@@ -236,6 +236,10 @@ namespace VirtualLab.Application.Courses
         public ActionPolicyDefinition(
             string policyId,
             string actionId,
+            string operationId,
+            SemanticActionLifecycle lifecycle,
+            string executionModeId,
+            SemanticActionPhase phase,
             string sourceEntityId,
             string targetEntityId,
             IEnumerable<string> ruleIds)
@@ -244,6 +248,24 @@ namespace VirtualLab.Application.Courses
             ActionId = CourseContractGuard.Required(
                 actionId,
                 $"动作策略“{PolicyId}”的动作 ID");
+            OperationId = CourseContractGuard.Required(
+                operationId,
+                $"动作策略“{PolicyId}”的抽象操作 ID");
+            if (!Enum.IsDefined(typeof(SemanticActionLifecycle), lifecycle))
+            {
+                throw new ArgumentOutOfRangeException(nameof(lifecycle));
+            }
+
+            if (!Enum.IsDefined(typeof(SemanticActionPhase), phase))
+            {
+                throw new ArgumentOutOfRangeException(nameof(phase));
+            }
+
+            Lifecycle = lifecycle;
+            ExecutionModeId = CourseContractGuard.Required(
+                executionModeId,
+                $"动作策略“{PolicyId}”的执行方式 ID");
+            Phase = phase;
             SourceEntityId = CourseContractGuard.Required(
                 sourceEntityId,
                 $"动作策略“{PolicyId}”的来源实体 ID");
@@ -256,6 +278,14 @@ namespace VirtualLab.Application.Courses
         public string PolicyId { get; }
 
         public string ActionId { get; }
+
+        public string OperationId { get; }
+
+        public SemanticActionLifecycle Lifecycle { get; }
+
+        public string ExecutionModeId { get; }
+
+        public SemanticActionPhase Phase { get; }
 
         public string SourceEntityId { get; }
 

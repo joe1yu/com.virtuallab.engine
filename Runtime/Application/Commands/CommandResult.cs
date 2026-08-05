@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using VirtualLab.Application.Courses;
 using VirtualLab.Application.Events;
 
 namespace VirtualLab.Application.Commands
@@ -11,12 +12,14 @@ namespace VirtualLab.Application.Commands
             bool isAccepted,
             string rejectionCode,
             IReadOnlyList<string> rejectionCodes,
-            IReadOnlyList<DomainEventEnvelope> events)
+            IReadOnlyList<DomainEventEnvelope> events,
+            SemanticActionExecution execution)
         {
             IsAccepted = isAccepted;
             RejectionCode = rejectionCode;
             RejectionCodes = rejectionCodes;
             Events = events;
+            Execution = execution;
         }
 
         public bool IsAccepted { get; }
@@ -27,7 +30,32 @@ namespace VirtualLab.Application.Commands
 
         public IReadOnlyList<DomainEventEnvelope> Events { get; }
 
-        public static CommandResult Accepted(IReadOnlyList<DomainEventEnvelope> events)
+        public SemanticActionExecution Execution { get; }
+
+        public static CommandResult Accepted(
+            IReadOnlyList<DomainEventEnvelope> events,
+            SemanticActionExecution execution)
+        {
+            if (execution == null)
+            {
+                throw new ArgumentNullException(nameof(execution));
+            }
+
+            return AcceptedCore(events, execution);
+        }
+
+        /// <summary>
+        /// 仅供未进入课程语义操作链路的通用领域命令使用。
+        /// </summary>
+        public static CommandResult AcceptedWithoutExecution(
+            IReadOnlyList<DomainEventEnvelope> events)
+        {
+            return AcceptedCore(events, null);
+        }
+
+        private static CommandResult AcceptedCore(
+            IReadOnlyList<DomainEventEnvelope> events,
+            SemanticActionExecution execution)
         {
             if (events == null)
             {
@@ -38,7 +66,8 @@ namespace VirtualLab.Application.Commands
                 true,
                 null,
                 EmptyRejectionCodes(),
-                Copy(events));
+                Copy(events),
+                execution);
         }
 
         public static CommandResult Rejected(string code)
@@ -84,7 +113,8 @@ namespace VirtualLab.Application.Commands
                 false,
                 primary,
                 new ReadOnlyCollection<string>(copy),
-                EmptyEvents());
+                EmptyEvents(),
+                null);
         }
 
         private static IReadOnlyList<DomainEventEnvelope> Copy(IReadOnlyList<DomainEventEnvelope> events)

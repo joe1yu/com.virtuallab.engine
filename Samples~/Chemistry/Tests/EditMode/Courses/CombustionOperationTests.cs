@@ -28,6 +28,10 @@ namespace VirtualLab.Chemistry.Tests.Courses
             var eventType = "实验风险.热损伤";
             var action = ConfiguredActionDefinition.CreateGeneric(
                 ChemistrySemanticActionIds.Ignite,
+                "点燃",
+                SemanticActionLifecycle.Instant,
+                "接触点火",
+                SemanticActionPhase.Complete,
                 Array.Empty<StructuredRuleDefinition>(),
                 new[]
                 {
@@ -172,6 +176,10 @@ namespace VirtualLab.Chemistry.Tests.Courses
                 new[] { CarbonReaction() });
             var action = ConfiguredActionDefinition.CreateGeneric(
                 ChemistrySemanticActionIds.Ignite,
+                "点燃",
+                SemanticActionLifecycle.Instant,
+                "接触点火",
+                SemanticActionPhase.Complete,
                 Array.Empty<StructuredRuleDefinition>(),
                 new[]
                 {
@@ -227,6 +235,10 @@ namespace VirtualLab.Chemistry.Tests.Courses
         {
             return ConfiguredActionDefinition.CreateGeneric(
                 ChemistrySemanticActionIds.Ignite,
+                "点燃",
+                SemanticActionLifecycle.Instant,
+                "接触点火",
+                SemanticActionPhase.Complete,
                 Array.Empty<StructuredRuleDefinition>(),
                 new[]
                 {
@@ -251,6 +263,10 @@ namespace VirtualLab.Chemistry.Tests.Courses
         {
             return ConfiguredActionDefinition.CreateGeneric(
                 ChemistrySemanticActionIds.Extinguish,
+                "熄灭",
+                SemanticActionLifecycle.Instant,
+                "覆盖熄灭",
+                SemanticActionPhase.Complete,
                 Array.Empty<StructuredRuleDefinition>(),
                 new[]
                 {
@@ -278,6 +294,9 @@ namespace VirtualLab.Chemistry.Tests.Courses
             return new SemanticActionRequest(
                 commandId,
                 actionId,
+                "操作." + commandId,
+                SemanticActionPhase.Complete,
+                0d,
                 "学生",
                 "器材.燃烧匙",
                 "器材.点火器",

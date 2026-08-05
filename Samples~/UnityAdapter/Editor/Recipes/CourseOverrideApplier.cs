@@ -453,6 +453,10 @@ namespace VirtualLab.Unity.Authoring.Recipes
                     new NormalizedActionDefinition(
                         definition.PolicyId,
                         definition.ActionId,
+                        definition.OperationId,
+                        definition.Lifecycle,
+                        definition.ExecutionModeId,
+                        definition.Phase,
                         definition.SourceEntityId,
                         definition.TargetEntityId,
                         definition.RuleIds.Concat(new[] { ruleId }),
@@ -501,6 +505,10 @@ namespace VirtualLab.Unity.Authoring.Recipes
                 new NormalizedActionDefinition(
                     policyId,
                     baseline.Definition.ActionId,
+                    baseline.Definition.OperationId,
+                    baseline.Definition.Lifecycle,
+                    baseline.Definition.ExecutionModeId,
+                    baseline.Definition.Phase,
                     interaction.SourceEntityId,
                     interaction.TargetEntityId,
                     Array.Empty<string>(),

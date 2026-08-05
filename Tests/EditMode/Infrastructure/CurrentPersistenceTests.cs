@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using NUnit.Framework;
 using VirtualLab.Application.Commands;
 using VirtualLab.Application.Courses;
+using VirtualLab.Application.Events;
 using VirtualLab.Infrastructure.Persistence;
 using VirtualLab.Infrastructure.Reporting;
 using VirtualLab.Kernel;
@@ -24,6 +26,21 @@ namespace VirtualLab.Engine.Tests.Infrastructure
             Assert.That(restored.SessionId, Is.EqualTo(original.SessionId));
             Assert.That(restored.RandomSeed, Is.EqualTo(original.RandomSeed));
             Assert.That(restored.State, Is.EqualTo(original.State));
+            var restoredCommand = restored.State.Commands.Single();
+            Assert.That(
+                restoredCommand.Request.OperationInstanceId,
+                Is.EqualTo("操作.存档"));
+            Assert.That(
+                restoredCommand.Request.Phase,
+                Is.EqualTo(SemanticActionPhase.Complete));
+            Assert.That(restoredCommand.Result.Execution.OperationId,
+                Is.EqualTo("抓取"));
+            Assert.That(
+                restoredCommand.Result.Execution.Lifecycle,
+                Is.EqualTo(SemanticActionLifecycle.Instant));
+            Assert.That(
+                restoredCommand.Result.Execution.ExecutionModeId,
+                Is.EqualTo("即时执行"));
             Assert.That(json, Does.Not.Contain("schemaVersion"));
             Assert.That(json, Does.Not.Contain("engineVersion"));
             Assert.That(json, Does.Not.Contain("configurationHash"));
@@ -130,8 +147,11 @@ namespace VirtualLab.Engine.Tests.Infrastructure
         private static SessionArchive Archive()
         {
             var request = new SemanticActionRequest(
-                "命令.拒绝",
+                "命令.存档",
                 "抓取",
+                "操作.存档",
+                SemanticActionPhase.Complete,
+                0d,
                 "学生",
                 "学生",
                 null,
@@ -164,8 +184,14 @@ namespace VirtualLab.Engine.Tests.Infrastructure
                 {
                     new CourseExecutedCommandState(
                         request,
-                        CommandResult.Rejected(
-                            "course.action.not-configured"))
+                        CommandResult.Accepted(
+                            Array.Empty<DomainEventEnvelope>(),
+                            new SemanticActionExecution(
+                                request.OperationInstanceId,
+                                "抓取",
+                                SemanticActionLifecycle.Instant,
+                                "即时执行",
+                                request.Phase)))
                 },
                 1,
                 new CourseGoalEvaluationResult(
@@ -180,7 +206,7 @@ namespace VirtualLab.Engine.Tests.Infrastructure
                             "风险.样品损坏",
                             -20,
                             "样品已经损坏，需要重新开始实验。",
-                            "命令.拒绝",
+                            "命令.存档",
                             CourseConsequenceSeverity
                                 .EquipmentOrSampleDamage,
                             CourseConsequenceRecoverability.RestartRequired,

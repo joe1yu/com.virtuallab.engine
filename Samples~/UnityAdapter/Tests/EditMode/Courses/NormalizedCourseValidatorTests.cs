@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using NUnit.Framework;
+using VirtualLab.Application.Courses;
 using VirtualLab.Unity.Authoring.Diagnostics;
 using VirtualLab.Unity.Authoring.Normalized;
 
@@ -29,6 +30,10 @@ namespace VirtualLab.Engine.Tests.Courses
                         new NormalizedActionDefinition(
                             "策略.抓取",
                             "抓取",
+                            "抓取",
+                            SemanticActionLifecycle.Instant,
+                            "即时执行",
+                            SemanticActionPhase.Complete,
                             "试管",
                             string.Empty,
                             Array.Empty<string>(),
@@ -160,6 +165,10 @@ namespace VirtualLab.Engine.Tests.Courses
                         new NormalizedActionDefinition(
                             "策略.错误",
                             "抓取",
+                            "抓取",
+                            SemanticActionLifecycle.Instant,
+                            "即时执行",
+                            SemanticActionPhase.Complete,
                             "不存在实体",
                             string.Empty,
                             new[] { "规则.不存在" },

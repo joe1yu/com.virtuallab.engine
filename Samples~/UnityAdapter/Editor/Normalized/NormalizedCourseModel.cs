@@ -111,6 +111,10 @@ namespace VirtualLab.Unity.Authoring.Normalized
         public NormalizedActionDefinition(
             string policyId,
             string actionId,
+            string operationId,
+            SemanticActionLifecycle lifecycle,
+            string executionModeId,
+            SemanticActionPhase phase,
             string sourceEntityId,
             string targetEntityId,
             IEnumerable<string> ruleIds,
@@ -124,6 +128,10 @@ namespace VirtualLab.Unity.Authoring.Normalized
         {
             PolicyId = policyId ?? string.Empty;
             ActionId = actionId ?? string.Empty;
+            OperationId = operationId ?? string.Empty;
+            Lifecycle = lifecycle;
+            ExecutionModeId = executionModeId ?? string.Empty;
+            Phase = phase;
             SourceEntityId = sourceEntityId ?? string.Empty;
             TargetEntityId = targetEntityId ?? string.Empty;
             RuleIds = Copy(ruleIds);
@@ -138,6 +146,10 @@ namespace VirtualLab.Unity.Authoring.Normalized
 
         public string PolicyId { get; }
         public string ActionId { get; }
+        public string OperationId { get; }
+        public SemanticActionLifecycle Lifecycle { get; }
+        public string ExecutionModeId { get; }
+        public SemanticActionPhase Phase { get; }
         public string SourceEntityId { get; }
         public string TargetEntityId { get; }
         public IReadOnlyList<string> RuleIds { get; }

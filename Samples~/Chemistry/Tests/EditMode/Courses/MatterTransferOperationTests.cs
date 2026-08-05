@@ -189,6 +189,10 @@ namespace VirtualLab.Chemistry.Tests.Courses
             var operations = new MatterTransferOperations();
             var action = ConfiguredActionDefinition.CreateGeneric(
                 ChemistrySemanticActionIds.CollectGas,
+                "集气",
+                SemanticActionLifecycle.Continuous,
+                "保持集气",
+                SemanticActionPhase.Observe,
                 Array.Empty<StructuredRuleDefinition>(),
                 new[]
                 {
@@ -211,6 +215,9 @@ namespace VirtualLab.Chemistry.Tests.Courses
                 new SemanticActionRequest(
                     "命令.收集",
                     ChemistrySemanticActionIds.CollectGas,
+                    "操作.集气",
+                    SemanticActionPhase.Observe,
+                    1d,
                     "学生",
                     "器材.试管",
                     "器材.收集瓶",
@@ -327,6 +334,10 @@ namespace VirtualLab.Chemistry.Tests.Courses
         {
             return ConfiguredActionDefinition.CreateGeneric(
                 ChemistrySemanticActionIds.BeginPour,
+                "倾倒",
+                SemanticActionLifecycle.Continuous,
+                "持续倾斜",
+                SemanticActionPhase.Start,
                 new[]
                 {
                     Rule(10, ChemistryStructuredFactFields.倾倒角度, StructuredRuleOperator.大于等于, StructuredValue.FromNumber(45d), "倾角不足"),
@@ -349,6 +360,10 @@ namespace VirtualLab.Chemistry.Tests.Courses
         {
             return ConfiguredActionDefinition.CreateGeneric(
                 ChemistrySemanticActionIds.EndPour,
+                "倾倒",
+                SemanticActionLifecycle.Continuous,
+                "持续倾斜",
+                SemanticActionPhase.Complete,
                 Array.Empty<StructuredRuleDefinition>(),
                 new[]
                 {
@@ -394,6 +409,9 @@ namespace VirtualLab.Chemistry.Tests.Courses
             return new SemanticActionRequest(
                 commandId,
                 ChemistrySemanticActionIds.BeginPour,
+                "操作.倾倒",
+                SemanticActionPhase.Start,
+                0d,
                 "学生",
                 "器材.量筒",
                 "器材.试管",
@@ -410,6 +428,9 @@ namespace VirtualLab.Chemistry.Tests.Courses
             return new SemanticActionRequest(
                 commandId,
                 ChemistrySemanticActionIds.EndPour,
+                "操作.倾倒",
+                SemanticActionPhase.Complete,
+                1d,
                 "学生",
                 "器材.量筒",
                 "器材.试管",

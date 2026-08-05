@@ -13,17 +13,29 @@ namespace VirtualLab.UnityAdapters.Input
     {
         public SemanticActionCandidate(
             string actionId,
+            string operationId,
+            SemanticActionLifecycle lifecycle,
+            string executionModeId,
+            SemanticActionPhase phase,
             string sourceEntityId,
             string targetEntityId,
             int priority)
         {
             ActionId = actionId;
+            OperationId = operationId;
+            Lifecycle = lifecycle;
+            ExecutionModeId = executionModeId;
+            Phase = phase;
             SourceEntityId = sourceEntityId;
             TargetEntityId = targetEntityId;
             Priority = priority;
         }
 
         public string ActionId { get; }
+        public string OperationId { get; }
+        public SemanticActionLifecycle Lifecycle { get; }
+        public string ExecutionModeId { get; }
+        public SemanticActionPhase Phase { get; }
         public string SourceEntityId { get; }
         public string TargetEntityId { get; }
         public int Priority { get; }
@@ -77,6 +89,9 @@ namespace VirtualLab.UnityAdapters.Input
         public SemanticActionRequest CreateRequest(
             string commandId,
             string actionId,
+            string operationInstanceId,
+            SemanticActionPhase phase,
+            double occurredAtSeconds,
             string actorEntityId,
             string sourceEntityId,
             string targetEntityId = null,
@@ -87,6 +102,9 @@ namespace VirtualLab.UnityAdapters.Input
             return _adapter.CreateRequest(
                 commandId,
                 actionId,
+                operationInstanceId,
+                phase,
+                occurredAtSeconds,
                 actorEntityId,
                 sourceEntityId,
                 targetEntityId,
@@ -97,6 +115,9 @@ namespace VirtualLab.UnityAdapters.Input
         public CourseAvailabilityResult QueryAvailability(
             string commandId,
             string actionId,
+            string operationInstanceId,
+            SemanticActionPhase phase,
+            double occurredAtSeconds,
             string actorEntityId,
             string sourceEntityId,
             string targetEntityId = null,
@@ -106,6 +127,9 @@ namespace VirtualLab.UnityAdapters.Input
             return _bootstrap.QueryAvailability(CreateRequest(
                 commandId,
                 actionId,
+                operationInstanceId,
+                phase,
+                occurredAtSeconds,
                 actorEntityId,
                 sourceEntityId,
                 targetEntityId,
@@ -133,11 +157,19 @@ namespace VirtualLab.UnityAdapters.Input
                     value => new
                     {
                         value.ActionId,
+                        value.OperationId,
+                        value.Lifecycle,
+                        value.ExecutionModeId,
+                        value.Phase,
                         value.SourceEntityId,
                         value.TargetEntityId
                     })
                 .Select(value => new SemanticActionCandidate(
                     value.Key.ActionId,
+                    value.Key.OperationId,
+                    value.Key.Lifecycle,
+                    value.Key.ExecutionModeId,
+                    value.Key.Phase,
                     value.Key.SourceEntityId,
                     value.Key.TargetEntityId,
                     value.Max(item => item.Priority)))
@@ -170,11 +202,19 @@ namespace VirtualLab.UnityAdapters.Input
                     value => new
                     {
                         value.ActionId,
+                        value.OperationId,
+                        value.Lifecycle,
+                        value.ExecutionModeId,
+                        value.Phase,
                         value.SourceEntityId,
                         value.TargetEntityId
                     })
                 .Select(value => new SemanticActionCandidate(
                     value.Key.ActionId,
+                    value.Key.OperationId,
+                    value.Key.Lifecycle,
+                    value.Key.ExecutionModeId,
+                    value.Key.Phase,
                     value.Key.SourceEntityId ?? manipulatedEntityId,
                     null,
                     value.Max(item => item.Priority)))
@@ -200,6 +240,9 @@ namespace VirtualLab.UnityAdapters.Input
         public ActionAvailability ProbeAvailability(
             string commandId,
             string actionId,
+            string operationInstanceId,
+            SemanticActionPhase phase,
+            double occurredAtSeconds,
             string actorEntityId,
             string sourceEntityId,
             string targetEntityId = null,
@@ -210,6 +253,9 @@ namespace VirtualLab.UnityAdapters.Input
             return _bootstrap.Runtime.QueryAvailability(CreateRequest(
                 commandId,
                 actionId,
+                operationInstanceId,
+                phase,
+                occurredAtSeconds,
                 actorEntityId,
                 sourceEntityId,
                 targetEntityId,
@@ -219,6 +265,9 @@ namespace VirtualLab.UnityAdapters.Input
         public CourseDispatchResult Dispatch(
             string commandId,
             string actionId,
+            string operationInstanceId,
+            SemanticActionPhase phase,
+            double occurredAtSeconds,
             string actorEntityId,
             string sourceEntityId,
             string targetEntityId = null,
@@ -228,6 +277,9 @@ namespace VirtualLab.UnityAdapters.Input
             return _bootstrap.Dispatch(CreateRequest(
                 commandId,
                 actionId,
+                operationInstanceId,
+                phase,
+                occurredAtSeconds,
                 actorEntityId,
                 sourceEntityId,
                 targetEntityId,

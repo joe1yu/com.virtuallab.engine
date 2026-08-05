@@ -800,6 +800,12 @@ namespace VirtualLab.Infrastructure.Persistence
             [JsonProperty(Required = Required.Always)]
             public string ActionId { get; set; }
             [JsonProperty(Required = Required.Always)]
+            public string OperationInstanceId { get; set; }
+            [JsonProperty(Required = Required.Always)]
+            public SemanticActionPhase Phase { get; set; }
+            [JsonProperty(Required = Required.Always)]
+            public double OccurredAtSeconds { get; set; }
+            [JsonProperty(Required = Required.Always)]
             public string ActorEntityId { get; set; }
             [JsonProperty(Required = Required.Always)]
             public string SourceEntityId { get; set; }
@@ -816,6 +822,9 @@ namespace VirtualLab.Infrastructure.Persistence
                 {
                     CommandId = value.CommandId,
                     ActionId = value.ActionId,
+                    OperationInstanceId = value.OperationInstanceId,
+                    Phase = value.Phase,
+                    OccurredAtSeconds = value.OccurredAtSeconds,
                     ActorEntityId = value.ActorEntityId,
                     SourceEntityId = value.SourceEntityId,
                     TargetEntityId = value.TargetEntityId,
@@ -832,6 +841,9 @@ namespace VirtualLab.Infrastructure.Persistence
                 return new SemanticActionRequest(
                     CommandId,
                     ActionId,
+                    OperationInstanceId,
+                    Phase,
+                    OccurredAtSeconds,
                     ActorEntityId,
                     SourceEntityId,
                     TargetEntityId,
@@ -851,6 +863,7 @@ namespace VirtualLab.Infrastructure.Persistence
             public List<string> RejectionCodes { get; set; }
             [JsonProperty(Required = Required.Always)]
             public List<EventDocument> Events { get; set; }
+            public ExecutionDocument Execution { get; set; }
 
             public static ResultDocument From(CommandResult value) =>
                 new ResultDocument
@@ -858,7 +871,10 @@ namespace VirtualLab.Infrastructure.Persistence
                     IsAccepted = value.IsAccepted,
                     RejectionCode = value.RejectionCode,
                     RejectionCodes = value.RejectionCodes.ToList(),
-                    Events = value.Events.Select(EventDocument.From).ToList()
+                    Events = value.Events.Select(EventDocument.From).ToList(),
+                    Execution = value.Execution == null
+                        ? null
+                        : ExecutionDocument.From(value.Execution)
                 };
 
             public CommandResult ToState()
@@ -869,13 +885,46 @@ namespace VirtualLab.Infrastructure.Persistence
                         Require(Events, "result events")
                             .Select(value =>
                                 Require(value, "result event").ToEnvelope())
-                            .ToArray());
+                            .ToArray(),
+                        Require(Execution, "result execution").ToState());
                 }
 
                 return CommandResult.Rejected(
                     RejectionCode,
                     Require(RejectionCodes, "rejectionCodes"));
             }
+        }
+
+        private sealed class ExecutionDocument
+        {
+            [JsonProperty(Required = Required.Always)]
+            public string OperationInstanceId { get; set; }
+            [JsonProperty(Required = Required.Always)]
+            public string OperationId { get; set; }
+            [JsonProperty(Required = Required.Always)]
+            public SemanticActionLifecycle Lifecycle { get; set; }
+            [JsonProperty(Required = Required.Always)]
+            public string ExecutionModeId { get; set; }
+            [JsonProperty(Required = Required.Always)]
+            public SemanticActionPhase Phase { get; set; }
+
+            public static ExecutionDocument From(
+                SemanticActionExecution value) => new ExecutionDocument
+            {
+                OperationInstanceId = value.OperationInstanceId,
+                OperationId = value.OperationId,
+                Lifecycle = value.Lifecycle,
+                ExecutionModeId = value.ExecutionModeId,
+                Phase = value.Phase
+            };
+
+            public SemanticActionExecution ToState() =>
+                new SemanticActionExecution(
+                    OperationInstanceId,
+                    OperationId,
+                    Lifecycle,
+                    ExecutionModeId,
+                    Phase);
         }
 
         private sealed class CommandDocument

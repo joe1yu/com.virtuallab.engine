@@ -287,6 +287,9 @@ namespace VirtualLab.Engine.Tests.Courses
             var conflicting = new SemanticActionRequest(
                 request.CommandId,
                 request.ActionId,
+                request.OperationInstanceId,
+                request.Phase,
+                request.OccurredAtSeconds,
                 request.ActorEntityId,
                 request.SourceEntityId,
                 null,
@@ -518,6 +521,10 @@ namespace VirtualLab.Engine.Tests.Courses
                 {
                     ConfiguredActionDefinition.CreateGeneric(
                         "抓取",
+                        "抓取",
+                        SemanticActionLifecycle.Instant,
+                        "即时执行",
+                        SemanticActionPhase.Complete,
                         Array.Empty<StructuredRuleDefinition>(),
                         mutations)
                 });
@@ -545,6 +552,10 @@ namespace VirtualLab.Engine.Tests.Courses
             return ConfiguredActionDefinition.CreatePolicy(
                 policyId,
                 "抓取",
+                "抓取",
+                SemanticActionLifecycle.Instant,
+                "即时执行",
+                SemanticActionPhase.Complete,
                 sourceEntityId,
                 "学生",
                 100,
@@ -564,6 +575,10 @@ namespace VirtualLab.Engine.Tests.Courses
             return ConfiguredActionDefinition.CreatePolicy(
                 policyId,
                 "抓取",
+                "抓取",
+                SemanticActionLifecycle.Instant,
+                "即时执行",
+                SemanticActionPhase.Complete,
                 sourceEntityId,
                 "学生",
                 priority,
@@ -594,6 +609,9 @@ namespace VirtualLab.Engine.Tests.Courses
             return new SemanticActionRequest(
                 commandId,
                 "抓取",
+                "操作." + commandId,
+                SemanticActionPhase.Complete,
+                0d,
                 "学生",
                 sourceEntityId,
                 "学生",

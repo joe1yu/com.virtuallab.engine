@@ -230,7 +230,7 @@ namespace VirtualLab.Application
                 new SemanticDomainEvent(eventType));
             CurrentTick = command.Tick;
             _processedCommandIds.Add(command.CommandId);
-            return CommandResult.Accepted(new[] { envelope });
+            return CommandResult.AcceptedWithoutExecution(new[] { envelope });
         }
 
         private sealed class SemanticDomainEvent : IDomainEvent

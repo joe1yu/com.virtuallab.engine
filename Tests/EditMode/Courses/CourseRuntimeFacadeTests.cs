@@ -132,6 +132,10 @@ namespace VirtualLab.Engine.Tests.Courses
             var readers = modules.FactReaders;
             var accident = ConfiguredActionDefinition.CreateGeneric(
                 "动作.造成事故",
+                "造成事故",
+                SemanticActionLifecycle.Instant,
+                "即时执行",
+                SemanticActionPhase.Complete,
                 Array.Empty<StructuredRuleDefinition>(),
                 new[]
                 {
@@ -145,6 +149,10 @@ namespace VirtualLab.Engine.Tests.Courses
             var continueObservation =
                 ConfiguredActionDefinition.CreateGeneric(
                     "动作.继续观察",
+                    "继续观察",
+                    SemanticActionLifecycle.Instant,
+                    "即时执行",
+                    SemanticActionPhase.Complete,
                     Array.Empty<StructuredRuleDefinition>(),
                     Array.Empty<ConfiguredMutationDefinition>());
             var runtime = new CourseRuntimeDefinition(
@@ -215,6 +223,10 @@ namespace VirtualLab.Engine.Tests.Courses
                 {
                     ConfiguredActionDefinition.CreateGeneric(
                         "动作.完成",
+                        "完成",
+                        SemanticActionLifecycle.Instant,
+                        "即时执行",
+                        SemanticActionPhase.Complete,
                         Array.Empty<StructuredRuleDefinition>(),
                         new[]
                         {
@@ -251,6 +263,10 @@ namespace VirtualLab.Engine.Tests.Courses
             var world = World();
             var action = ConfiguredActionDefinition.CreateGeneric(
                 "动作.产生风险后果",
+                "产生风险后果",
+                SemanticActionLifecycle.Instant,
+                "即时执行",
+                SemanticActionPhase.Complete,
                 Array.Empty<StructuredRuleDefinition>(),
                 new[]
                 {
@@ -292,6 +308,10 @@ namespace VirtualLab.Engine.Tests.Courses
         {
             yield return ConfiguredActionDefinition.CreateGeneric(
                 "动作.完成",
+                "完成",
+                SemanticActionLifecycle.Instant,
+                "即时执行",
+                SemanticActionPhase.Complete,
                 Array.Empty<StructuredRuleDefinition>(),
                 new[]
                 {
@@ -312,10 +332,18 @@ namespace VirtualLab.Engine.Tests.Courses
                 });
             yield return ConfiguredActionDefinition.CreateGeneric(
                 InteractionSemanticActionIds.Observe,
+                "观察",
+                SemanticActionLifecycle.Instant,
+                "观察",
+                SemanticActionPhase.Complete,
                 Array.Empty<StructuredRuleDefinition>(),
                 Array.Empty<ConfiguredMutationDefinition>());
             yield return ConfiguredActionDefinition.CreateGeneric(
                 "动作.危险",
+                "危险操作",
+                SemanticActionLifecycle.Instant,
+                "即时执行",
+                SemanticActionPhase.Complete,
                 new[]
                 {
                     new StructuredRuleDefinition(
@@ -361,6 +389,9 @@ namespace VirtualLab.Engine.Tests.Courses
             new SemanticActionRequest(
                 commandId,
                 actionId,
+                "操作." + commandId,
+                SemanticActionPhase.Complete,
+                0d,
                 "学生",
                 "器材",
                 null,

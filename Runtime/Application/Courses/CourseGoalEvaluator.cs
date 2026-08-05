@@ -121,6 +121,9 @@ namespace VirtualLab.Application.Courses
             var request = new SemanticActionRequest(
                 "评价." + condition.ConditionId,
                 "course.evaluate",
+                "评价操作." + condition.ConditionId,
+                SemanticActionPhase.Complete,
+                0d,
                 condition.ActorEntityId,
                 condition.SourceEntityId,
                 condition.TargetEntityId,

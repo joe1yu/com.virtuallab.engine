@@ -134,6 +134,9 @@ namespace VirtualLab.Application.Courses
         public SemanticActionRequest(
             string commandId,
             string actionId,
+            string operationInstanceId,
+            SemanticActionPhase phase,
+            double occurredAtSeconds,
             string actorEntityId,
             string sourceEntityId,
             string targetEntityId,
@@ -141,6 +144,26 @@ namespace VirtualLab.Application.Courses
         {
             CommandId = CourseContractGuard.Required(commandId, "命令 ID");
             ActionId = CourseContractGuard.Required(actionId, "动作 ID");
+            OperationInstanceId = CourseContractGuard.Required(
+                operationInstanceId,
+                $"命令“{CommandId}”的操作实例 ID");
+            if (!Enum.IsDefined(typeof(SemanticActionPhase), phase))
+            {
+                throw new ArgumentOutOfRangeException(nameof(phase));
+            }
+
+            if (double.IsNaN(occurredAtSeconds)
+                || double.IsInfinity(occurredAtSeconds)
+                || occurredAtSeconds < 0d)
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(occurredAtSeconds),
+                    occurredAtSeconds,
+                    "语义操作发生时刻必须是有限且非负的秒数。");
+            }
+
+            Phase = phase;
+            OccurredAtSeconds = occurredAtSeconds;
             ActorEntityId = CourseContractGuard.Required(
                 actorEntityId,
                 $"命令“{CommandId}”的操作者实体 ID");
@@ -154,6 +177,12 @@ namespace VirtualLab.Application.Courses
         public string CommandId { get; }
 
         public string ActionId { get; }
+
+        public string OperationInstanceId { get; }
+
+        public SemanticActionPhase Phase { get; }
+
+        public double OccurredAtSeconds { get; }
 
         public string ActorEntityId { get; }
 

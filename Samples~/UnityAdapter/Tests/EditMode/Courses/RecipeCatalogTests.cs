@@ -229,7 +229,11 @@ namespace VirtualLab.Engine.Tests.Courses
                         "动作",
                         new[] { "条件.不存在" },
                         new[] { "结果.不存在" },
-                        new[] { "表现.不存在" })
+                        new[] { "表现.不存在" },
+                        "错误动作",
+                        SemanticActionLifecycle.Instant,
+                        "即时执行",
+                        SemanticActionPhase.Complete)
                 },
                 results: new[]
                 {

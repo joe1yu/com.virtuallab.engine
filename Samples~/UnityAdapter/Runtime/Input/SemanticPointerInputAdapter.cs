@@ -27,6 +27,9 @@ namespace VirtualLab.UnityAdapters.Input
         public SemanticActionRequest CreateRequest(
             string commandId,
             string actionId,
+            string operationInstanceId,
+            SemanticActionPhase phase,
+            double occurredAtSeconds,
             string actorEntityId,
             string sourceEntityId,
             string targetEntityId,
@@ -45,6 +48,9 @@ namespace VirtualLab.UnityAdapters.Input
                 parameters);
             return _mapper.Map(
                 commandId,
+                operationInstanceId,
+                phase,
+                occurredAtSeconds,
                 intent,
                 _spatialFacts.Measure(intent));
         }

@@ -144,6 +144,9 @@ namespace VirtualLab.Engine.Tests.Courses
                 new SemanticActionRequest(
                     "命令.规则测试",
                     "抓取",
+                    "操作.规则测试",
+                    SemanticActionPhase.Complete,
+                    0d,
                     "学生",
                     "器材.试管",
                     null,

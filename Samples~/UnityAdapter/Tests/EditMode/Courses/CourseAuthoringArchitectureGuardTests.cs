@@ -155,7 +155,7 @@ namespace VirtualLab.Engine.Tests.Courses
 
             Assert.That(templateUsages, Is.Empty);
             StringAssert.StartsWith(
-                "配方标识,操作名称,操作指令,审核结果,优先级,状态变化,表现反馈",
+                "配方标识,操作名称,操作指令,抽象操作,生命周期,执行方式,阶段,审核结果,优先级,状态变化,表现反馈",
                 actions);
             StringAssert.DoesNotContain("生成项类型", actions);
             StringAssert.DoesNotContain("core.", actions);

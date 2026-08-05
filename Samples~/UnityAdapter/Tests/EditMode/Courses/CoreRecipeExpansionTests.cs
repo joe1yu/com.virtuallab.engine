@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Linq;
 using NUnit.Framework;
 using VirtualLab.Application.Courses;
@@ -58,6 +59,16 @@ namespace VirtualLab.Engine.Tests.Courses
 
             var grab = result.Model.Actions.Single(value =>
                 value.Definition.PolicyId == "策略.通用抓取.大试管");
+            Assert.That(grab.Definition.OperationId, Is.EqualTo("抓取"));
+            Assert.That(
+                grab.Definition.Lifecycle,
+                Is.EqualTo(SemanticActionLifecycle.Manipulation));
+            Assert.That(
+                grab.Definition.ExecutionModeId,
+                Is.EqualTo("直接操纵"));
+            Assert.That(
+                grab.Definition.Phase,
+                Is.EqualTo(SemanticActionPhase.Start));
             Assert.That(
                 grab.Provenance.Sources
                     .Select(value => value.Layer)
@@ -136,6 +147,61 @@ namespace VirtualLab.Engine.Tests.Courses
                     && value.Source.FileName == "操作.csv"
                     && value.Source.Line > 1),
                 Is.True);
+        }
+
+        [Test]
+        public void 操作表拒绝英文生命周期且不保留旧协议兼容()
+        {
+            var sourceDirectory = Path.GetFullPath(Path.Combine(
+                "Packages",
+                "com.virtuallab.engine",
+                "Samples~",
+                "UnityAdapter",
+                "Editor",
+                "Recipes",
+                "平台通用"));
+            var temporaryDirectory = Path.Combine(
+                Path.GetTempPath(),
+                "VirtualLab.RecipeLifecycle."
+                + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(temporaryDirectory);
+            try
+            {
+                foreach (var sourcePath in Directory.GetFiles(sourceDirectory))
+                {
+                    File.Copy(
+                        sourcePath,
+                        Path.Combine(
+                            temporaryDirectory,
+                            Path.GetFileName(sourcePath)));
+                }
+
+                var actionPath = Path.Combine(
+                    temporaryDirectory,
+                    "操作.csv");
+                var actions = File.ReadAllText(actionPath);
+                File.WriteAllText(
+                    actionPath,
+                    actions.Replace(
+                        ",操纵,直接操纵,开始,",
+                        ",Manipulation,直接操纵,开始,"));
+
+                Assert.That(
+                    () => new RecipePackageCsvLoader().Load(
+                        "平台通用",
+                        RecipeLayer.Platform,
+                        temporaryDirectory),
+                    Throws.TypeOf<InvalidOperationException>()
+                        .With.Message.Contains(
+                            "未注册操作生命周期“Manipulation”"));
+            }
+            finally
+            {
+                if (Directory.Exists(temporaryDirectory))
+                {
+                    Directory.Delete(temporaryDirectory, true);
+                }
+            }
         }
 
         private static CourseBlueprint ReadBlueprint(

@@ -304,6 +304,9 @@ namespace VirtualLab.Engine.Tests.Courses
             var request = new SemanticActionRequest(
                 "命令.准备器材",
                 "准备",
+                "操作.准备器材",
+                SemanticActionPhase.Complete,
+                0d,
                 "学生",
                 "器材",
                 null,
@@ -351,6 +354,9 @@ namespace VirtualLab.Engine.Tests.Courses
             var request = new SemanticActionRequest(
                 "命令.结束加热",
                 "结束加热",
+                "操作.加热",
+                SemanticActionPhase.Complete,
+                1d,
                 "学生",
                 "大试管",
                 "酒精灯",

@@ -212,6 +212,10 @@ namespace VirtualLab.Chemistry.Tests.Courses
 
             return ConfiguredActionDefinition.CreateGeneric(
                 ChemistrySemanticActionIds.BeginHeating,
+                "加热",
+                SemanticActionLifecycle.Continuous,
+                "保持加热",
+                SemanticActionPhase.Start,
                 Array.Empty<StructuredRuleDefinition>(),
                 new[]
                 {
@@ -241,6 +245,10 @@ namespace VirtualLab.Chemistry.Tests.Courses
 
             return ConfiguredActionDefinition.CreateGeneric(
                 ChemistrySemanticActionIds.EndHeating,
+                "加热",
+                SemanticActionLifecycle.Continuous,
+                "保持加热",
+                SemanticActionPhase.Complete,
                 Array.Empty<StructuredRuleDefinition>(),
                 new[]
                 {
@@ -253,21 +261,34 @@ namespace VirtualLab.Chemistry.Tests.Courses
 
         private static SemanticActionRequest Begin(string commandId)
         {
-            return Request(commandId, ChemistrySemanticActionIds.BeginHeating);
+            return Request(
+                commandId,
+                ChemistrySemanticActionIds.BeginHeating,
+                SemanticActionPhase.Start,
+                0d);
         }
 
         private static SemanticActionRequest End(string commandId)
         {
-            return Request(commandId, ChemistrySemanticActionIds.EndHeating);
+            return Request(
+                commandId,
+                ChemistrySemanticActionIds.EndHeating,
+                SemanticActionPhase.Complete,
+                1d);
         }
 
         private static SemanticActionRequest Request(
             string commandId,
-            string actionId)
+            string actionId,
+            SemanticActionPhase phase,
+            double occurredAtSeconds)
         {
             return new SemanticActionRequest(
                 commandId,
                 actionId,
+                "操作.加热",
+                phase,
+                occurredAtSeconds,
                 "学生",
                 "器材.试管",
                 "器材.酒精灯",

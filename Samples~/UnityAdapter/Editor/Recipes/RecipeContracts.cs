@@ -331,6 +331,10 @@ namespace VirtualLab.Unity.Authoring.Recipes
             IEnumerable<string> conditionIds,
             IEnumerable<string> resultIds,
             IEnumerable<string> presentationIds,
+            string operationId,
+            SemanticActionLifecycle lifecycle,
+            string executionModeId,
+            SemanticActionPhase phase,
             string semanticCommandId = "",
             int priority = 100,
             string reviewResult = "允许",
@@ -341,6 +345,10 @@ namespace VirtualLab.Unity.Authoring.Recipes
             ConditionIds = Copy(conditionIds);
             ResultIds = Copy(resultIds);
             PresentationIds = Copy(presentationIds);
+            OperationId = operationId ?? string.Empty;
+            Lifecycle = lifecycle;
+            ExecutionModeId = executionModeId ?? string.Empty;
+            Phase = phase;
             SemanticCommandId = semanticCommandId ?? string.Empty;
             Priority = priority;
             ReviewResult = reviewResult ?? string.Empty;
@@ -352,6 +360,10 @@ namespace VirtualLab.Unity.Authoring.Recipes
         public IReadOnlyList<string> ConditionIds { get; }
         public IReadOnlyList<string> ResultIds { get; }
         public IReadOnlyList<string> PresentationIds { get; }
+        public string OperationId { get; }
+        public SemanticActionLifecycle Lifecycle { get; }
+        public string ExecutionModeId { get; }
+        public SemanticActionPhase Phase { get; }
         public string SemanticCommandId { get; }
         public int Priority { get; }
         public string ReviewResult { get; }

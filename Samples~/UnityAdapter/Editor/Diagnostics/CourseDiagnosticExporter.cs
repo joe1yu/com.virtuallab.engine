@@ -104,6 +104,10 @@ namespace VirtualLab.Unity.Authoring.Diagnostics
             yield return Csv(
                 "策略ID",
                 "语义动作",
+                "抽象操作",
+                "生命周期",
+                "执行方式",
+                "阶段",
                 "源实体",
                 "目标实体",
                 "裁决",
@@ -117,6 +121,10 @@ namespace VirtualLab.Unity.Authoring.Diagnostics
                 yield return Csv(
                     value.PolicyId,
                     value.ActionId,
+                    value.OperationId,
+                    Lifecycle(value.Lifecycle),
+                    value.ExecutionModeId,
+                    Phase(value.Phase),
                     value.SourceEntityId,
                     value.TargetEntityId,
                     value.PolicyEffect,
@@ -126,6 +134,25 @@ namespace VirtualLab.Unity.Authoring.Diagnostics
                     value.PresentationGroupId);
             }
         }
+
+        private static string Lifecycle(SemanticActionLifecycle value) =>
+            value switch
+            {
+                SemanticActionLifecycle.Instant => "即时",
+                SemanticActionLifecycle.Continuous => "持续",
+                SemanticActionLifecycle.Manipulation => "操纵",
+                _ => throw new ArgumentOutOfRangeException(nameof(value))
+            };
+
+        private static string Phase(SemanticActionPhase value) =>
+            value switch
+            {
+                SemanticActionPhase.Start => "开始",
+                SemanticActionPhase.Observe => "观测",
+                SemanticActionPhase.Complete => "完成",
+                SemanticActionPhase.Cancel => "取消",
+                _ => throw new ArgumentOutOfRangeException(nameof(value))
+            };
 
         private static IEnumerable<string> Conditions(
             CourseBlueprintCompilationResult compilation)

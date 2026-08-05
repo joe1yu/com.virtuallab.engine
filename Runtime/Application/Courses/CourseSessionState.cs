@@ -893,6 +893,10 @@ namespace VirtualLab.Application.Courses
                 return $"{value.Sequence}:{Token(value.CommandId)}:{value.Tick.Value}:{Token(value.EventType)}:{payload}";
             });
             return $"{Token(request.CommandId)}{Token(request.ActionId)}"
+                + $"{Token(request.OperationInstanceId)}:{request.Phase}"
+                + ":" + request.OccurredAtSeconds.ToString(
+                    "R",
+                    CultureInfo.InvariantCulture)
                 + $"{Token(request.ActorEntityId)}{Token(request.SourceEntityId)}"
                 + $"{Token(request.TargetEntityId)}"
                 + ParametersCanonical(request.Parameters)
@@ -900,8 +904,19 @@ namespace VirtualLab.Application.Courses
                 + string.Join(
                     string.Empty,
                     result.RejectionCodes.Select(Token))
+                + ExecutionCanonical(result.Execution)
                 + string.Join(string.Empty, events);
         }
+
+        private static string ExecutionCanonical(
+            SemanticActionExecution execution) =>
+            execution == null
+                ? Token(null)
+                : Token(execution.OperationInstanceId)
+                    + Token(execution.OperationId)
+                    + $":{execution.Lifecycle}"
+                    + Token(execution.ExecutionModeId)
+                    + $":{execution.Phase}";
 
         private static string ParametersCanonical(
             IEnumerable<KeyValuePair<string, StructuredValue>> parameters) =>

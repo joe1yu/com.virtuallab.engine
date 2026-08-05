@@ -23,12 +23,20 @@ namespace VirtualLab.Application.Courses
     {
         public static ConfiguredActionDefinition CreateGeneric(
             string actionId,
+            string operationId,
+            SemanticActionLifecycle lifecycle,
+            string executionModeId,
+            SemanticActionPhase phase,
             IEnumerable<StructuredRuleDefinition> rules,
             IEnumerable<ConfiguredMutationDefinition> mutations)
         {
             return new ConfiguredActionDefinition(
                 actionId,
                 actionId,
+                operationId,
+                lifecycle,
+                executionModeId,
+                phase,
                 null,
                 null,
                 true,
@@ -43,6 +51,10 @@ namespace VirtualLab.Application.Courses
         public ConfiguredActionDefinition(
             string policyId,
             string actionId,
+            string operationId,
+            SemanticActionLifecycle lifecycle,
+            string executionModeId,
+            SemanticActionPhase phase,
             string sourceEntityId,
             string targetEntityId,
             IEnumerable<StructuredRuleDefinition> rules,
@@ -56,6 +68,10 @@ namespace VirtualLab.Application.Courses
             : this(
                 policyId,
                 actionId,
+                operationId,
+                lifecycle,
+                executionModeId,
+                phase,
                 sourceEntityId,
                 targetEntityId,
                 matchesAnyEntities,
@@ -71,6 +87,10 @@ namespace VirtualLab.Application.Courses
         public static ConfiguredActionDefinition CreatePolicy(
             string policyId,
             string actionId,
+            string operationId,
+            SemanticActionLifecycle lifecycle,
+            string executionModeId,
+            SemanticActionPhase phase,
             string sourceEntityId,
             string targetEntityId,
             int priority,
@@ -83,6 +103,10 @@ namespace VirtualLab.Application.Courses
             return new ConfiguredActionDefinition(
                 policyId,
                 actionId,
+                operationId,
+                lifecycle,
+                executionModeId,
+                phase,
                 sourceEntityId,
                 targetEntityId,
                 false,
@@ -97,6 +121,10 @@ namespace VirtualLab.Application.Courses
         private ConfiguredActionDefinition(
             string policyId,
             string actionId,
+            string operationId,
+            SemanticActionLifecycle lifecycle,
+            string executionModeId,
+            SemanticActionPhase phase,
             string sourceEntityId,
             string targetEntityId,
             bool matchesAnyEntities,
@@ -109,6 +137,24 @@ namespace VirtualLab.Application.Courses
         {
             PolicyId = CourseContractGuard.Required(policyId, "动作策略 ID");
             ActionId = CourseContractGuard.Required(actionId, "动作 ID");
+            OperationId = CourseContractGuard.Required(
+                operationId,
+                $"动作策略“{PolicyId}”的抽象操作 ID");
+            if (!Enum.IsDefined(typeof(SemanticActionLifecycle), lifecycle))
+            {
+                throw new ArgumentOutOfRangeException(nameof(lifecycle));
+            }
+
+            if (!Enum.IsDefined(typeof(SemanticActionPhase), phase))
+            {
+                throw new ArgumentOutOfRangeException(nameof(phase));
+            }
+
+            Lifecycle = lifecycle;
+            ExecutionModeId = CourseContractGuard.Required(
+                executionModeId,
+                $"动作策略“{PolicyId}”的执行方式 ID");
+            Phase = phase;
             if (priority < 0)
             {
                 throw new ArgumentOutOfRangeException(
@@ -162,6 +208,14 @@ namespace VirtualLab.Application.Courses
 
         public string ActionId { get; }
 
+        public string OperationId { get; }
+
+        public SemanticActionLifecycle Lifecycle { get; }
+
+        public string ExecutionModeId { get; }
+
+        public SemanticActionPhase Phase { get; }
+
         public string SourceEntityId { get; }
 
         public string TargetEntityId { get; }
@@ -191,6 +245,7 @@ namespace VirtualLab.Application.Courses
                     ActionId,
                     request.ActionId,
                     StringComparison.Ordinal)
+                && Phase == request.Phase
                 && (MatchesAnyEntities
                     || (string.Equals(
                             SourceEntityId,
@@ -355,7 +410,9 @@ namespace VirtualLab.Application.Courses
 
                 return Remember(
                     request,
-                    CommandResult.Accepted(events));
+                    CommandResult.Accepted(
+                        events,
+                        evaluated.Availability.Execution));
             }
             catch (ConfiguredStateOperationException exception)
             {
@@ -451,7 +508,8 @@ namespace VirtualLab.Application.Courses
                             ActionAvailabilityKind.Allowed,
                             null,
                             null,
-                            Array.Empty<string>()));
+                            Array.Empty<string>(),
+                            candidate));
                 }
 
                 if (blockedMessageId == null)
@@ -481,8 +539,17 @@ namespace VirtualLab.Application.Courses
             ActionAvailabilityKind kind,
             string rejectionCode,
             string messageId,
-            IEnumerable<string> rejectionCodes)
+            IEnumerable<string> rejectionCodes,
+            ConfiguredActionDefinition action = null)
         {
+            var execution = action == null
+                ? null
+                : new SemanticActionExecution(
+                    request.OperationInstanceId,
+                    action.OperationId,
+                    action.Lifecycle,
+                    action.ExecutionModeId,
+                    request.Phase);
             return new ActionAvailability(
                 request.ActionId,
                 request.ActorEntityId,
@@ -491,7 +558,8 @@ namespace VirtualLab.Application.Courses
                 kind,
                 rejectionCode,
                 messageId,
-                rejectionCodes);
+                rejectionCodes,
+                execution);
         }
 
         private static void AddUnique(
@@ -532,6 +600,9 @@ namespace VirtualLab.Application.Courses
                     var request = new SemanticActionRequest(
                         "表现状态评估:" + state.StateId,
                         "表现状态.评估",
+                        "表现状态评估操作:" + state.StateId,
+                        SemanticActionPhase.Complete,
+                        0d,
                         "系统",
                         state.ContextSourceEntityId,
                         state.ContextTargetEntityId,
@@ -650,6 +721,12 @@ namespace VirtualLab.Application.Courses
             SemanticActionRequest right)
         {
             if (!string.Equals(left.ActionId, right.ActionId, StringComparison.Ordinal)
+                || !string.Equals(
+                    left.OperationInstanceId,
+                    right.OperationInstanceId,
+                    StringComparison.Ordinal)
+                || left.Phase != right.Phase
+                || !left.OccurredAtSeconds.Equals(right.OccurredAtSeconds)
                 || !string.Equals(left.ActorEntityId, right.ActorEntityId, StringComparison.Ordinal)
                 || !string.Equals(left.SourceEntityId, right.SourceEntityId, StringComparison.Ordinal)
                 || !string.Equals(left.TargetEntityId, right.TargetEntityId, StringComparison.Ordinal)

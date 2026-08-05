@@ -19,6 +19,9 @@ namespace VirtualLab.Engine.Tests.Courses
             var request = new SemanticActionRequest(
                 "命令.0001",
                 "抓取",
+                "操作.0001",
+                SemanticActionPhase.Complete,
+                0d,
                 "学生",
                 "器材.试管",
                 null,

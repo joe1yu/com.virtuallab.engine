@@ -45,6 +45,9 @@ namespace VirtualLab.Engine.Tests.Courses
             var request = new SemanticActionRequest(
                 "命令.读取化学事实",
                 ChemistrySemanticActionIds.BeginPour,
+                "操作.读取化学事实",
+                SemanticActionPhase.Start,
+                0d,
                 "学生",
                 "药匙",
                 "火柴",
@@ -80,21 +83,31 @@ namespace VirtualLab.Engine.Tests.Courses
             var request = new SemanticActionRequest(
                 "命令.不规范加热",
                 "化学.开始加热",
+                "操作.不规范加热",
+                SemanticActionPhase.Start,
+                0d,
                 "学生",
                 "大试管",
                 "酒精灯",
                 Array.Empty<KeyValuePair<string, StructuredValue>>());
             var eventType = "实验风险.装置漏气";
-            var actionResult = CommandResult.Accepted(new[]
-            {
-                new DomainEventEnvelope(
-                    1,
-                    request.CommandId,
-                    new SimulationTick(0),
-                    new ConfiguredCourseDomainEvent(
-                        eventType,
-                        new Dictionary<string, StructuredValue>()))
-            });
+            var actionResult = CommandResult.Accepted(
+                new[]
+                {
+                    new DomainEventEnvelope(
+                        1,
+                        request.CommandId,
+                        new SimulationTick(0),
+                        new ConfiguredCourseDomainEvent(
+                            eventType,
+                            new Dictionary<string, StructuredValue>()))
+                },
+                new SemanticActionExecution(
+                    request.OperationInstanceId,
+                    "加热",
+                    SemanticActionLifecycle.Continuous,
+                    "持续加热",
+                    request.Phase));
 
             var result = evaluator.EvaluateAction(
                 World(),
@@ -140,6 +153,10 @@ namespace VirtualLab.Engine.Tests.Courses
                 null);
             var action = ConfiguredActionDefinition.CreateGeneric(
                 InteractionSemanticActionIds.Grab,
+                "抓取",
+                SemanticActionLifecycle.Instant,
+                "即时执行",
+                SemanticActionPhase.Complete,
                 new[]
                 {
                     Rule(
@@ -156,6 +173,9 @@ namespace VirtualLab.Engine.Tests.Courses
             var request = new SemanticActionRequest(
                 "命令.徒手抓高温器材",
                 InteractionSemanticActionIds.Grab,
+                "操作.徒手抓高温器材",
+                SemanticActionPhase.Complete,
+                0d,
                 "学生",
                 "器材.甲",
                 null,
@@ -197,6 +217,9 @@ namespace VirtualLab.Engine.Tests.Courses
             var safeRequest = new SemanticActionRequest(
                 "命令.抓取常温器材",
                 InteractionSemanticActionIds.Grab,
+                "操作.抓取常温器材",
+                SemanticActionPhase.Complete,
+                1d,
                 "学生",
                 "器材.甲",
                 null,
@@ -276,6 +299,9 @@ namespace VirtualLab.Engine.Tests.Courses
             var request = new SemanticActionRequest(
                 "命令.风险条件",
                 InteractionSemanticActionIds.Grab,
+                "操作.风险条件",
+                SemanticActionPhase.Complete,
+                0d,
                 "学生",
                 "器材.甲",
                 null,
@@ -317,6 +343,10 @@ namespace VirtualLab.Engine.Tests.Courses
                 null);
             var action = ConfiguredActionDefinition.CreateGeneric(
                 InteractionSemanticActionIds.Grab,
+                "抓取",
+                SemanticActionLifecycle.Instant,
+                "即时执行",
+                SemanticActionPhase.Complete,
                 new[]
                 {
                     Rule(
@@ -420,6 +450,9 @@ namespace VirtualLab.Engine.Tests.Courses
             new SemanticActionRequest(
                 commandId,
                 InteractionSemanticActionIds.Grab,
+                "操作." + commandId,
+                SemanticActionPhase.Complete,
+                0d,
                 "学生",
                 "器材.甲",
                 null,

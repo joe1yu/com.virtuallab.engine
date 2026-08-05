@@ -29,7 +29,8 @@ namespace VirtualLab.Application.Courses
             ActionAvailabilityKind kind,
             string rejectionCode,
             string messageId,
-            IEnumerable<string> rejectionCodes)
+            IEnumerable<string> rejectionCodes,
+            SemanticActionExecution execution)
         {
             if (!Enum.IsDefined(typeof(ActionAvailabilityKind), kind))
             {
@@ -48,6 +49,7 @@ namespace VirtualLab.Application.Courses
             RejectionCode = CourseContractGuard.Optional(rejectionCode);
             MessageId = CourseContractGuard.Optional(messageId);
             RejectionCodes = CopyRejectionCodes(rejectionCodes);
+            Execution = execution;
 
             if (IsAllowed &&
                 (RejectionCode != null || RejectionCodes.Count > 0))
@@ -55,6 +57,20 @@ namespace VirtualLab.Application.Courses
                 throw new ArgumentException(
                     "允许执行的动作不能包含拒绝原因。",
                     nameof(rejectionCodes));
+            }
+
+            if (IsAllowed && Execution == null)
+            {
+                throw new ArgumentException(
+                    "允许执行的动作必须包含设备无关执行计划。",
+                    nameof(execution));
+            }
+
+            if (!IsAllowed && Execution != null)
+            {
+                throw new ArgumentException(
+                    "不可执行的动作不能包含执行计划。",
+                    nameof(execution));
             }
 
             if (!IsAllowed && RejectionCode == null)
@@ -82,6 +98,8 @@ namespace VirtualLab.Application.Courses
         public string MessageId { get; }
 
         public IReadOnlyList<string> RejectionCodes { get; }
+
+        public SemanticActionExecution Execution { get; }
 
         private static IReadOnlyList<string> CopyRejectionCodes(
             IEnumerable<string> rejectionCodes)

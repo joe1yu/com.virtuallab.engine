@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using NUnit.Framework;
+using VirtualLab.Application.Courses;
 using VirtualLab.Unity.Authoring.Normalized;
 using VirtualLab.Unity.Authoring.Workbench;
 
@@ -53,6 +54,10 @@ namespace VirtualLab.Engine.Tests.Courses
                 new NormalizedActionDefinition(
                     "策略." + operationName,
                     "test.action",
+                    operationName,
+                    SemanticActionLifecycle.Instant,
+                    "即时执行",
+                    SemanticActionPhase.Complete,
                     sourceEntityId,
                     targetEntityId,
                     Array.Empty<string>(),

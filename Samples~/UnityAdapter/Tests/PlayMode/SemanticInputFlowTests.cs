@@ -59,12 +59,18 @@ namespace VirtualLab.Engine.PlayModeTests
                 var pointerRequest = pointer.CreateRequest(
                     "命令.0001",
                     intent.ActionId,
+                    "操作.0001",
+                    SemanticActionPhase.Complete,
+                    1d,
                     intent.ActorEntityId,
                     intent.SourceEntityId,
                     intent.TargetEntityId,
                     intent.Parameters);
                 var testRequest = mapper.Map(
                     "命令.0001",
+                    "操作.0001",
+                    SemanticActionPhase.Complete,
+                    1d,
                     intent,
                     facts.Measure(intent));
 
@@ -110,6 +116,9 @@ namespace VirtualLab.Engine.PlayModeTests
                 pointer.CreateRequest(
                     "命令.0002",
                     "抓取",
+                    "操作.0002",
+                    SemanticActionPhase.Complete,
+                    2d,
                     "学生",
                     "器材.试管",
                     null,
@@ -144,6 +153,10 @@ namespace VirtualLab.Engine.PlayModeTests
                     {
                         ConfiguredActionDefinition.CreateGeneric(
                             "抓取",
+                            "抓取",
+                            SemanticActionLifecycle.Instant,
+                            "即时执行",
+                            SemanticActionPhase.Complete,
                             Array.Empty<StructuredRuleDefinition>(),
                             Array.Empty<ConfiguredMutationDefinition>())
                     });
@@ -217,6 +230,9 @@ namespace VirtualLab.Engine.PlayModeTests
                     presenter);
                 var request = new SemanticActionGestureMapper().Map(
                     "命令.抓取",
+                    "操作.抓取",
+                    SemanticActionPhase.Complete,
+                    3d,
                     new SemanticInputIntent(
                         "抓取",
                         "学生",

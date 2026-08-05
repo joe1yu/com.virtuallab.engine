@@ -37,7 +37,8 @@ namespace VirtualLab.Engine.Tests.Courses
                 ActionAvailabilityKind.Disabled,
                 "课程.铁架台固定",
                 "文案.铁架台固定",
-                new[] { "课程.铁架台固定" });
+                new[] { "课程.铁架台固定" },
+                null);
 
             coordinator.PresentAvailability(request, availability);
 
@@ -102,6 +103,9 @@ namespace VirtualLab.Engine.Tests.Courses
             var request = new SemanticActionRequest(
                 "命令.动态抓取",
                 "抓取",
+                "操作.动态抓取",
+                SemanticActionPhase.Complete,
+                0d,
                 "学生",
                 "器材.试管",
                 "学生",
@@ -277,6 +281,9 @@ namespace VirtualLab.Engine.Tests.Courses
             var request = new SemanticActionRequest(
                 "命令.放下",
                 "放下",
+                "操作.放下",
+                SemanticActionPhase.Complete,
+                0d,
                 "学生",
                 "器材.试管",
                 "学生",
@@ -365,6 +372,10 @@ namespace VirtualLab.Engine.Tests.Courses
                     {
                     ConfiguredActionDefinition.CreateGeneric(
                         "抓取",
+                        "抓取",
+                        SemanticActionLifecycle.Instant,
+                        "即时执行",
+                        SemanticActionPhase.Complete,
                         Array.Empty<StructuredRuleDefinition>(),
                         new[]
                         {
@@ -384,6 +395,10 @@ namespace VirtualLab.Engine.Tests.Courses
                         }),
                     ConfiguredActionDefinition.CreateGeneric(
                         "放下",
+                        "放下",
+                        SemanticActionLifecycle.Instant,
+                        "即时执行",
+                        SemanticActionPhase.Complete,
                         Array.Empty<StructuredRuleDefinition>(),
                         new[]
                         {
@@ -568,6 +583,9 @@ namespace VirtualLab.Engine.Tests.Courses
             return new SemanticActionRequest(
                 commandId,
                 "抓取",
+                "操作." + commandId,
+                SemanticActionPhase.Complete,
+                0d,
                 "学生",
                 "器材.试管",
                 "学生",
