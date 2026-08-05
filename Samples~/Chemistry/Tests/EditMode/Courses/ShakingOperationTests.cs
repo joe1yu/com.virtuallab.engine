@@ -8,6 +8,7 @@ using VirtualLab.Domain;
 using VirtualLab.Domain.Capabilities;
 using VirtualLab.Domain.Entities;
 using VirtualLab.Domain.Relations;
+using VirtualLab.Interaction.Relations;
 using VirtualLab.Kernel;
 
 namespace VirtualLab.Chemistry.Tests.Courses

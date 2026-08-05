@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace VirtualLab.Application.Courses
+namespace VirtualLab.Interaction.Actions
 {
     /// <summary>
     /// 交互模块拥有的设备无关语义动作协议。

@@ -10,6 +10,7 @@ using VirtualLab.Domain.Capabilities;
 using VirtualLab.Domain.Entities;
 using VirtualLab.Domain.Events;
 using VirtualLab.Domain.Matter;
+using VirtualLab.Interaction.Capabilities;
 using VirtualLab.Kernel;
 
 namespace VirtualLab.Application

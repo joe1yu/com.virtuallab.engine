@@ -3,6 +3,8 @@ using VirtualLab.Domain;
 using VirtualLab.Domain.Capabilities;
 using VirtualLab.Domain.Entities;
 using VirtualLab.Domain.Relations;
+using VirtualLab.Interaction.Capabilities;
+using VirtualLab.Interaction.Relations;
 using VirtualLab.Kernel;
 
 namespace VirtualLab.Engine.Tests.Domain
@@ -12,6 +14,10 @@ namespace VirtualLab.Engine.Tests.Domain
         [Test]
         public void 交互能力由交互目录集中拥有且不保留核心入口()
         {
+            Assert.That(
+                typeof(InteractionCapabilityIds).Assembly.GetName().Name,
+                Is.EqualTo("VirtualLab.Interaction"),
+                "交互能力协议必须由独立交互程序集拥有。");
             CollectionAssert.AreEqual(
                 new[]
                 {
@@ -56,6 +62,10 @@ namespace VirtualLab.Engine.Tests.Domain
         [Test]
         public void Relation_graph_keeps_single_cover_for_a_container()
         {
+            Assert.That(
+                typeof(InteractionRelationSchemas).Assembly.GetName().Name,
+                Is.EqualTo("VirtualLab.Interaction"),
+                "交互关系协议必须由独立交互程序集拥有。");
             var graph = new RelationGraph(InteractionRelationSchemas.All);
             graph.Set(new EntityRelation(
                 InteractionRelationTypeIds.Cover,

@@ -4,6 +4,7 @@
   "references": [
     "VirtualLab.Application",
     "VirtualLab.Domain",
+    "VirtualLab.Interaction",
     "VirtualLab.UnityAdapters",
     "VirtualLab.Chemistry",
     "VirtualLab.Unity.Authoring",

@@ -4,7 +4,8 @@
   "references": [
     "VirtualLab.Kernel",
     "VirtualLab.Domain",
-    "VirtualLab.Application"
+    "VirtualLab.Application",
+    "VirtualLab.Interaction"
   ],
   "overrideReferences": true,
   "precompiledReferences": [

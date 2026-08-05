@@ -6,6 +6,7 @@ using VirtualLab.Application.Commands;
 using VirtualLab.Application.Events;
 using VirtualLab.Domain;
 using VirtualLab.Domain.Processes;
+using VirtualLab.Interaction.Actions;
 using VirtualLab.Kernel;
 
 namespace VirtualLab.Application.Courses

@@ -18,10 +18,15 @@ namespace VirtualLab.Engine.Tests.Architecture
                 {
                     "VirtualLab.Kernel"
                 },
+                ["VirtualLab.Interaction"] = new[]
+                {
+                    "VirtualLab.Domain"
+                },
                 ["VirtualLab.Application"] = new[]
                 {
                     "VirtualLab.Kernel",
-                    "VirtualLab.Domain"
+                    "VirtualLab.Domain",
+                    "VirtualLab.Interaction"
                 },
                 ["VirtualLab.Presentation"] = Array.Empty<string>(),
                 ["VirtualLab.Infrastructure"] = new[]
@@ -34,13 +39,15 @@ namespace VirtualLab.Engine.Tests.Architecture
                 {
                     "VirtualLab.Kernel",
                     "VirtualLab.Domain",
-                    "VirtualLab.Application"
+                    "VirtualLab.Application",
+                    "VirtualLab.Interaction"
                 },
                 ["VirtualLab.UnityAdapters"] = new[]
                 {
                     "VirtualLab.Kernel",
                     "VirtualLab.Domain",
                     "VirtualLab.Application",
+                    "VirtualLab.Interaction",
                     "VirtualLab.Presentation",
                     "Unity.ugui"
                 },

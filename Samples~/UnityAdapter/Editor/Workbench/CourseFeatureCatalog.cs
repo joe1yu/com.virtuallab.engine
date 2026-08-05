@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using VirtualLab.Domain.Capabilities;
+using VirtualLab.Interaction.Capabilities;
 using VirtualLab.Unity.Authoring.Recipes;
 
 namespace VirtualLab.Unity.Authoring.Workbench

@@ -12,6 +12,8 @@ using VirtualLab.Domain.Matter;
 using VirtualLab.Domain.Events;
 using VirtualLab.Domain.Processes;
 using VirtualLab.Domain.Relations;
+using VirtualLab.Interaction.Capabilities;
+using VirtualLab.Interaction.Relations;
 using VirtualLab.Kernel;
 
 namespace VirtualLab.Chemistry.Tests.Courses

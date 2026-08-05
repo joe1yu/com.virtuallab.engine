@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace VirtualLab.Domain.Capabilities
+namespace VirtualLab.Interaction.Capabilities
 {
     /// <summary>
     /// 交互模块拥有的能力协议标识。

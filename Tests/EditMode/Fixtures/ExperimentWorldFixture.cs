@@ -1,6 +1,7 @@
 using VirtualLab.Domain;
 using VirtualLab.Domain.Capabilities;
 using VirtualLab.Domain.Entities;
+using VirtualLab.Interaction.Capabilities;
 using VirtualLab.Kernel;
 
 namespace VirtualLab.Engine.Tests.Fixtures

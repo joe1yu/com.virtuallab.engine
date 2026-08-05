@@ -10,6 +10,8 @@ using VirtualLab.Chemistry.Configuration;
 using VirtualLab.Domain;
 using VirtualLab.Domain.Matter;
 using VirtualLab.Domain.Relations;
+using VirtualLab.Interaction.Actions;
+using VirtualLab.Interaction.Relations;
 using VirtualLab.Kernel;
 using VirtualLab.OxygenCourse.Authoring;
 using VirtualLab.Unity.Authoring.Blueprints;

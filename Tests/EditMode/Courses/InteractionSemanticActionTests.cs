@@ -7,6 +7,9 @@ using VirtualLab.Domain;
 using VirtualLab.Domain.Capabilities;
 using VirtualLab.Domain.Entities;
 using VirtualLab.Domain.Relations;
+using VirtualLab.Interaction.Actions;
+using VirtualLab.Interaction.Capabilities;
+using VirtualLab.Interaction.Relations;
 using VirtualLab.Kernel;
 
 namespace VirtualLab.Engine.Tests.Courses
@@ -16,6 +19,10 @@ namespace VirtualLab.Engine.Tests.Courses
         [Test]
         public void 交互动作由交互模块集中拥有且不保留核心入口()
         {
+            Assert.That(
+                typeof(InteractionSemanticActionIds).Assembly.GetName().Name,
+                Is.EqualTo("VirtualLab.Interaction"),
+                "交互动作协议必须由独立交互程序集拥有。");
             Assert.That(InteractionSemanticActionIds.Grab, Is.EqualTo("抓取"));
             Assert.That(InteractionSemanticActionIds.Release, Is.EqualTo("释放"));
             Assert.That(InteractionSemanticActionIds.Place, Is.EqualTo("放置"));

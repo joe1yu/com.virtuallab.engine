@@ -1,0 +1,8 @@
+{
+  "name": "VirtualLab.Interaction",
+  "rootNamespace": "VirtualLab.Interaction",
+  "references": [
+    "VirtualLab.Domain"
+  ],
+  "autoReferenced": true
+}

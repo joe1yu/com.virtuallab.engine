@@ -4,6 +4,7 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using VirtualLab.Application.Courses;
+using VirtualLab.Interaction.Actions;
 using VirtualLab.UnityAdapters.Authoring;
 using VirtualLab.UnityAdapters.Courses;
 using VirtualLab.UnityAdapters.Presentation;

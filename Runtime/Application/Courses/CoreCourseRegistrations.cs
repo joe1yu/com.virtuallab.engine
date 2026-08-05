@@ -6,6 +6,8 @@ using VirtualLab.Domain.Capabilities;
 using VirtualLab.Domain.Entities;
 using VirtualLab.Domain.Matter;
 using VirtualLab.Domain.Relations;
+using VirtualLab.Interaction.Capabilities;
+using VirtualLab.Interaction.Relations;
 using VirtualLab.Kernel;
 
 namespace VirtualLab.Application.Courses

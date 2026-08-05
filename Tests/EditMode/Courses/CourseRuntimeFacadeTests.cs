@@ -8,6 +8,7 @@ using VirtualLab.Domain.Entities;
 using VirtualLab.Domain.Events;
 using VirtualLab.Domain.Processes;
 using VirtualLab.Infrastructure.Reporting;
+using VirtualLab.Interaction.Actions;
 using VirtualLab.Kernel;
 
 namespace VirtualLab.Engine.Tests.Courses

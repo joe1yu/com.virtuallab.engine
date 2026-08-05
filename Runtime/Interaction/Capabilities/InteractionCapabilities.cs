@@ -2,8 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using VirtualLab.Domain.Capabilities;
 
-namespace VirtualLab.Domain.Capabilities
+namespace VirtualLab.Interaction.Capabilities
 {
     /// <summary>
     /// 实体可以被操作者抓取。

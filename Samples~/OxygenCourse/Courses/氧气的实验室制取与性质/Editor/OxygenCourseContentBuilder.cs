@@ -13,6 +13,7 @@ using VirtualLab.Chemistry.Authoring;
 using VirtualLab.Chemistry.Configuration;
 using VirtualLab.Chemistry.UnityAdapters;
 using VirtualLab.Domain.Capabilities;
+using VirtualLab.Interaction.Capabilities;
 using VirtualLab.Unity.Authoring.Blueprints;
 using VirtualLab.Unity.Authoring.Diagnostics;
 using VirtualLab.Unity.Authoring.Generation;

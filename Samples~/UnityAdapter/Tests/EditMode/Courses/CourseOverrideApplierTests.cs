@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using NUnit.Framework;
 using VirtualLab.Application.Courses;
+using VirtualLab.Interaction.Actions;
 using VirtualLab.Unity.Authoring.Blueprints;
 using VirtualLab.Unity.Authoring.Diagnostics;
 using VirtualLab.Unity.Authoring.Recipes;

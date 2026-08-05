@@ -11,6 +11,7 @@ using VirtualLab.Domain.Capabilities;
 using VirtualLab.Domain.Entities;
 using VirtualLab.Domain.Events;
 using VirtualLab.Engine.Tests.Fixtures;
+using VirtualLab.Interaction.Capabilities;
 using VirtualLab.Kernel;
 
 namespace VirtualLab.Engine.Tests.Application

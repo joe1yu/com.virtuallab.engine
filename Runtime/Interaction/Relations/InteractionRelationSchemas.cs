@@ -1,9 +1,11 @@
 using System.Collections.Generic;
+using VirtualLab.Domain.Relations;
 
-namespace VirtualLab.Domain.Relations
+namespace VirtualLab.Interaction.Relations
 {
     /// <summary>
-    /// 交互模块拥有的关系类型标识。集中定义便于后续整体迁入独立交互模块程序集。
+    /// 交互模块拥有的关系类型标识。课程与适配器只能引用这里的稳定协议，
+    /// 不应复制关系标识文本。
     /// </summary>
     public static class InteractionRelationTypeIds
     {

@@ -3,7 +3,8 @@
   "rootNamespace": "VirtualLab.Application",
   "references": [
     "VirtualLab.Kernel",
-    "VirtualLab.Domain"
+    "VirtualLab.Domain",
+    "VirtualLab.Interaction"
   ],
   "autoReferenced": true
 }
