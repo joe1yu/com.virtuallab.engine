@@ -51,26 +51,4 @@ namespace VirtualLab.Application.Courses
         private static StructuredFactField New(string id) =>
             new StructuredFactField(id);
     }
-
-    /// <summary>
-    /// 教学模块暂时拥有的课程进度事实。后续迁移会把统一进度标量
-    /// 替换为模块声明的具体状态，届时同步删除这组字段。
-    /// </summary>
-    public static class TeachingStructuredFactFields
-    {
-        public static readonly StructuredFactField 来源对象进度 =
-            New("来源对象进度");
-        public static readonly StructuredFactField 目标对象进度 =
-            New("目标对象进度");
-
-        public static IReadOnlyList<StructuredFactField> All { get; } =
-            Array.AsReadOnly(new[]
-            {
-                来源对象进度,
-                目标对象进度
-            });
-
-        private static StructuredFactField New(string id) =>
-            new StructuredFactField(id);
-    }
 }

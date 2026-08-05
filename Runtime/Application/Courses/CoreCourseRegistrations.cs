@@ -128,12 +128,6 @@ namespace VirtualLab.Application.Courses
                 new CapabilityFactReader(
                     CoreStructuredFactFields.目标对象能力,
                     context => context.Request.TargetEntityId),
-                new ProgressFactReader(
-                    TeachingStructuredFactFields.来源对象进度,
-                    context => context.Request.SourceEntityId),
-                new ProgressFactReader(
-                    TeachingStructuredFactFields.目标对象进度,
-                    context => context.Request.TargetEntityId),
                 new RequestParameterFactReader(
                     SpatialStructuredFactFields.对象正在接触,
                     对象正在接触Parameter,
@@ -213,35 +207,6 @@ namespace VirtualLab.Application.Courses
             {
                 return CapabilityIds(
                     FindEntity(context, _idSelector(context)));
-            }
-        }
-
-        private sealed class ProgressFactReader : IStructuredFactReader
-        {
-            private readonly Func<StructuredRuleContext, string> _idSelector;
-
-            public ProgressFactReader(
-                StructuredFactField field,
-                Func<StructuredRuleContext, string> idSelector)
-            {
-                Field = field;
-                _idSelector = idSelector;
-            }
-
-            public StructuredFactField Field { get; }
-
-            public StructuredValue Read(StructuredRuleContext context)
-            {
-                var selectedId = _idSelector(context);
-                if (string.IsNullOrWhiteSpace(selectedId))
-                {
-                    return StructuredValue.FromNumber(0d);
-                }
-
-                var key = selectedId + ".课程进度";
-                return context.World.TryGetScalar(key, out var progress)
-                    ? StructuredValue.FromNumber(progress.Value)
-                    : StructuredValue.FromNumber(0d);
             }
         }
 

@@ -6,6 +6,7 @@ using VirtualLab.Domain;
 using VirtualLab.Domain.Matter;
 using VirtualLab.Interaction.Courses;
 using VirtualLab.Kernel;
+using VirtualLab.Teaching.Courses;
 
 namespace VirtualLab.Chemistry.Courses
 {
@@ -169,6 +170,7 @@ namespace VirtualLab.Chemistry.Courses
             return CourseRuntimeModuleScope.Create(
                 new CoreCourseRuntimeModule(),
                 new InteractionCourseRuntimeModule(),
+                new TeachingCourseRuntimeModule(),
                 new ChemistryCourseRuntimeModule(
                     matterTransferOperations,
                     combustionOperations,

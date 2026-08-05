@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using VirtualLab.Application.Courses;
 using VirtualLab.Interaction.Courses;
+using VirtualLab.Teaching.Courses;
 using UnityEditor.Compilation;
 
 namespace VirtualLab.Unity.Authoring.Recipes
@@ -20,7 +21,8 @@ namespace VirtualLab.Unity.Authoring.Recipes
             new[]
             {
                 CourseModuleIds.Core,
-                InteractionModuleIds.Interaction
+                InteractionModuleIds.Interaction,
+                TeachingModuleIds.Teaching
             };
 
         public RecipePackage Load()

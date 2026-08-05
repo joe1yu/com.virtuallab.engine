@@ -10,6 +10,7 @@ using VirtualLab.Domain.Processes;
 using VirtualLab.Infrastructure.Reporting;
 using VirtualLab.Interaction.Actions;
 using VirtualLab.Kernel;
+using VirtualLab.Teaching.Courses;
 
 namespace VirtualLab.Engine.Tests.Courses
 {
@@ -282,7 +283,7 @@ namespace VirtualLab.Engine.Tests.Courses
                         "设置标量",
                         Parameters(
                             ("状态键", StructuredValue.FromText(
-                                "器材.课程进度")),
+                                TeachingStateKeys.EntityProgress("器材"))),
                             ("数值", StructuredValue.FromNumber(1d)),
                             ("单位", StructuredValue.FromText("进度")))),
                     new ConfiguredMutationDefinition(

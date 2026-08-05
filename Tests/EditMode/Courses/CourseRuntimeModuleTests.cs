@@ -12,6 +12,7 @@ using VirtualLab.Interaction.Capabilities;
 using VirtualLab.Interaction.Courses;
 using VirtualLab.Interaction.Relations;
 using VirtualLab.Kernel;
+using VirtualLab.Teaching.Courses;
 
 namespace VirtualLab.Engine.Tests.Courses
 {
@@ -182,7 +183,7 @@ namespace VirtualLab.Engine.Tests.Courses
         }
 
         [Test]
-        public void 交互关系和事实只由显式交互模块安装()
+        public void 交互与教学事实只由各自显式模块安装()
         {
             var core = CoreCourseRegistrations.CreateModuleScope();
             Assert.That(core.RelationSchemas, Is.Empty);
@@ -190,6 +191,22 @@ namespace VirtualLab.Engine.Tests.Courses
                 core.FactReaders.Select(value => value.Field)
                     .Intersect(InteractionStructuredFactFields.All),
                 Is.Empty);
+            Assert.That(
+                core.FactReaders.Select(value => value.Field)
+                    .Intersect(TeachingStructuredFactFields.All),
+                Is.Empty);
+
+            var teaching = TeachingCourseRegistrations.CreateModuleScope();
+            Assert.That(
+                teaching.Manifests.Select(value => value.ModuleId),
+                Is.EqualTo(new[]
+                {
+                    CourseModuleIds.Core,
+                    TeachingModuleIds.Teaching
+                }));
+            Assert.That(
+                teaching.FactReaders.Select(value => value.Field),
+                Is.SupersetOf(TeachingStructuredFactFields.All));
 
             var interaction = InteractionCourseRegistrations
                 .CreateModuleScope();

@@ -6,7 +6,8 @@
     "VirtualLab.Domain",
     "VirtualLab.Application",
     "VirtualLab.Interaction",
-    "VirtualLab.Interaction.Courses"
+    "VirtualLab.Interaction.Courses",
+    "VirtualLab.Teaching.Courses"
   ],
   "overrideReferences": true,
   "precompiledReferences": [

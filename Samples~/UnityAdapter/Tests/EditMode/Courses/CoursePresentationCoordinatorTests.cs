@@ -11,6 +11,7 @@ using VirtualLab.Interaction.Relations;
 using VirtualLab.Interaction.Courses;
 using VirtualLab.Kernel;
 using VirtualLab.Presentation;
+using VirtualLab.Teaching.Courses;
 using VirtualLab.UnityAdapters.Presentation;
 
 namespace VirtualLab.Engine.Tests.Courses
@@ -325,7 +326,7 @@ namespace VirtualLab.Engine.Tests.Courses
             coordinator.InitializeOrRestore();
             calls.Clear();
             world.SetScalar(
-                "器材.试管.课程进度",
+                TeachingStateKeys.EntityProgress("器材.试管"),
                 1,
                 new WorldScalarUnit("进度"),
                 0,
@@ -617,7 +618,8 @@ namespace VirtualLab.Engine.Tests.Courses
 
             public StructuredValue Read(StructuredRuleContext context)
             {
-                var key = context.Request.SourceEntityId + ".课程进度";
+                var key = TeachingStateKeys.EntityProgress(
+                    context.Request.SourceEntityId);
                 return context.World.TryGetScalar(key, out var value)
                     ? StructuredValue.FromNumber(value.Value)
                     : StructuredValue.FromNumber(0);

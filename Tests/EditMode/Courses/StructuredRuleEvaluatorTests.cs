@@ -4,6 +4,7 @@ using NUnit.Framework;
 using VirtualLab.Application.Courses;
 using VirtualLab.Domain;
 using VirtualLab.Interaction.Courses;
+using VirtualLab.Teaching.Courses;
 
 namespace VirtualLab.Engine.Tests.Courses
 {

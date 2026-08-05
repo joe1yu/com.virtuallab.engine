@@ -12,6 +12,7 @@ using VirtualLab.Interaction.Capabilities;
 using VirtualLab.Interaction.Courses;
 using VirtualLab.Interaction.Relations;
 using VirtualLab.Kernel;
+using VirtualLab.Teaching.Courses;
 
 namespace VirtualLab.Engine.Tests.Courses
 {
@@ -302,7 +303,7 @@ namespace VirtualLab.Engine.Tests.Courses
                 "目标",
                 "学生"));
             world.SetScalar(
-                "目标.课程进度",
+                TeachingStateKeys.EntityProgress("目标"),
                 2d,
                 new WorldScalarUnit("进度"),
                 null,
@@ -310,8 +311,10 @@ namespace VirtualLab.Engine.Tests.Courses
             var context = new StructuredRuleContext(
                 Request("命令.检查目标事实", "test.inspect", "来源", "目标"),
                 world);
-            var readers = InteractionCourseRegistrations
-                .CreateModuleScope().FactReaders;
+            var readers = CourseRuntimeModuleScope.Create(
+                new CoreCourseRuntimeModule(),
+                new InteractionCourseRuntimeModule(),
+                new TeachingCourseRuntimeModule()).FactReaders;
 
             Assert.That(
                 readers.Single(value =>

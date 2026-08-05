@@ -1,0 +1,9 @@
+{
+  "name": "VirtualLab.Teaching.Courses",
+  "rootNamespace": "VirtualLab.Teaching.Courses",
+  "references": [
+    "VirtualLab.Domain",
+    "VirtualLab.Application"
+  ],
+  "autoReferenced": true
+}

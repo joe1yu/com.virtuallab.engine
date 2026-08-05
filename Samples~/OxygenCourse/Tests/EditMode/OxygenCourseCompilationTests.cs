@@ -7,6 +7,7 @@ using UnityEditor;
 using UnityEngine;
 using VirtualLab.Application.Courses;
 using VirtualLab.Interaction.Courses;
+using VirtualLab.Teaching.Courses;
 using VirtualLab.Chemistry.Authoring;
 using VirtualLab.Chemistry.Courses;
 using VirtualLab.OxygenCourse.Authoring;
@@ -51,7 +52,8 @@ namespace VirtualLab.Engine.Tests.Courses
                 {
                     CourseModuleIds.Core,
                     InteractionModuleIds.Interaction,
-                    ChemistryModuleIds.Chemistry
+                    ChemistryModuleIds.Chemistry,
+                    TeachingModuleIds.Teaching
                 }));
             var suckBack = result.Domain.ActionAssessments.Single(value =>
                 value.RiskId == "风险.冷凝水倒吸");
