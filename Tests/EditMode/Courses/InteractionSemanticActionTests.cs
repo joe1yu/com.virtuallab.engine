@@ -11,21 +11,30 @@ using VirtualLab.Kernel;
 
 namespace VirtualLab.Engine.Tests.Courses
 {
-    public sealed class CoreSemanticActionTests
+    public sealed class InteractionSemanticActionTests
     {
         [Test]
-        public void 核心动作ID是与输入设备无关的稳定协议()
+        public void 交互动作由交互模块集中拥有且不保留核心入口()
         {
-            Assert.That(CoreSemanticActionIds.Grab, Is.EqualTo("抓取"));
-            Assert.That(CoreSemanticActionIds.Release, Is.EqualTo("释放"));
-            Assert.That(CoreSemanticActionIds.Place, Is.EqualTo("放置"));
-            Assert.That(CoreSemanticActionIds.Take, Is.EqualTo("拿出"));
-            Assert.That(CoreSemanticActionIds.Position, Is.EqualTo("定位"));
-            Assert.That(CoreSemanticActionIds.Cover, Is.EqualTo("覆盖"));
-            Assert.That(CoreSemanticActionIds.Uncover, Is.EqualTo("揭开"));
-            Assert.That(CoreSemanticActionIds.Connect, Is.EqualTo("连接"));
-            Assert.That(CoreSemanticActionIds.Disconnect, Is.EqualTo("断开"));
-            Assert.That(CoreSemanticActionIds.Observe, Is.EqualTo("观察"));
+            Assert.That(InteractionSemanticActionIds.Grab, Is.EqualTo("抓取"));
+            Assert.That(InteractionSemanticActionIds.Release, Is.EqualTo("释放"));
+            Assert.That(InteractionSemanticActionIds.Place, Is.EqualTo("放置"));
+            Assert.That(InteractionSemanticActionIds.Take, Is.EqualTo("拿出"));
+            Assert.That(InteractionSemanticActionIds.Position, Is.EqualTo("定位"));
+            Assert.That(InteractionSemanticActionIds.Cover, Is.EqualTo("覆盖"));
+            Assert.That(InteractionSemanticActionIds.Uncover, Is.EqualTo("揭开"));
+            Assert.That(InteractionSemanticActionIds.Connect, Is.EqualTo("连接"));
+            Assert.That(InteractionSemanticActionIds.Disconnect, Is.EqualTo("断开"));
+            Assert.That(InteractionSemanticActionIds.Observe, Is.EqualTo("观察"));
+            Assert.That(
+                InteractionSemanticActionIds.All.Distinct().Count(),
+                Is.EqualTo(InteractionSemanticActionIds.All.Count),
+                "交互动作标识不能重复。");
+            Assert.That(
+                typeof(InteractionSemanticActionIds).Assembly.GetType(
+                    "VirtualLab.Application.Courses.CoreSemanticActionIds"),
+                Is.Null,
+                "迁移后不能保留旧核心动作目录。");
         }
 
         [Test]
@@ -44,7 +53,7 @@ namespace VirtualLab.Engine.Tests.Courses
             var session = Session(world, GrabAction());
 
             var accepted = session.Execute(
-                Request("命令.抓取", CoreSemanticActionIds.Grab, "器材.试管", "器材.桌面"));
+                Request("命令.抓取", InteractionSemanticActionIds.Grab, "器材.试管", "器材.桌面"));
 
             Assert.That(accepted.IsAccepted, Is.True);
             Assert.That(
@@ -52,14 +61,14 @@ namespace VirtualLab.Engine.Tests.Courses
                 Is.EqualTo(new EntityId("学生")));
 
             var alreadyHeld = session.Execute(
-                Request("命令.重复抓取", CoreSemanticActionIds.Grab, "器材.试管", "学生"));
+                Request("命令.重复抓取", InteractionSemanticActionIds.Grab, "器材.试管", "学生"));
             Assert.That(alreadyHeld.IsAccepted, Is.False);
             Assert.That(alreadyHeld.RejectionCodes, Does.Contain("器材已被持有"));
             Assert.That(world.Relations, Has.Count.EqualTo(1));
 
             var missingWorld = WorldWith(Entity("学生"));
             var missingResult = Session(missingWorld, GrabAction()).Execute(
-                Request("命令.抓不存在器材", CoreSemanticActionIds.Grab, "器材.不存在", "学生"));
+                Request("命令.抓不存在器材", InteractionSemanticActionIds.Grab, "器材.不存在", "学生"));
             Assert.That(missingResult.RejectionCodes, Does.Contain("来源实体不存在"));
             Assert.That(missingWorld.Relations, Is.Empty);
         }
@@ -79,14 +88,14 @@ namespace VirtualLab.Engine.Tests.Courses
             var rejected = session.Execute(
                 Request(
                     "命令.他人释放",
-                    CoreSemanticActionIds.Release,
+                    InteractionSemanticActionIds.Release,
                     "器材.试管",
                     null,
                     "另一学生"));
             Assert.That(rejected.IsAccepted, Is.False);
 
             var accepted = session.Execute(
-                Request("命令.释放", CoreSemanticActionIds.Release, "器材.试管", null));
+                Request("命令.释放", InteractionSemanticActionIds.Release, "器材.试管", null));
 
             Assert.That(accepted.IsAccepted, Is.True);
             Assert.That(
@@ -126,7 +135,7 @@ namespace VirtualLab.Engine.Tests.Courses
             var rejected = session.Execute(
                 Request(
                     "命令.错误连接",
-                    CoreSemanticActionIds.Connect,
+                    InteractionSemanticActionIds.Connect,
                     "端口.来源",
                     "端口.错误目标",
                     ("空间距离米", StructuredValue.FromNumber(0.5d))));
@@ -140,7 +149,7 @@ namespace VirtualLab.Engine.Tests.Courses
             var disconnected = session.Execute(
                 Request(
                     "命令.断开指定端口",
-                    CoreSemanticActionIds.Disconnect,
+                    InteractionSemanticActionIds.Disconnect,
                     "端口.来源",
                     "端口.已连接"));
             Assert.That(disconnected.IsAccepted, Is.True);
@@ -152,7 +161,7 @@ namespace VirtualLab.Engine.Tests.Courses
             var connected = session.Execute(
                 Request(
                     "命令.正确连接",
-                    CoreSemanticActionIds.Connect,
+                    InteractionSemanticActionIds.Connect,
                     "端口.空闲来源",
                     "端口.兼容目标",
                     ("空间距离米", StructuredValue.FromNumber(0.05d))));
@@ -162,7 +171,7 @@ namespace VirtualLab.Engine.Tests.Courses
             var occupiedTarget = session.Execute(
                 Request(
                     "命令.目标已占用",
-                    CoreSemanticActionIds.Connect,
+                    InteractionSemanticActionIds.Connect,
                     "端口.来源",
                     "端口.兼容目标",
                     ("空间距离米", StructuredValue.FromNumber(0.05d))));
@@ -207,13 +216,13 @@ namespace VirtualLab.Engine.Tests.Courses
 
             var stopperToTube = session.Execute(Request(
                 "命令.橡皮塞连接试管",
-                CoreSemanticActionIds.Connect,
+                InteractionSemanticActionIds.Connect,
                 "单孔橡皮塞",
                 "大试管",
                 ("空间距离米", StructuredValue.FromNumber(0.01d))));
             var pipeToStopper = session.Execute(Request(
                 "命令.导气管连接橡皮塞",
-                CoreSemanticActionIds.Connect,
+                InteractionSemanticActionIds.Connect,
                 "导气管",
                 "单孔橡皮塞",
                 ("空间距离米", StructuredValue.FromNumber(0.01d))));
@@ -245,14 +254,14 @@ namespace VirtualLab.Engine.Tests.Courses
             var placed = session.Execute(
                 Request(
                     "命令.放置",
-                    CoreSemanticActionIds.Place,
+                    InteractionSemanticActionIds.Place,
                     "器材.试管架",
                     "器材.试管",
                     ("空间接触", StructuredValue.FromBoolean(true))));
             var covered = session.Execute(
                 Request(
                     "命令.覆盖",
-                    CoreSemanticActionIds.Cover,
+                    InteractionSemanticActionIds.Cover,
                     "器材.瓶塞",
                     "器材.集气瓶",
                     ("空间接触", StructuredValue.FromBoolean(true))));
@@ -320,19 +329,19 @@ namespace VirtualLab.Engine.Tests.Courses
 
             var first = session.Execute(Request(
                 "命令.放置第一只集气瓶",
-                CoreSemanticActionIds.Place,
+                InteractionSemanticActionIds.Place,
                 "集气瓶一",
                 "水槽",
                 ("空间接触", StructuredValue.FromBoolean(true))));
             var second = session.Execute(Request(
                 "命令.放置第二只集气瓶",
-                CoreSemanticActionIds.Place,
+                InteractionSemanticActionIds.Place,
                 "集气瓶二",
                 "水槽",
                 ("空间接触", StructuredValue.FromBoolean(true))));
             var duplicateLocation = session.Execute(Request(
                 "命令.重复放置第一只集气瓶",
-                CoreSemanticActionIds.Place,
+                InteractionSemanticActionIds.Place,
                 "集气瓶一",
                 "实验台",
                 ("空间接触", StructuredValue.FromBoolean(true))));
@@ -357,7 +366,7 @@ namespace VirtualLab.Engine.Tests.Courses
         private static ConfiguredActionDefinition GrabAction()
         {
             return Action(
-                CoreSemanticActionIds.Grab,
+                InteractionSemanticActionIds.Grab,
                 new[]
                 {
                     Rule(10, CoreStructuredFactFields.来源对象存在, StructuredRuleOperator.等于, StructuredValue.FromBoolean(true), "来源实体不存在"),
@@ -374,7 +383,7 @@ namespace VirtualLab.Engine.Tests.Courses
         private static ConfiguredActionDefinition ReleaseAction()
         {
             return Action(
-                CoreSemanticActionIds.Release,
+                InteractionSemanticActionIds.Release,
                 new[]
                 {
                     Rule(10, InteractionStructuredFactFields.来源对象已被操作者拿起, StructuredRuleOperator.等于, StructuredValue.FromBoolean(true), "器材不是当前主体持有")
@@ -389,7 +398,7 @@ namespace VirtualLab.Engine.Tests.Courses
         private static ConfiguredActionDefinition ConnectAction()
         {
             return Action(
-                CoreSemanticActionIds.Connect,
+                InteractionSemanticActionIds.Connect,
                 new[]
                 {
                     Rule(10, InteractionStructuredFactFields.来源连接点占用状态, StructuredRuleOperator.为空, StructuredValue.Null(), "来源端口已占用"),
@@ -403,7 +412,7 @@ namespace VirtualLab.Engine.Tests.Courses
         private static ConfiguredActionDefinition DisconnectAction()
         {
             return Action(
-                CoreSemanticActionIds.Disconnect,
+                InteractionSemanticActionIds.Disconnect,
                 Array.Empty<StructuredRuleDefinition>(),
                 Mutation("移除端口连接", ConfiguredStateOperationIds.RelationRemove, ("关系类型", StructuredValue.FromText("连接对象"))));
         }
@@ -411,7 +420,7 @@ namespace VirtualLab.Engine.Tests.Courses
         private static ConfiguredActionDefinition PlaceAction()
         {
             return Action(
-                CoreSemanticActionIds.Place,
+                InteractionSemanticActionIds.Place,
                 new[]
                 {
                     Rule(10, SpatialStructuredFactFields.对象正在接触, StructuredRuleOperator.等于, StructuredValue.FromBoolean(true), "未接触放置位置")
@@ -422,7 +431,7 @@ namespace VirtualLab.Engine.Tests.Courses
         private static ConfiguredActionDefinition CoverAction()
         {
             return Action(
-                CoreSemanticActionIds.Cover,
+                InteractionSemanticActionIds.Cover,
                 new[]
                 {
                     Rule(10, SpatialStructuredFactFields.对象正在接触, StructuredRuleOperator.等于, StructuredValue.FromBoolean(true), "未接触覆盖位置")

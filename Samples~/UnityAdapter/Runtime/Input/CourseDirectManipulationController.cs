@@ -126,8 +126,8 @@ namespace VirtualLab.UnityAdapters.Input
 
             _preview.Begin(source);
             var result = _gateway.Dispatch(
-                NextCommandId("抓取"),
-                CoreSemanticActionIds.Grab,
+                NextCommandId(InteractionSemanticActionIds.Grab),
+                InteractionSemanticActionIds.Grab,
                 actorEntityId,
                 source.EntityId);
             if (!result.Outcome.IsAccepted)
@@ -231,8 +231,8 @@ namespace VirtualLab.UnityAdapters.Input
             }
 
             var release = _gateway.Dispatch(
-                NextCommandId("释放"),
-                CoreSemanticActionIds.Release,
+                NextCommandId(InteractionSemanticActionIds.Release),
+                InteractionSemanticActionIds.Release,
                 actorEntityId,
                 source.EntityId);
             var freePlacement = resolution == null

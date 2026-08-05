@@ -213,7 +213,7 @@ namespace VirtualLab.Application.Courses
             if (result.IsAccepted
                 && string.Equals(
                     request.ActionId,
-                    CoreSemanticActionIds.Observe,
+                    InteractionSemanticActionIds.Observe,
                     StringComparison.Ordinal))
             {
                 _observations.Add(new CourseObservationRecord(

@@ -29,7 +29,7 @@ namespace VirtualLab.Engine.Tests.Courses
             Assert.That(result.IsSuccess, Is.True);
             var candidates = result.Model.Actions
                 .Where(value =>
-                    value.Definition.ActionId == CoreSemanticActionIds.Grab
+                    value.Definition.ActionId == InteractionSemanticActionIds.Grab
                     && value.Definition.SourceEntityId == "铁架台")
                 .ToArray();
             Assert.That(candidates, Has.Length.EqualTo(2));
@@ -61,7 +61,7 @@ namespace VirtualLab.Engine.Tests.Courses
             var catalog = Catalog();
             var expanded = new RecipeExpander().Expand(blueprint, catalog);
             var before = expanded.Model.Actions.Single(value =>
-                value.Definition.ActionId == CoreSemanticActionIds.Grab);
+                value.Definition.ActionId == InteractionSemanticActionIds.Grab);
 
             var result = new CourseOverrideApplier().Apply(
                 blueprint,

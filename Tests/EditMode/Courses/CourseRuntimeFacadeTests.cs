@@ -54,7 +54,7 @@ namespace VirtualLab.Engine.Tests.Courses
                 "动作.完成"));
             var observation = facade.Execute(Request(
                 "命令.观察",
-                CoreSemanticActionIds.Observe));
+                InteractionSemanticActionIds.Observe));
             var rejected = facade.Execute(Request(
                 "命令.危险",
                 "动作.危险"));
@@ -292,7 +292,7 @@ namespace VirtualLab.Engine.Tests.Courses
                                 "课程门面.命令已接受"))))
                 });
             yield return ConfiguredActionDefinition.CreateGeneric(
-                CoreSemanticActionIds.Observe,
+                InteractionSemanticActionIds.Observe,
                 Array.Empty<StructuredRuleDefinition>(),
                 Array.Empty<ConfiguredMutationDefinition>());
             yield return ConfiguredActionDefinition.CreateGeneric(

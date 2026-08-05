@@ -104,7 +104,7 @@ namespace VirtualLab.Engine.PlayModeTests
 
             Assert.That(
                 candidates.Any(value =>
-                    value.ActionId == CoreSemanticActionIds.Connect
+                    value.ActionId == InteractionSemanticActionIds.Connect
                     && value.SourceEntityId == "铁架台试管夹"
                     && value.TargetEntityId == "大试管"),
                 Is.True,
@@ -291,53 +291,53 @@ namespace VirtualLab.Engine.PlayModeTests
             Assert.That(tubeContent.enabled, Is.False);
 
             Execute(bootstrap, "命令.拿起镊子",
-                CoreSemanticActionIds.Grab, "镊子", null);
+                InteractionSemanticActionIds.Grab, "镊子", null);
             Execute(bootstrap, "命令.镊子夹住棉花团",
-                CoreSemanticActionIds.Connect, "镊子", "棉花团");
+                InteractionSemanticActionIds.Connect, "镊子", "棉花团");
             Execute(bootstrap, "命令.通过镊子拿起棉花团",
-                CoreSemanticActionIds.Grab, "棉花团", null);
+                InteractionSemanticActionIds.Grab, "棉花团", null);
             Execute(bootstrap, "命令.放置棉花团",
-                CoreSemanticActionIds.Place, "棉花团", "大试管");
+                InteractionSemanticActionIds.Place, "棉花团", "大试管");
             Execute(bootstrap, "命令.拿起橡皮塞",
-                CoreSemanticActionIds.Grab, "橡胶塞玻璃导管", null);
+                InteractionSemanticActionIds.Grab, "橡胶塞玻璃导管", null);
             Execute(bootstrap, "命令.连接橡皮塞",
-                CoreSemanticActionIds.Connect, "橡胶塞玻璃导管", "大试管");
+                InteractionSemanticActionIds.Connect, "橡胶塞玻璃导管", "大试管");
             Execute(bootstrap, "命令.拿起试管",
-                CoreSemanticActionIds.Grab, "大试管", null);
+                InteractionSemanticActionIds.Grab, "大试管", null);
             Execute(bootstrap, "命令.固定试管",
-                CoreSemanticActionIds.Connect, "铁架台试管夹", "大试管");
+                InteractionSemanticActionIds.Connect, "铁架台试管夹", "大试管");
             Execute(bootstrap, "命令.拿起折角导气管并组装气路",
-                CoreSemanticActionIds.Grab, "折角导气管", null);
+                InteractionSemanticActionIds.Grab, "折角导气管", null);
             Execute(bootstrap, "命令.折角导气管连接橡皮塞",
-                CoreSemanticActionIds.Connect, "折角导气管", "橡胶塞玻璃导管");
+                InteractionSemanticActionIds.Connect, "折角导气管", "橡胶塞玻璃导管");
             Execute(bootstrap, "命令.放下已组装折角导气管",
-                CoreSemanticActionIds.Release, "折角导气管", null);
+                InteractionSemanticActionIds.Release, "折角导气管", null);
             Execute(bootstrap, "命令.取下酒精灯帽",
-                CoreSemanticActionIds.Grab, "酒精灯帽", null);
+                InteractionSemanticActionIds.Grab, "酒精灯帽", null);
             Execute(bootstrap, "命令.放下酒精灯帽",
-                CoreSemanticActionIds.Release, "酒精灯帽", null);
+                InteractionSemanticActionIds.Release, "酒精灯帽", null);
             Execute(bootstrap, "命令.拿起火柴",
-                CoreSemanticActionIds.Grab, "火柴", null);
+                InteractionSemanticActionIds.Grab, "火柴", null);
             Execute(bootstrap, "命令.划燃火柴",
                 ChemistrySemanticActionIds.Ignite, "火柴", "火柴盒");
             var igniteLamp = Execute(bootstrap, "命令.点燃酒精灯",
                 ChemistrySemanticActionIds.Ignite, "酒精灯", "火柴");
             Execute(bootstrap, "命令.放下火柴",
-                CoreSemanticActionIds.Release, "火柴", null);
+                InteractionSemanticActionIds.Release, "火柴", null);
             Assert.That(
                 igniteLamp.PresentationCommands.Select(value =>
                     value.EffectId),
                 Does.Contain("vfx.play"));
             Execute(bootstrap, "命令.取下高锰酸钾广口瓶盖",
-                CoreSemanticActionIds.Grab, "高锰酸钾瓶盖", null);
+                InteractionSemanticActionIds.Grab, "高锰酸钾瓶盖", null);
             Execute(bootstrap, "命令.放下高锰酸钾广口瓶盖",
-                CoreSemanticActionIds.Release, "高锰酸钾瓶盖", null);
+                InteractionSemanticActionIds.Release, "高锰酸钾瓶盖", null);
             Execute(bootstrap, "命令.拿起药匙",
-                CoreSemanticActionIds.Grab, "药匙", null);
+                InteractionSemanticActionIds.Grab, "药匙", null);
             Execute(bootstrap, "命令.药匙伸入试剂瓶",
-                CoreSemanticActionIds.Place, "药匙", "高锰酸钾广口瓶");
+                InteractionSemanticActionIds.Place, "药匙", "高锰酸钾广口瓶");
             Execute(bootstrap, "命令.药匙舀取高锰酸钾",
-                CoreSemanticActionIds.Take, "药匙", "高锰酸钾广口瓶");
+                InteractionSemanticActionIds.Take, "药匙", "高锰酸钾广口瓶");
             Assert.That(reagentContent.enabled, Is.False);
             Assert.That(spoonContent.enabled, Is.True);
             var pourPermanganate = Execute(
@@ -362,11 +362,11 @@ namespace VirtualLab.Engine.PlayModeTests
             FillBottle(bootstrap, chemistry, "集气瓶一");
             FillBottle(bootstrap, chemistry, "集气瓶二");
             Execute(bootstrap, "命令.拿起折角导气管一",
-                CoreSemanticActionIds.Grab, "折角导气管", null);
+                InteractionSemanticActionIds.Grab, "折角导气管", null);
             var connectFirst = Execute(bootstrap, "命令.连接第一只集气瓶",
-                CoreSemanticActionIds.Connect, "折角导气管", "集气瓶一");
+                InteractionSemanticActionIds.Connect, "折角导气管", "集气瓶一");
             Execute(bootstrap, "命令.放下折角导气管一",
-                CoreSemanticActionIds.Release, "折角导气管", null);
+                InteractionSemanticActionIds.Release, "折角导气管", null);
             Assert.That(
                 connectFirst.PresentationCommands.Select(value =>
                     value.EffectId),
@@ -387,37 +387,37 @@ namespace VirtualLab.Engine.PlayModeTests
                     value.EffectId),
                 Does.Contain("liquid.set-level"));
             Execute(bootstrap, "命令.再次拿起折角导气管",
-                CoreSemanticActionIds.Grab, "折角导气管", null);
+                InteractionSemanticActionIds.Grab, "折角导气管", null);
             Execute(bootstrap, "命令.断开第一只集气瓶",
-                CoreSemanticActionIds.Disconnect, "折角导气管", "集气瓶一");
+                InteractionSemanticActionIds.Disconnect, "折角导气管", "集气瓶一");
             Execute(bootstrap, "命令.连接第二只集气瓶",
-                CoreSemanticActionIds.Connect, "折角导气管", "集气瓶二");
+                InteractionSemanticActionIds.Connect, "折角导气管", "集气瓶二");
             Execute(bootstrap, "命令.放下折角导气管二",
-                CoreSemanticActionIds.Release, "折角导气管", null);
+                InteractionSemanticActionIds.Release, "折角导气管", null);
             Execute(bootstrap, "命令.收集第二瓶氧气",
                 ChemistrySemanticActionIds.CollectGas,
                 "折角导气管",
                 "集气瓶二");
             Execute(bootstrap, "命令.第三次拿起折角导气管",
-                CoreSemanticActionIds.Grab, "折角导气管", null);
+                InteractionSemanticActionIds.Grab, "折角导气管", null);
             Execute(bootstrap, "命令.将折角导气管移出水面",
-                CoreSemanticActionIds.Disconnect, "折角导气管", "集气瓶二");
+                InteractionSemanticActionIds.Disconnect, "折角导气管", "集气瓶二");
             Execute(bootstrap, "命令.停止加热",
                 ChemistrySemanticActionIds.EndHeating, "大试管", "酒精灯");
 
             Execute(bootstrap, "命令.打开木炭瓶",
-                CoreSemanticActionIds.Grab, "木炭瓶盖", null);
+                InteractionSemanticActionIds.Grab, "木炭瓶盖", null);
             Execute(bootstrap, "命令.放下木炭瓶盖",
-                CoreSemanticActionIds.Release, "木炭瓶盖", null);
+                InteractionSemanticActionIds.Release, "木炭瓶盖", null);
             Execute(bootstrap, "命令.拿起坩埚钳",
-                CoreSemanticActionIds.Grab, "坩埚钳", null);
+                InteractionSemanticActionIds.Grab, "坩埚钳", null);
             Execute(bootstrap, "命令.夹住木炭",
-                CoreSemanticActionIds.Connect, "坩埚钳", "木炭");
+                InteractionSemanticActionIds.Connect, "坩埚钳", "木炭");
             Execute(bootstrap, "命令.预热木炭",
                 ChemistrySemanticActionIds.BeginHeating, "木炭", "酒精灯");
             chemistry.Advance(200d);
             Execute(bootstrap, "命令.拿起石灰水",
-                CoreSemanticActionIds.Grab, "澄清石灰水窄口瓶", null);
+                InteractionSemanticActionIds.Grab, "澄清石灰水窄口瓶", null);
             Execute(
                 bootstrap,
                 "命令.点燃木炭",
@@ -427,7 +427,7 @@ namespace VirtualLab.Engine.PlayModeTests
                 ("空间距离米", StructuredValue.FromNumber(0.1d)));
             chemistry.Advance(1d);
             Execute(bootstrap, "命令.放入木炭",
-                CoreSemanticActionIds.Place, "木炭", "集气瓶一");
+                InteractionSemanticActionIds.Place, "木炭", "集气瓶一");
             Execute(
                 bootstrap,
                 "命令.加入石灰水",
@@ -437,7 +437,7 @@ namespace VirtualLab.Engine.PlayModeTests
                 ("请求流量毫升每秒", StructuredValue.FromNumber(10d)));
             chemistry.Advance(1d);
             Execute(bootstrap, "命令.握持集气瓶一",
-                CoreSemanticActionIds.Grab, "集气瓶一", null);
+                InteractionSemanticActionIds.Grab, "集气瓶一", null);
             var shake = Execute(
                 bootstrap,
                 "命令.振荡石灰水",
@@ -452,13 +452,13 @@ namespace VirtualLab.Engine.PlayModeTests
             chemistry.Advance(1d);
 
             Execute(bootstrap, "命令.再次拿起火柴",
-                CoreSemanticActionIds.Grab, "火柴", null);
+                InteractionSemanticActionIds.Grab, "火柴", null);
             Execute(bootstrap, "命令.再次划燃火柴",
                 ChemistrySemanticActionIds.Ignite, "火柴", "火柴盒");
             Execute(bootstrap, "命令.点燃铁丝底端火柴",
                 ChemistrySemanticActionIds.Ignite, "组合引燃火柴", "火柴");
             Execute(bootstrap, "命令.再次放下火柴",
-                CoreSemanticActionIds.Release, "火柴", null);
+                InteractionSemanticActionIds.Release, "火柴", null);
             Execute(bootstrap, "命令.预热铁丝",
                 ChemistrySemanticActionIds.BeginHeating, "火柴铁丝组合", "组合引燃火柴");
             chemistry.Advance(200d);
@@ -471,11 +471,11 @@ namespace VirtualLab.Engine.PlayModeTests
                 ("空间距离米", StructuredValue.FromNumber(0.1d)));
             chemistry.Advance(1d);
             Execute(bootstrap, "命令.拿起铁丝",
-                CoreSemanticActionIds.Grab, "火柴铁丝组合", null);
+                InteractionSemanticActionIds.Grab, "火柴铁丝组合", null);
             Execute(bootstrap, "命令.放入铁丝",
-                CoreSemanticActionIds.Place, "火柴铁丝组合", "集气瓶二");
+                InteractionSemanticActionIds.Place, "火柴铁丝组合", "集气瓶二");
             Execute(bootstrap, "命令.观察铁丝燃烧",
-                CoreSemanticActionIds.Observe, "集气瓶二", null);
+                InteractionSemanticActionIds.Observe, "集气瓶二", null);
 
             var state = chemistry.Runtime.Session.ExportState();
             Assert.That(
@@ -492,9 +492,9 @@ namespace VirtualLab.Engine.PlayModeTests
                 Is.True);
             Assert.That(
                 state.Commands.Select(value => value.Request.ActionId),
-                Does.Contain(CoreSemanticActionIds.Connect)
-                    .And.Contain(CoreSemanticActionIds.Disconnect)
-                    .And.Contain(CoreSemanticActionIds.Place)
+                Does.Contain(InteractionSemanticActionIds.Connect)
+                    .And.Contain(InteractionSemanticActionIds.Disconnect)
+                    .And.Contain(InteractionSemanticActionIds.Place)
                     .And.Contain(ChemistrySemanticActionIds.BeginPour)
                     .And.Contain(ChemistrySemanticActionIds.BeginHeating)
                     .And.Contain(ChemistrySemanticActionIds.EndHeating)
@@ -625,13 +625,13 @@ namespace VirtualLab.Engine.PlayModeTests
             Execute(
                 bootstrap,
                 "命令.拿起." + bottleId,
-                CoreSemanticActionIds.Grab,
+                InteractionSemanticActionIds.Grab,
                 bottleId,
                 null);
             Execute(
                 bootstrap,
                 "命令.拿起加水烧杯." + bottleId,
-                CoreSemanticActionIds.Grab,
+                InteractionSemanticActionIds.Grab,
                 "加水烧杯",
                 null);
             Execute(
@@ -651,13 +651,13 @@ namespace VirtualLab.Engine.PlayModeTests
             Execute(
                 bootstrap,
                 "命令.放下加水烧杯." + bottleId,
-                CoreSemanticActionIds.Release,
+                InteractionSemanticActionIds.Release,
                 "加水烧杯",
                 null);
             Execute(
                 bootstrap,
                 "命令.放下." + bottleId,
-                CoreSemanticActionIds.Release,
+                InteractionSemanticActionIds.Release,
                 bottleId,
                 null);
         }

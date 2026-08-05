@@ -84,7 +84,7 @@ namespace VirtualLab.Engine.Tests.Courses
                 null,
                 null);
             var action = ConfiguredActionDefinition.CreateGeneric(
-                CoreSemanticActionIds.Grab,
+                InteractionSemanticActionIds.Grab,
                 new[]
                 {
                     Rule(
@@ -100,7 +100,7 @@ namespace VirtualLab.Engine.Tests.Courses
                 new[] { action });
             var request = new SemanticActionRequest(
                 "命令.徒手抓高温器材",
-                CoreSemanticActionIds.Grab,
+                InteractionSemanticActionIds.Grab,
                 "学生",
                 "器材.甲",
                 null,
@@ -121,7 +121,7 @@ namespace VirtualLab.Engine.Tests.Courses
                 {
                     new CourseActionAssessmentDefinition(
                         "评价.徒手接触高温器材",
-                        CoreSemanticActionIds.Grab,
+                        InteractionSemanticActionIds.Grab,
                         "器材温度过高",
                         "风险.烫伤",
                         -10,
@@ -140,7 +140,7 @@ namespace VirtualLab.Engine.Tests.Courses
                 null);
             var safeRequest = new SemanticActionRequest(
                 "命令.抓取常温器材",
-                CoreSemanticActionIds.Grab,
+                InteractionSemanticActionIds.Grab,
                 "学生",
                 "器材.甲",
                 null,
@@ -153,7 +153,7 @@ namespace VirtualLab.Engine.Tests.Courses
                 {
                     new CourseActionAssessmentDefinition(
                         "评价.徒手接触高温器材",
-                        CoreSemanticActionIds.Grab,
+                        InteractionSemanticActionIds.Grab,
                         "器材温度过高",
                         "风险.烫伤",
                         -10,
@@ -210,7 +210,7 @@ namespace VirtualLab.Engine.Tests.Courses
                 });
             var assessment = new CourseActionAssessmentDefinition(
                 "评价.高温拒绝",
-                CoreSemanticActionIds.Grab,
+                InteractionSemanticActionIds.Grab,
                 "器材温度过高",
                 "风险.烫伤",
                 -10,
@@ -218,7 +218,7 @@ namespace VirtualLab.Engine.Tests.Courses
                 new[] { condition });
             var request = new SemanticActionRequest(
                 "命令.风险条件",
-                CoreSemanticActionIds.Grab,
+                InteractionSemanticActionIds.Grab,
                 "学生",
                 "器材.甲",
                 null,
@@ -259,7 +259,7 @@ namespace VirtualLab.Engine.Tests.Courses
                 null,
                 null);
             var action = ConfiguredActionDefinition.CreateGeneric(
-                CoreSemanticActionIds.Grab,
+                InteractionSemanticActionIds.Grab,
                 new[]
                 {
                     Rule(
@@ -278,7 +278,7 @@ namespace VirtualLab.Engine.Tests.Courses
                 {
                     new CourseActionAssessmentDefinition(
                         "评价.徒手接触高温器材",
-                        CoreSemanticActionIds.Grab,
+                        InteractionSemanticActionIds.Grab,
                         "器材温度过高",
                         "风险.烫伤",
                         -10,
@@ -362,7 +362,7 @@ namespace VirtualLab.Engine.Tests.Courses
         private static SemanticActionRequest Request(string commandId) =>
             new SemanticActionRequest(
                 commandId,
-                CoreSemanticActionIds.Grab,
+                InteractionSemanticActionIds.Grab,
                 "学生",
                 "器材.甲",
                 null,
