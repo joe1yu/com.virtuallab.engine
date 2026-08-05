@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using VirtualLab.Application.Courses;
 using VirtualLab.Domain;
+using VirtualLab.Domain.Relations;
 using VirtualLab.Interaction.Relations;
 using VirtualLab.Kernel;
 
@@ -151,7 +152,15 @@ namespace VirtualLab.Interaction.Courses
                 new PortCompatibilityGroupFactReader(
                     InteractionStructuredFactFields.目标连接标签,
                     false),
-                new 连接标签相匹配FactReader()
+                new 连接标签相匹配FactReader(),
+                new RelatedEntityIdsFactReader(
+                    InteractionStructuredFactFields.来源对象连接对象,
+                    InteractionRelationTypeIds.Connection,
+                    true),
+                new RelatedEntityIdsFactReader(
+                    InteractionStructuredFactFields.来源对象固定对象,
+                    InteractionRelationTypeIds.FixedBy,
+                    false)
             };
         }
 
@@ -352,6 +361,43 @@ namespace VirtualLab.Interaction.Courses
             {
                 return StructuredValue.FromBoolean(
                     TryResolve(context, false, out _));
+            }
+        }
+
+        /// <summary>
+        /// 返回动作来源在指定交互关系下关联的实体标识。
+        /// 无向关系读取任一端，定向关系只读取来源端，课程无需重复写入派生状态。
+        /// </summary>
+        private sealed class RelatedEntityIdsFactReader : IStructuredFactReader
+        {
+            private readonly RelationTypeId _relationTypeId;
+            private readonly bool _undirected;
+
+            public RelatedEntityIdsFactReader(
+                StructuredFactField field,
+                RelationTypeId relationTypeId,
+                bool undirected)
+            {
+                Field = field;
+                _relationTypeId = relationTypeId;
+                _undirected = undirected;
+            }
+
+            public StructuredFactField Field { get; }
+
+            public StructuredValue Read(StructuredRuleContext context)
+            {
+                var source = new EntityId(context.Request.SourceEntityId);
+                var related = context.World.Relations
+                    .Where(value => value.TypeId == _relationTypeId
+                        && (value.Source == source
+                            || (_undirected && value.Target == source)))
+                    .Select(value => value.Source == source
+                        ? value.Target.Value
+                        : value.Source.Value)
+                    .Distinct(StringComparer.Ordinal)
+                    .OrderBy(value => value, StringComparer.Ordinal);
+                return StructuredValue.FromTextList(related);
             }
         }
     }

@@ -334,6 +334,50 @@ namespace VirtualLab.Engine.Tests.Courses
         }
 
         [Test]
+        public void 连接和固定事实直接读取权威关系()
+        {
+            var world = WorldWith(
+                Entity("镊子"),
+                Entity("棉花团"),
+                Entity("铁架台试管夹"),
+                Entity("大试管"));
+            world.SetRelation(Relation(
+                InteractionRelationTypeIds.Connection,
+                "镊子",
+                "棉花团"));
+            world.SetRelation(Relation(
+                InteractionRelationTypeIds.FixedBy,
+                "铁架台试管夹",
+                "大试管"));
+            var readers = InteractionCourseRegistrations.CreateFactReaders();
+
+            var connected = readers.Single(value => value.Field ==
+                InteractionStructuredFactFields.来源对象连接对象);
+            Assert.That(
+                connected.Read(new StructuredRuleContext(
+                    Request(
+                        "命令.检查夹持",
+                        "检查",
+                        "棉花团",
+                        null),
+                    world)).TextList,
+                Is.EqualTo(new[] { "镊子" }),
+                "连接是无向关系，从任一端都应读取另一端。");
+
+            var fixedObjects = readers.Single(value => value.Field ==
+                InteractionStructuredFactFields.来源对象固定对象);
+            Assert.That(
+                fixedObjects.Read(new StructuredRuleContext(
+                    Request(
+                        "命令.检查固定",
+                        "检查",
+                        "铁架台试管夹",
+                        null),
+                    world)).TextList,
+                Is.EqualTo(new[] { "大试管" }));
+        }
+
+        [Test]
         public void 同一容器可以容纳多个对象但同一对象不能同时位于两个容器()
         {
             var world = WorldWith(
