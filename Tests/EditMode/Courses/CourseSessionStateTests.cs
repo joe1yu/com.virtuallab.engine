@@ -85,7 +85,7 @@ namespace VirtualLab.Engine.Tests.Courses
                 new[]
                 {
                     new CourseRelationState(
-                        RelationKind.连接对象,
+                        InteractionRelationTypeIds.Connection,
                         "端口.不存在",
                         "端口.目标")
                 });
@@ -139,7 +139,7 @@ namespace VirtualLab.Engine.Tests.Courses
                         "变更.建立连接",
                         ConfiguredStateOperationIds.RelationSet,
                         Parameters(
-                            ("关系类型", StructuredValue.FromText("连接对象")))),
+                            ("关系类型", StructuredValue.FromText("交互.关系.连接")))),
                     new ConfiguredMutationDefinition(
                         "变更.温度",
                         ConfiguredStateOperationIds.ScalarSet,

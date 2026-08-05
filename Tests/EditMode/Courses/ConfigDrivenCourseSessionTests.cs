@@ -223,7 +223,7 @@ namespace VirtualLab.Engine.Tests.Courses
                     "变更.建立持有关系",
                     "设置关系",
                     Parameters(
-                        ("关系类型", StructuredValue.FromText("由对象持有")))),
+                        ("关系类型", StructuredValue.FromText("交互.关系.持有")))),
                 new ConfiguredMutationDefinition(
                     "变更.记录温度",
                     "设置标量",
@@ -443,7 +443,7 @@ namespace VirtualLab.Engine.Tests.Courses
                         "变更.首次持有",
                         "设置关系",
                         Parameters(
-                            ("关系类型", StructuredValue.FromText("由对象持有"))))
+                            ("关系类型", StructuredValue.FromText("交互.关系.持有"))))
                 });
             Assert.DoesNotThrow(() => registry.ApplyAtomically(
                 request,
@@ -454,7 +454,7 @@ namespace VirtualLab.Engine.Tests.Courses
                         "变更.重复设置首次持有",
                         "设置关系",
                         Parameters(
-                            ("关系类型", StructuredValue.FromText("由对象持有"))))
+                            ("关系类型", StructuredValue.FromText("交互.关系.持有"))))
                 }));
             Assert.Throws<ConfiguredStateOperationException>(() =>
                 registry.ApplyAtomically(
@@ -466,7 +466,7 @@ namespace VirtualLab.Engine.Tests.Courses
                             "变更.第二持有者",
                             "设置关系",
                             Parameters(
-                                ("关系类型", StructuredValue.FromText("由对象持有")),
+                                ("关系类型", StructuredValue.FromText("交互.关系.持有")),
                                 ("目标实体标识", StructuredValue.FromText(
                                     "另一学生"))))
                     }));

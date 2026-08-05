@@ -114,7 +114,7 @@ namespace VirtualLab.Chemistry.Tests.Courses
             bool held,
             bool shakeable)
         {
-            var world = new ExperimentWorld();
+            var world = new ExperimentWorld(InteractionRelationSchemas.All);
             world.AddEntity(
                 new ExperimentEntity(new EntityId("学生")));
             var vessel = new ExperimentEntity(
@@ -129,7 +129,7 @@ namespace VirtualLab.Chemistry.Tests.Courses
             {
                 world.SetRelation(
                     new EntityRelation(
-                        RelationKind.由对象持有,
+                        InteractionRelationTypeIds.HeldBy,
                         vessel.Id,
                         new EntityId("学生")));
             }

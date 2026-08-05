@@ -119,7 +119,7 @@ namespace VirtualLab.Engine.Tests.Courses
         {
             var world = World();
             world.SetRelation(new EntityRelation(
-                RelationKind.由对象持有,
+                InteractionRelationTypeIds.HeldBy,
                 new EntityId("器材.试管"),
                 new EntityId("学生")));
             var calls = new List<string>();
@@ -243,7 +243,7 @@ namespace VirtualLab.Engine.Tests.Courses
             Assert.That(result.IsAccepted, Is.True);
             Assert.That(
                 world.Relations.Any(value =>
-                    value.Kind == RelationKind.由对象持有 &&
+                    value.TypeId == InteractionRelationTypeIds.HeldBy &&
                     value.Source == new EntityId("器材.试管") &&
                     value.Target == new EntityId("学生")),
                 Is.True);
@@ -258,7 +258,7 @@ namespace VirtualLab.Engine.Tests.Courses
         {
             var world = World();
             world.SetRelation(new EntityRelation(
-                RelationKind.由对象持有,
+                InteractionRelationTypeIds.HeldBy,
                 new EntityId("器材.试管"),
                 new EntityId("学生")));
             var session = Session(world);
@@ -371,7 +371,7 @@ namespace VirtualLab.Engine.Tests.Courses
                                 "设置关系",
                                 Parameters(
                                     ("关系类型",
-                                        StructuredValue.FromText("由对象持有")))),
+                                        StructuredValue.FromText("交互.关系.持有")))),
                             new ConfiguredMutationDefinition(
                                 "变更.发布持有事件",
                                 "发布事件",
@@ -390,7 +390,7 @@ namespace VirtualLab.Engine.Tests.Courses
                                 "移除关系",
                                 Parameters(
                                     ("关系类型",
-                                        StructuredValue.FromText("由对象持有"))))
+                                        StructuredValue.FromText("交互.关系.持有"))))
                         })
                     }));
         }
@@ -574,7 +574,7 @@ namespace VirtualLab.Engine.Tests.Courses
 
         private static ExperimentWorld World()
         {
-            var world = new ExperimentWorld();
+            var world = new ExperimentWorld(InteractionRelationSchemas.All);
             world.AddEntity(new ExperimentEntity(
                 new EntityId("器材.试管")));
             world.AddEntity(new ExperimentEntity(
@@ -599,7 +599,7 @@ namespace VirtualLab.Engine.Tests.Courses
             public StructuredValue Read(StructuredRuleContext context)
             {
                 var holder = context.World.Relations.SingleOrDefault(value =>
-                    value.Kind == RelationKind.由对象持有 &&
+                    value.TypeId == InteractionRelationTypeIds.HeldBy &&
                     value.Source ==
                     new EntityId(context.Request.SourceEntityId));
                 return holder == null

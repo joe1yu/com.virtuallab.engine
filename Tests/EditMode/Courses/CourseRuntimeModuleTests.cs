@@ -6,6 +6,7 @@ using VirtualLab.Application.Courses;
 using VirtualLab.Application.Events;
 using VirtualLab.Domain;
 using VirtualLab.Domain.Processes;
+using VirtualLab.Domain.Relations;
 using VirtualLab.Kernel;
 
 namespace VirtualLab.Engine.Tests.Courses
@@ -65,7 +66,7 @@ namespace VirtualLab.Engine.Tests.Courses
         }
 
         [Test]
-        public void 不同模块不能重复注册同一事实或状态操作()
+        public void 不同模块不能重复注册同一事实状态操作或关系模式()
         {
             var fact = new StructuredFactField("测试事实");
             var firstFactModule = Module(
@@ -101,6 +102,23 @@ namespace VirtualLab.Engine.Tests.Courses
                 CourseRuntimeModuleScope.Create(
                     firstOperationModule,
                     secondOperationModule));
+
+            var relationSchema = new RelationSchema(
+                new RelationTypeId("甲.关系.测试"));
+            var firstRelationModule = Module(
+                "甲",
+                "甲模块",
+                new Version(1, 0, 0),
+                context => context.RegisterRelationSchema(relationSchema));
+            var secondRelationModule = Module(
+                "乙",
+                "乙模块",
+                new Version(1, 0, 0),
+                context => context.RegisterRelationSchema(relationSchema));
+            Assert.Throws<InvalidOperationException>(() =>
+                CourseRuntimeModuleScope.Create(
+                    firstRelationModule,
+                    secondRelationModule));
         }
 
         [Test]

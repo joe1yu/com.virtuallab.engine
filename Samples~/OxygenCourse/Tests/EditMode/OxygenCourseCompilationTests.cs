@@ -451,7 +451,7 @@ namespace VirtualLab.Engine.Tests.Courses
                 "端口|" + value.PortId + "|" + value.EntityId + "|"
                 + value.CompatibilityGroup));
             result.AddRange(course.InitialRelations.Select(value =>
-                "初始关系|" + value.RelationId + "|" + value.Kind + "|"
+                "初始关系|" + value.RelationId + "|" + value.TypeId + "|"
                 + value.SourceEntityId + "|" + value.TargetEntityId));
             result.AddRange(course.StateChanges.Select(value =>
                 "状态变化|" + MutationSignature(value)));

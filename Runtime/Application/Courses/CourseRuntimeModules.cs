@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using VirtualLab.Domain;
 using VirtualLab.Domain.Processes;
+using VirtualLab.Domain.Relations;
 using VirtualLab.Kernel;
 
 namespace VirtualLab.Application.Courses
@@ -117,6 +118,11 @@ namespace VirtualLab.Application.Courses
             _builder.RegisterFactReader(ModuleId, reader);
         }
 
+        public void RegisterRelationSchema(RelationSchema schema)
+        {
+            _builder.RegisterRelationSchema(ModuleId, schema);
+        }
+
         public void RegisterStateOperations(
             string registrationId,
             Action<ConfiguredStateOperationRegistry> registration)
@@ -162,6 +168,7 @@ namespace VirtualLab.Application.Courses
 
         internal CourseRuntimeModuleScope(
             IEnumerable<CourseModuleManifest> manifests,
+            IEnumerable<RelationSchema> relationSchemas,
             IEnumerable<IStructuredFactReader> factReaders,
             IEnumerable<Action<ConfiguredStateOperationRegistry>> stateRegistrations,
             IEnumerable<ICourseEventProjector> eventProjectors,
@@ -170,6 +177,8 @@ namespace VirtualLab.Application.Courses
         {
             Manifests = new ReadOnlyCollection<CourseModuleManifest>(
                 manifests.ToArray());
+            RelationSchemas = new ReadOnlyCollection<RelationSchema>(
+                relationSchemas.ToArray());
             FactReaders = new ReadOnlyCollection<IStructuredFactReader>(
                 factReaders.ToArray());
             EventProjectors = new ReadOnlyCollection<ICourseEventProjector>(
@@ -183,6 +192,8 @@ namespace VirtualLab.Application.Courses
         }
 
         public IReadOnlyList<CourseModuleManifest> Manifests { get; }
+
+        public IReadOnlyList<RelationSchema> RelationSchemas { get; }
 
         public IReadOnlyList<IStructuredFactReader> FactReaders { get; }
 
@@ -204,6 +215,34 @@ namespace VirtualLab.Application.Courses
 
             registry.Freeze();
             return registry;
+        }
+
+        /// <summary>
+        /// 把模块已冻结的关系模式安装到世界并冻结世界注册表。
+        /// 世界工厂可以提前安装同一模式以建立初始关系。
+        /// </summary>
+        public void PrepareWorld(ExperimentWorld world)
+        {
+            if (world == null)
+            {
+                throw new ArgumentNullException(nameof(world));
+            }
+
+            if (!world.RelationSchemasFrozen)
+            {
+                world.RegisterRelationSchemas(RelationSchemas);
+                world.FreezeRelationSchemas();
+                return;
+            }
+
+            foreach (var schema in RelationSchemas)
+            {
+                if (!world.RequireRelationSchema(schema.TypeId).Equals(schema))
+                {
+                    throw new InvalidOperationException(
+                        $"世界中的关系模式“{schema.TypeId}”与模块注册不一致。");
+                }
+            }
         }
 
         public ICourseProcessAdvancer CreateProcessAdvancer(
@@ -277,6 +316,8 @@ namespace VirtualLab.Application.Courses
     {
         private readonly Dictionary<StructuredFactField, OwnedFactReader>
             _factReaders = new Dictionary<StructuredFactField, OwnedFactReader>();
+        private readonly Dictionary<RelationTypeId, OwnedRelationSchema>
+            _relationSchemas = new Dictionary<RelationTypeId, OwnedRelationSchema>();
         private readonly Dictionary<string, OwnedStateRegistration>
             _stateRegistrations = new Dictionary<string, OwnedStateRegistration>(
                 StringComparer.Ordinal);
@@ -340,6 +381,9 @@ namespace VirtualLab.Application.Courses
             builder._isFrozen = true;
             return new CourseRuntimeModuleScope(
                 ordered.Select(value => value.Manifest),
+                builder._relationSchemas
+                    .OrderBy(value => value.Key.Value, StringComparer.Ordinal)
+                    .Select(value => value.Value.Schema),
                 builder._factReaders
                     .OrderBy(value => value.Key.Id, StringComparer.Ordinal)
                     .Select(value => value.Value.Reader),
@@ -371,6 +415,25 @@ namespace VirtualLab.Application.Courses
                 var owner = _factReaders[reader.Field].ModuleId;
                 throw new InvalidOperationException(
                     $"事实“{reader.Field}”已由模块“{owner}”注册，"
+                    + $"模块“{moduleId}”不能重复注册。");
+            }
+        }
+
+        public void RegisterRelationSchema(string moduleId, RelationSchema schema)
+        {
+            EnsureMutable();
+            if (schema == null)
+            {
+                throw new ArgumentNullException(nameof(schema));
+            }
+
+            if (!_relationSchemas.TryAdd(
+                    schema.TypeId,
+                    new OwnedRelationSchema(moduleId, schema)))
+            {
+                var owner = _relationSchemas[schema.TypeId].ModuleId;
+                throw new InvalidOperationException(
+                    $"关系模式“{schema.TypeId}”已由模块“{owner}”注册，"
                     + $"模块“{moduleId}”不能重复注册。");
             }
         }
@@ -530,6 +593,18 @@ namespace VirtualLab.Application.Courses
             public string ModuleId { get; }
 
             public IStructuredFactReader Reader { get; }
+        }
+
+        private sealed class OwnedRelationSchema
+        {
+            public OwnedRelationSchema(string moduleId, RelationSchema schema)
+            {
+                ModuleId = moduleId;
+                Schema = schema;
+            }
+
+            public string ModuleId { get; }
+            public RelationSchema Schema { get; }
         }
 
         private sealed class OwnedStateRegistration : IOwnedRegistration

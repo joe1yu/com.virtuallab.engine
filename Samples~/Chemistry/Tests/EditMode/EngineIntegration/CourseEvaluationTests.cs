@@ -340,8 +340,8 @@ namespace VirtualLab.Engine.Tests.Courses
             string second)
         {
             var world = World();
-            world.SetRelation(Relation(RelationKind.由对象持有, first, "学生"));
-            world.SetRelation(Relation(RelationKind.由对象持有, second, "学生"));
+            world.SetRelation(Relation(InteractionRelationTypeIds.HeldBy, first, "学生"));
+            world.SetRelation(Relation(InteractionRelationTypeIds.HeldBy, second, "学生"));
             var evaluator = new CourseGoalEvaluator(
                 new StructuredRuleEvaluator(
                     CoreCourseRegistrations.CreateFactReaders()));
@@ -408,7 +408,7 @@ namespace VirtualLab.Engine.Tests.Courses
 
         private static ExperimentWorld World()
         {
-            var world = new ExperimentWorld();
+            var world = new ExperimentWorld(InteractionRelationSchemas.All);
             Add(world, "学生");
             Add(world, "器材.甲", new GrabbableCapability());
             Add(world, "器材.乙", new GrabbableCapability());
@@ -430,7 +430,7 @@ namespace VirtualLab.Engine.Tests.Courses
         }
 
         private static EntityRelation Relation(
-            RelationKind kind,
+            RelationTypeId kind,
             string source,
             string target)
         {

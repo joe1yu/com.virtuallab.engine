@@ -35,6 +35,7 @@ namespace VirtualLab.Application.Courses
         private readonly IReadOnlyList<ICourseEventProjector> _eventProjectors;
         private readonly Func<ExperimentWorld, ICourseProcessAdvancer>
             _processAdvancerFactory;
+        private readonly Action<ExperimentWorld> _worldPreparation;
 
         public CourseRuntimeDefinition(
             CourseRuntimeModuleScope modules,
@@ -49,7 +50,8 @@ namespace VirtualLab.Application.Courses
                 maximumScore,
                 modules.CreateStateOperationRegistry,
                 modules.EventProjectors,
-                modules.CreateProcessAdvancer)
+                modules.CreateProcessAdvancer,
+                modules.PrepareWorld)
         {
         }
 
@@ -88,7 +90,8 @@ namespace VirtualLab.Application.Courses
             Func<ConfiguredStateOperationRegistry> registryFactory,
             IEnumerable<ICourseEventProjector> eventProjectors = null,
             Func<ExperimentWorld, ICourseProcessAdvancer>
-                processAdvancerFactory = null)
+                processAdvancerFactory = null,
+            Action<ExperimentWorld> worldPreparation = null)
         {
             _readers = (readers
                 ?? throw new ArgumentNullException(nameof(readers))).ToArray();
@@ -108,6 +111,7 @@ namespace VirtualLab.Application.Courses
             _eventProjectors = (eventProjectors
                 ?? Array.Empty<ICourseEventProjector>()).ToArray();
             _processAdvancerFactory = processAdvancerFactory;
+            _worldPreparation = worldPreparation ?? PrepareCoreRelations;
         }
 
         public ConfigDrivenCourseSession CreateSession(ExperimentWorld world)
@@ -128,10 +132,36 @@ namespace VirtualLab.Application.Courses
             return _processAdvancerFactory?.Invoke(world);
         }
 
+        internal void PrepareWorld(ExperimentWorld world)
+        {
+            _worldPreparation?.Invoke(
+                world ?? throw new ArgumentNullException(nameof(world)));
+        }
+
+        private static void PrepareCoreRelations(ExperimentWorld world)
+        {
+            if (!world.RelationSchemasFrozen)
+            {
+                world.RegisterRelationSchemas(InteractionRelationSchemas.All);
+                world.FreezeRelationSchemas();
+                return;
+            }
+
+            foreach (var schema in InteractionRelationSchemas.All)
+            {
+                if (!world.RequireRelationSchema(schema.TypeId).Equals(schema))
+                {
+                    throw new InvalidOperationException(
+                        $"世界中的关系模式“{schema.TypeId}”与交互模块不一致。");
+                }
+            }
+        }
+
         internal ConfigDrivenCourseSession CreateSession(
             ExperimentWorld world,
             IEnumerable<CourseEventState> initialEvents)
         {
+            PrepareWorld(world);
             var evaluator = new StructuredRuleEvaluator(_readers);
             return new ConfigDrivenCourseSession(
                 world,
@@ -211,13 +241,13 @@ namespace VirtualLab.Application.Courses
     public sealed class CourseRelationState
     {
         public CourseRelationState(
-            RelationKind kind,
+            RelationTypeId typeId,
             string sourceEntityId,
             string targetEntityId,
             string sourcePortId = null,
             string targetPortId = null)
         {
-            Kind = kind;
+            TypeId = typeId;
             SourceEntityId = sourceEntityId;
             TargetEntityId = targetEntityId;
             SourcePortId = CourseContractGuard.Optional(sourcePortId);
@@ -229,7 +259,7 @@ namespace VirtualLab.Application.Courses
             }
         }
 
-        public RelationKind Kind { get; }
+        public RelationTypeId TypeId { get; }
         public string SourceEntityId { get; }
         public string TargetEntityId { get; }
         public string SourcePortId { get; }
@@ -562,7 +592,7 @@ namespace VirtualLab.Application.Courses
                     value.Id.Value,
                     value.Capabilities.Select(CaptureCapability))),
                 world.Relations.Select(value => new CourseRelationState(
-                    value.Kind,
+                    value.TypeId,
                     value.Source.Value,
                     value.Target.Value,
                     value.SourcePortId,
@@ -589,12 +619,22 @@ namespace VirtualLab.Application.Courses
                 spatialPoses);
         }
 
-        internal ExperimentWorld RestoreWorld()
+        internal ExperimentWorld RestoreWorld(
+            Action<ExperimentWorld> prepareWorld = null)
         {
             try
             {
                 ValidateJournal();
-                var world = new ExperimentWorld();
+                var world = prepareWorld == null
+                    ? new ExperimentWorld(Relations
+                        .Select(value => value.TypeId)
+                        .Distinct()
+                        .Select(value => new RelationSchema(
+                            value,
+                            allowSelfRelation: true,
+                            portPolicy: RelationPortPolicy.可选)))
+                    : new ExperimentWorld();
+                prepareWorld?.Invoke(world);
                 foreach (var entityState in Entities)
                 {
                     var entity = new ExperimentEntity(
@@ -620,7 +660,7 @@ namespace VirtualLab.Application.Courses
                     }
 
                     world.SetRelation(new EntityRelation(
-                        relation.Kind,
+                        relation.TypeId,
                         source,
                         target,
                         relation.SourcePortId,
@@ -760,7 +800,7 @@ namespace VirtualLab.Application.Courses
                     string.Empty,
                     value.Capabilities.Select(CapabilityCanonical).OrderBy(x => x))));
             values.AddRange(Relations.OrderBy(value => value.SourceEntityId).ThenBy(value => value.TargetEntityId).Select(
-                value => $"relation:{value.Kind}:{Token(value.SourceEntityId)}{Token(value.TargetEntityId)}"
+                value => $"relation:{value.TypeId}:{Token(value.SourceEntityId)}{Token(value.TargetEntityId)}"
                          + $"{Token(value.SourcePortId)}{Token(value.TargetPortId)}"));
             values.AddRange(Matter.OrderBy(value => value.LocationId).ThenBy(value => value.SubstanceId).Select(
                 value => $"matter:{Token(value.LocationId)}{Token(value.SubstanceId)}:{value.Value.ToString(CultureInfo.InvariantCulture)}:{value.Unit}:{value.Phase}:{value.TemperatureCelsius.ToString(CultureInfo.InvariantCulture)}"));

@@ -415,7 +415,7 @@ namespace VirtualLab.Chemistry.Tests.Courses
             bool held = true,
             Unit sourceUnit = Unit.Millilitre)
         {
-            var world = new ExperimentWorld();
+            var world = new ExperimentWorld(InteractionRelationSchemas.All);
             Add(world, "学生");
             Add(
                 world,
@@ -431,7 +431,7 @@ namespace VirtualLab.Chemistry.Tests.Courses
             {
                 world.SetRelation(
                     new EntityRelation(
-                        RelationKind.由对象持有,
+                        InteractionRelationTypeIds.HeldBy,
                         new EntityId("器材.量筒"),
                         new EntityId("学生")));
             }

@@ -117,7 +117,7 @@ namespace VirtualLab.Chemistry.Courses
                 }
 
                 if (!world.Relations.Any(
-                    value => value.Kind == RelationKind.由对象持有
+                    value => value.TypeId == InteractionRelationTypeIds.HeldBy
                         && value.Source == source
                         && value.Target
                             == new EntityId(request.ActorEntityId)))

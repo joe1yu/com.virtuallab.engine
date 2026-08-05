@@ -581,7 +581,7 @@ namespace VirtualLab.Application.Courses
             }
 
             var session = runtime.CreateSession(
-                state.RestoreWorld(),
+                state.RestoreWorld(runtime.PrepareWorld),
                 state.Events);
             if (session._eventStream.NextSequence != state.NextEventSequence)
             {

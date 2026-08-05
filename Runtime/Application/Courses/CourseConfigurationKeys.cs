@@ -16,7 +16,7 @@ namespace VirtualLab.Application.Courses
 
         public static class Mutation
         {
-            public const string RelationKind = "关系类型";
+            public const string RelationTypeId = "关系类型";
             public const string SourceEntityId = Common.SourceEntityId;
             public const string SourceEntityReference = "来源实体引用";
             public const string TargetEntityId = Common.TargetEntityId;

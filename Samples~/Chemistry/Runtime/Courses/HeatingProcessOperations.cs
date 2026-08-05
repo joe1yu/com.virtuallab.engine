@@ -153,7 +153,7 @@ namespace VirtualLab.Chemistry.Courses
                     world,
                     source,
                     mutation,
-                    RelationKind.位于容器内,
+                    InteractionRelationTypeIds.ContainedBy,
                     ChemistryConfigurationKeys.Heating.RequiredContainedEntityId,
                     ChemistryConfigurationKeys.Heating.MissingContainedEntityRejectionReason,
                     ChemistryConfigurationKeys.Heating.MissingContainedEntityRiskStateKey,
@@ -162,7 +162,7 @@ namespace VirtualLab.Chemistry.Courses
                     world,
                     source,
                     mutation,
-                    RelationKind.连接对象,
+                    InteractionRelationTypeIds.Connection,
                     ChemistryConfigurationKeys.Heating.RequiredConnectedEntityId,
                     ChemistryConfigurationKeys.Heating.MissingConnectedEntityRejectionReason,
                     ChemistryConfigurationKeys.Heating.MissingConnectedEntityRiskStateKey,
@@ -236,7 +236,7 @@ namespace VirtualLab.Chemistry.Courses
                     numbers);
                 world.SetRelation(
                     new EntityRelation(
-                        RelationKind.由对象加热,
+                        ChemistryRelationTypeIds.HeatedBy,
                         source,
                         new EntityId(request.TargetEntityId)));
             }
@@ -295,7 +295,7 @@ namespace VirtualLab.Chemistry.Courses
                 var hasRiskConnection = detectRisk
                     && world.Relations.Any(value =>
                     {
-                        if (value.Kind != RelationKind.连接对象)
+                        if (value.TypeId != InteractionRelationTypeIds.Connection)
                         {
                             return false;
                         }
@@ -366,7 +366,7 @@ namespace VirtualLab.Chemistry.Courses
                 world.StopProcess(HeatingProcessId, source);
                 world.RemoveRelation(
                     new EntityRelation(
-                        RelationKind.由对象加热,
+                        ChemistryRelationTypeIds.HeatedBy,
                         source,
                         new EntityId(
                             process.TextParameters[ChemistryConfigurationKeys.Heating.HeatSourceEntityId])));
@@ -377,7 +377,7 @@ namespace VirtualLab.Chemistry.Courses
             ExperimentWorld world,
             EntityId heatedEntity,
             ConfiguredMutationDefinition mutation,
-            RelationKind kind,
+            RelationTypeId typeId,
             string requiredEntityKey,
             string rejectionKey,
             string riskStateKeyParameter,
@@ -393,8 +393,8 @@ namespace VirtualLab.Chemistry.Courses
                     mutation,
                     requiredEntityKey));
             var exists = world.Relations.Any(value =>
-                value.Kind == kind
-                && (kind == RelationKind.位于容器内
+                value.TypeId == typeId
+                && (typeId == InteractionRelationTypeIds.ContainedBy
                     ? value.Source == required
                         && value.Target == heatedEntity
                     : (value.Source == required

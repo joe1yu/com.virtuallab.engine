@@ -54,6 +54,11 @@ namespace VirtualLab.Chemistry.Courses
 
         public void Register(CourseModuleRegistrationContext context)
         {
+            foreach (var schema in ChemistryRelationSchemas.All)
+            {
+                context.RegisterRelationSchema(schema);
+            }
+
             foreach (var reader in ChemistryCourseRegistrations.CreateFactReaders())
             {
                 context.RegisterFactReader(reader);

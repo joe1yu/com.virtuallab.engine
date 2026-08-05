@@ -417,20 +417,13 @@ namespace VirtualLab.Application.Courses
             return value.Number;
         }
 
-        private static RelationKind ReadRelationKind(
+        private static RelationTypeId ReadRelationTypeId(
             ConfiguredMutationDefinition mutation)
         {
             var text = ReadText(
                 mutation,
-                CourseConfigurationKeys.Mutation.RelationKind);
-            if (!Enum.TryParse(text, true, out RelationKind kind)
-                || !Enum.IsDefined(typeof(RelationKind), kind))
-            {
-                throw new ArgumentException(
-                    $"状态变更“{mutation.MutationId}”的关系类型“{text}”无效。");
-            }
-
-            return kind;
+                CourseConfigurationKeys.Mutation.RelationTypeId);
+            return new RelationTypeId(text);
         }
 
         private static EntityId ReadEntityId(
@@ -465,109 +458,13 @@ namespace VirtualLab.Application.Courses
             return new EntityId(value);
         }
 
-        private static void EnsureRelationIsUnique(
-            ExperimentWorld world,
-            EntityRelation candidate)
-        {
-            foreach (var existing in world.Relations)
-            {
-                if (existing.Kind == candidate.Kind
-                    && existing.Source == candidate.Source
-                    && existing.Target == candidate.Target
-                    && string.Equals(
-                        existing.SourcePortId,
-                        candidate.SourcePortId,
-                        StringComparison.Ordinal)
-                    && string.Equals(
-                        existing.TargetPortId,
-                        candidate.TargetPortId,
-                        StringComparison.Ordinal))
-                {
-                    // “设置关系”采用幂等语义。重复提交同一放置或覆盖结果时，
-                    // 保持既有状态即可；只有同类关系指向不同端点时才算冲突。
-                    return;
-                }
-
-                if (existing.Kind != candidate.Kind)
-                {
-                    continue;
-                }
-
-                var conflicts = candidate.Kind switch
-                {
-                    RelationKind.位于容器内 =>
-                        existing.Source == candidate.Source,
-                    RelationKind.覆盖对象 =>
-                        existing.Source == candidate.Source
-                        || existing.Target == candidate.Target,
-                    RelationKind.由对象持有 or
-                    RelationKind.固定对象 or
-                    RelationKind.浸入对象 or
-                    RelationKind.由对象加热 =>
-                        existing.Source == candidate.Source,
-                    RelationKind.连接对象 =>
-                        SharesConnectionEndpoint(existing, candidate),
-                    _ => false
-                };
-                if (conflicts)
-                {
-                    throw new InvalidOperationException(
-                        $"关系“{candidate.Kind}”违反唯一性约束。");
-                }
-            }
-        }
-
-        private static bool SharesConnectionEndpoint(
-            EntityRelation first,
-            EntityRelation second)
-        {
-            if (!first.HasPortEndpoints || !second.HasPortEndpoints)
-            {
-                return first.Source == second.Source
-                       || first.Target == second.Source
-                       || first.Source == second.Target
-                       || first.Target == second.Target;
-            }
-
-            return SamePort(
-                       first.Source,
-                       first.SourcePortId,
-                       second.Source,
-                       second.SourcePortId)
-                   || SamePort(
-                       first.Source,
-                       first.SourcePortId,
-                       second.Target,
-                       second.TargetPortId)
-                   || SamePort(
-                       first.Target,
-                       first.TargetPortId,
-                       second.Source,
-                       second.SourcePortId)
-                   || SamePort(
-                       first.Target,
-                       first.TargetPortId,
-                       second.Target,
-                       second.TargetPortId);
-        }
-
-        private static bool SamePort(
-            EntityId firstEntity,
-            string firstPortId,
-            EntityId secondEntity,
-            string secondPortId) =>
-            firstEntity == secondEntity
-            && string.Equals(
-                firstPortId,
-                secondPortId,
-                StringComparison.Ordinal);
-
         private static EntityRelation CreateRelation(
             SemanticActionRequest request,
             ExperimentWorld world,
             ConfiguredMutationDefinition mutation)
         {
-            var kind = ReadRelationKind(mutation);
+            var typeId = ReadRelationTypeId(mutation);
+            var schema = world.RequireRelationSchema(typeId);
             var source = ReadEntityId(
                 mutation,
                 CourseConfigurationKeys.Mutation.SourceEntityId,
@@ -580,11 +477,6 @@ namespace VirtualLab.Application.Courses
                 CourseConfigurationKeys.Mutation.TargetEntityReference,
                 request,
                 request.TargetEntityId);
-            if (kind != RelationKind.连接对象)
-            {
-                return new EntityRelation(kind, source, target);
-            }
-
             var sourcePortId = ReadOptionalText(
                 mutation,
                 CourseConfigurationKeys.Mutation.SourcePortId);
@@ -597,23 +489,26 @@ namespace VirtualLab.Application.Courses
                     $"状态变更“{mutation.MutationId}”必须同时声明来源端口和目标端口。");
             }
 
-            if (sourcePortId == null)
+            if (sourcePortId == null
+                && schema.PortPolicy != RelationPortPolicy.禁止)
             {
-                if (!ConnectionPortResolver.TryResolve(
+                if (ConnectionPortResolver.TryResolve(
                         world,
                         request,
                         out var resolved))
                 {
-                    // 兼容尚未声明端口的旧课程；新课程编译产物必须携带端口 ID。
-                    return new EntityRelation(kind, source, target);
+                    sourcePortId = resolved.SourcePort.PortId;
+                    targetPortId = resolved.TargetPort.PortId;
                 }
-
-                sourcePortId = resolved.SourcePort.PortId;
-                targetPortId = resolved.TargetPort.PortId;
+                else if (schema.PortPolicy == RelationPortPolicy.必须)
+                {
+                    throw new ArgumentException(
+                        $"状态变更“{mutation.MutationId}”无法解析关系“{typeId}”的端口。");
+                }
             }
 
             return new EntityRelation(
-                kind,
+                typeId,
                 source,
                 target,
                 sourcePortId,
@@ -670,7 +565,6 @@ namespace VirtualLab.Application.Courses
                 ConfiguredMutationDefinition mutation)
             {
                 var relation = CreateRelation(request, world, mutation);
-                EnsureRelationIsUnique(world, relation);
                 world.SetRelation(relation);
             }
         }
@@ -687,26 +581,15 @@ namespace VirtualLab.Application.Courses
                 ConfiguredMutationDefinition mutation)
             {
                 var relation = CreateRelation(request, world, mutation);
-                if (world.RemoveRelation(relation))
+                if (world.RemoveRelation(relation)
+                    || !world.RequireRelationSchema(relation.TypeId)
+                        .RequireExistingOnRemove)
                 {
                     return;
                 }
 
-                // 旧课程只记录实体级连接。未显式配端口的断开命令需能移除
-                // 这种历史关系；显式端口命令则绝不能扩大删除范围。
-                var hasExplicitPorts = mutation.Parameters.ContainsKey(
-                    CourseConfigurationKeys.Mutation.SourcePortId);
-                var removedLegacy = !hasExplicitPorts
-                    && relation.Kind == RelationKind.连接对象
-                    && world.RemoveRelation(new EntityRelation(
-                        relation.Kind,
-                        relation.Source,
-                        relation.Target));
-                if (!removedLegacy)
-                {
-                    throw new InvalidOperationException(
-                        $"待移除的关系“{relation.Kind}”不存在。");
-                }
+                throw new InvalidOperationException(
+                    $"待移除的关系“{relation.TypeId}”不存在。");
             }
         }
 

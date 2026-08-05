@@ -49,7 +49,7 @@ namespace VirtualLab.Engine.Tests.Infrastructure
                 SessionJson.TryDeserialize(
                     json.Replace(
                         "\"relations\": []",
-                        "\"relations\": [{\"kind\":\"位于容器内\"," 
+                        "\"relations\": [{\"typeId\":\"交互.关系.位于容器内\","
                         + "\"sourceEntityId\":\"学生\","
                         + "\"targetEntityId\":\"不存在\"}]"),
                     out _,

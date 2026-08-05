@@ -467,7 +467,7 @@ namespace VirtualLab.Infrastructure.Persistence
         private sealed class RelationDocument
         {
             [JsonProperty(Required = Required.Always)]
-            public RelationKind Kind { get; set; }
+            public string TypeId { get; set; }
             [JsonProperty(Required = Required.Always)]
             public string SourceEntityId { get; set; }
             [JsonProperty(Required = Required.Always)]
@@ -478,7 +478,7 @@ namespace VirtualLab.Infrastructure.Persistence
             public static RelationDocument From(CourseRelationState value) =>
                 new RelationDocument
                 {
-                    Kind = value.Kind,
+                    TypeId = value.TypeId.Value,
                     SourceEntityId = value.SourceEntityId,
                     TargetEntityId = value.TargetEntityId,
                     SourcePortId = value.SourcePortId,
@@ -487,7 +487,7 @@ namespace VirtualLab.Infrastructure.Persistence
 
             public CourseRelationState ToState() =>
                 new CourseRelationState(
-                    Kind,
+                    new RelationTypeId(TypeId),
                     SourceEntityId,
                     TargetEntityId,
                     SourcePortId,

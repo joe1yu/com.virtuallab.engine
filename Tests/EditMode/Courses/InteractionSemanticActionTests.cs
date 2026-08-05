@@ -81,8 +81,8 @@ namespace VirtualLab.Engine.Tests.Courses
                 Entity("另一学生"),
                 Entity("器材.试管", new GrabbableCapability()),
                 Entity("器材.烧杯", new GrabbableCapability()));
-            world.SetRelation(Relation(RelationKind.由对象持有, "器材.试管", "学生"));
-            world.SetRelation(Relation(RelationKind.由对象持有, "器材.烧杯", "另一学生"));
+            world.SetRelation(Relation(InteractionRelationTypeIds.HeldBy, "器材.试管", "学生"));
+            world.SetRelation(Relation(InteractionRelationTypeIds.HeldBy, "器材.烧杯", "另一学生"));
             var session = Session(world, ReleaseAction());
 
             var rejected = session.Execute(
@@ -122,12 +122,12 @@ namespace VirtualLab.Engine.Tests.Courses
                 Entity("端口.兼容目标", new ConnectorCapability("导气")));
             world.SetRelation(
                 Relation(
-                    RelationKind.连接对象,
+                    InteractionRelationTypeIds.Connection,
                     "端口.来源",
                     "端口.已连接"));
             world.SetRelation(
                 Relation(
-                    RelationKind.连接对象,
+                    InteractionRelationTypeIds.Connection,
                     "端口.另一来源",
                     "端口.另一目标"));
             var session = Session(world, ConnectAction(), DisconnectAction());
@@ -271,13 +271,13 @@ namespace VirtualLab.Engine.Tests.Courses
             Assert.That(
                 world.Relations,
                 Has.Some.Matches<EntityRelation>(
-                    value => value.Kind == RelationKind.位于容器内
+                    value => value.TypeId == InteractionRelationTypeIds.ContainedBy
                         && value.Source == new EntityId("器材.试管架")
                         && value.Target == new EntityId("器材.试管")));
             Assert.That(
                 world.Relations,
                 Has.Some.Matches<EntityRelation>(
-                    value => value.Kind == RelationKind.覆盖对象
+                    value => value.TypeId == InteractionRelationTypeIds.Cover
                         && value.Source == new EntityId("器材.瓶塞")
                         && value.Target == new EntityId("器材.集气瓶")));
         }
@@ -290,7 +290,7 @@ namespace VirtualLab.Engine.Tests.Courses
                 Entity("来源"),
                 Entity("目标", new GrabbableCapability()));
             world.SetRelation(Relation(
-                RelationKind.由对象持有,
+                InteractionRelationTypeIds.HeldBy,
                 "目标",
                 "学生"));
             world.SetScalar(
@@ -351,7 +351,7 @@ namespace VirtualLab.Engine.Tests.Courses
             Assert.That(duplicateLocation.IsAccepted, Is.False);
             Assert.That(
                 world.Relations.Count(value =>
-                    value.Kind == RelationKind.位于容器内
+                    value.TypeId == InteractionRelationTypeIds.ContainedBy
                     && value.Target == new EntityId("水槽")),
                 Is.EqualTo(2));
         }
@@ -376,7 +376,7 @@ namespace VirtualLab.Engine.Tests.Courses
                 Mutation(
                     "建立持有关系",
                     ConfiguredStateOperationIds.RelationSet,
-                    ("关系类型", StructuredValue.FromText("由对象持有")),
+                    ("关系类型", StructuredValue.FromText("交互.关系.持有")),
                     ("目标实体引用", StructuredValue.FromText("操作者"))));
         }
 
@@ -391,7 +391,7 @@ namespace VirtualLab.Engine.Tests.Courses
                 Mutation(
                     "移除持有关系",
                     ConfiguredStateOperationIds.RelationRemove,
-                    ("关系类型", StructuredValue.FromText("由对象持有")),
+                    ("关系类型", StructuredValue.FromText("交互.关系.持有")),
                     ("目标实体引用", StructuredValue.FromText("操作者"))));
         }
 
@@ -406,7 +406,7 @@ namespace VirtualLab.Engine.Tests.Courses
                     Rule(30, InteractionStructuredFactFields.连接标签相匹配, StructuredRuleOperator.等于, StructuredValue.FromBoolean(true), "端口不兼容"),
                     Rule(40, SpatialStructuredFactFields.对象间距离, StructuredRuleOperator.小于等于, StructuredValue.FromNumber(0.1d), "连接距离过远")
                 },
-                Mutation("建立端口连接", ConfiguredStateOperationIds.RelationSet, ("关系类型", StructuredValue.FromText("连接对象"))));
+                Mutation("建立端口连接", ConfiguredStateOperationIds.RelationSet, ("关系类型", StructuredValue.FromText("交互.关系.连接"))));
         }
 
         private static ConfiguredActionDefinition DisconnectAction()
@@ -414,7 +414,7 @@ namespace VirtualLab.Engine.Tests.Courses
             return Action(
                 InteractionSemanticActionIds.Disconnect,
                 Array.Empty<StructuredRuleDefinition>(),
-                Mutation("移除端口连接", ConfiguredStateOperationIds.RelationRemove, ("关系类型", StructuredValue.FromText("连接对象"))));
+                Mutation("移除端口连接", ConfiguredStateOperationIds.RelationRemove, ("关系类型", StructuredValue.FromText("交互.关系.连接"))));
         }
 
         private static ConfiguredActionDefinition PlaceAction()
@@ -425,7 +425,7 @@ namespace VirtualLab.Engine.Tests.Courses
                 {
                     Rule(10, SpatialStructuredFactFields.对象正在接触, StructuredRuleOperator.等于, StructuredValue.FromBoolean(true), "未接触放置位置")
                 },
-                Mutation("建立放置关系", ConfiguredStateOperationIds.RelationSet, ("关系类型", StructuredValue.FromText("位于容器内"))));
+                Mutation("建立放置关系", ConfiguredStateOperationIds.RelationSet, ("关系类型", StructuredValue.FromText("交互.关系.位于容器内"))));
         }
 
         private static ConfiguredActionDefinition CoverAction()
@@ -436,7 +436,7 @@ namespace VirtualLab.Engine.Tests.Courses
                 {
                     Rule(10, SpatialStructuredFactFields.对象正在接触, StructuredRuleOperator.等于, StructuredValue.FromBoolean(true), "未接触覆盖位置")
                 },
-                Mutation("建立覆盖关系", ConfiguredStateOperationIds.RelationSet, ("关系类型", StructuredValue.FromText("覆盖对象"))));
+                Mutation("建立覆盖关系", ConfiguredStateOperationIds.RelationSet, ("关系类型", StructuredValue.FromText("交互.关系.覆盖"))));
         }
 
         private static ConfiguredActionDefinition Action(
@@ -537,7 +537,7 @@ namespace VirtualLab.Engine.Tests.Courses
 
         private static ExperimentWorld WorldWith(params ExperimentEntity[] entities)
         {
-            var world = new ExperimentWorld();
+            var world = new ExperimentWorld(InteractionRelationSchemas.All);
             foreach (var entity in entities)
             {
                 world.AddEntity(entity);
@@ -547,7 +547,7 @@ namespace VirtualLab.Engine.Tests.Courses
         }
 
         private static EntityRelation Relation(
-            RelationKind kind,
+            RelationTypeId kind,
             string source,
             string target)
         {

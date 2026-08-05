@@ -66,15 +66,16 @@ namespace VirtualLab.Domain
     {
         private readonly Dictionary<EntityId, ExperimentEntity> _entities =
             new Dictionary<EntityId, ExperimentEntity>();
-        private readonly RelationGraph _relationGraph = new RelationGraph();
+        private readonly RelationGraph _relationGraph;
         private readonly Dictionary<string, WorldScalarValue> _scalars =
             new Dictionary<string, WorldScalarValue>(StringComparer.Ordinal);
         private readonly Dictionary<string, WorldProcessState> _activeProcesses =
             new Dictionary<string, WorldProcessState>(StringComparer.Ordinal);
         private bool _transactionActive;
 
-        public ExperimentWorld()
+        public ExperimentWorld(IEnumerable<RelationSchema> relationSchemas = null)
         {
+            _relationGraph = new RelationGraph(relationSchemas);
             Matter = new MatterInventory(ContainsEntity);
         }
 
@@ -86,6 +87,22 @@ namespace VirtualLab.Domain
 
         public IReadOnlyCollection<EntityRelation> Relations =>
             _relationGraph.Relations;
+
+        public IReadOnlyCollection<RelationSchema> RelationSchemas =>
+            _relationGraph.Schemas;
+
+        public bool RelationSchemasFrozen => _relationGraph.SchemasFrozen;
+
+        /// <summary>
+        /// 在会话启动前安装模块关系模式。相同模式可重复安装，不同模式直接拒绝。
+        /// </summary>
+        public void RegisterRelationSchemas(IEnumerable<RelationSchema> schemas) =>
+            _relationGraph.RegisterSchemas(schemas);
+
+        public void FreezeRelationSchemas() => _relationGraph.FreezeSchemas();
+
+        public RelationSchema RequireRelationSchema(RelationTypeId typeId) =>
+            _relationGraph.RequireSchema(typeId);
 
         public IReadOnlyCollection<WorldProcessState> ActiveProcesses =>
             new ReadOnlyCollection<WorldProcessState>(
@@ -323,7 +340,11 @@ namespace VirtualLab.Domain
 
         private ExperimentWorld CreateTransactionalCopy()
         {
-            var copy = new ExperimentWorld();
+            var copy = new ExperimentWorld(RelationSchemas);
+            if (RelationSchemasFrozen)
+            {
+                copy.FreezeRelationSchemas();
+            }
             foreach (var entity in _entities.Values)
             {
                 var entityCopy = new ExperimentEntity(entity.Id);
@@ -350,7 +371,7 @@ namespace VirtualLab.Domain
             {
                 copy.SetRelation(
                     new EntityRelation(
-                        relation.Kind,
+                        relation.TypeId,
                         relation.Source,
                         relation.Target,
                         relation.SourcePortId,
@@ -392,7 +413,7 @@ namespace VirtualLab.Domain
             {
                 _relationGraph.Set(
                     new EntityRelation(
-                        relation.Kind,
+                        relation.TypeId,
                         relation.Source,
                         relation.Target,
                         relation.SourcePortId,

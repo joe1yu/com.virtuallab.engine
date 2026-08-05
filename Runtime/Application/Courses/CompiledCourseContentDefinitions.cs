@@ -58,14 +58,14 @@ namespace VirtualLab.Application.Courses
     {
         public CourseInitialRelationDefinition(
             string relationId,
-            RelationKind kind,
+            RelationTypeId typeId,
             string sourceEntityId,
             string targetEntityId)
         {
             RelationId = CourseContractGuard.Required(
                 relationId,
                 "初始关系 ID");
-            Kind = kind;
+            TypeId = typeId;
             SourceEntityId = CourseContractGuard.Required(
                 sourceEntityId,
                 $"初始关系“{RelationId}”的来源实体");
@@ -75,7 +75,7 @@ namespace VirtualLab.Application.Courses
         }
 
         public string RelationId { get; }
-        public RelationKind Kind { get; }
+        public RelationTypeId TypeId { get; }
         public string SourceEntityId { get; }
         public string TargetEntityId { get; }
     }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Newtonsoft.Json;
 using VirtualLab.Application.Courses;
+using VirtualLab.Domain.Relations;
 
 namespace VirtualLab.UnityAdapters.Courses
 {
@@ -16,6 +17,7 @@ namespace VirtualLab.UnityAdapters.Courses
                 Converters =
                 {
                     new StructuredFactFieldConverter(),
+                    new RelationTypeIdConverter(),
                     new StructuredValueDictionaryConverter()
                 }
             };
@@ -46,6 +48,35 @@ namespace VirtualLab.UnityAdapters.Courses
 
                 throw new JsonSerializationException(
                     "课程事实字段必须是中文字符串标识。");
+            }
+        }
+
+        private sealed class RelationTypeIdConverter : JsonConverter
+        {
+            public override bool CanConvert(Type objectType) =>
+                objectType == typeof(RelationTypeId);
+
+            public override void WriteJson(
+                JsonWriter writer,
+                object value,
+                JsonSerializer serializer)
+            {
+                writer.WriteValue(((RelationTypeId)value).Value);
+            }
+
+            public override object ReadJson(
+                JsonReader reader,
+                Type objectType,
+                object existingValue,
+                JsonSerializer serializer)
+            {
+                if (reader.TokenType == JsonToken.String)
+                {
+                    return new RelationTypeId((string)reader.Value);
+                }
+
+                throw new JsonSerializationException(
+                    "课程关系类型必须是模块注册的中文字符串标识。");
             }
         }
 

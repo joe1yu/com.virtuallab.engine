@@ -34,7 +34,7 @@ namespace VirtualLab.Chemistry.Tests.Courses
             Assert.That(
                 world.Relations,
                 Has.Some.Matches<EntityRelation>(
-                    value => value.Kind == RelationKind.由对象加热
+                    value => value.TypeId == ChemistryRelationTypeIds.HeatedBy
                         && value.Source == new EntityId("器材.试管")
                         && value.Target == new EntityId("器材.酒精灯")));
             operations.Advance(
@@ -64,7 +64,7 @@ namespace VirtualLab.Chemistry.Tests.Courses
             Assert.That(
                 world.Relations,
                 Has.None.Matches<EntityRelation>(
-                    value => value.Kind == RelationKind.由对象加热));
+                    value => value.TypeId == ChemistryRelationTypeIds.HeatedBy));
         }
 
         [Test]
@@ -125,7 +125,7 @@ namespace VirtualLab.Chemistry.Tests.Courses
             safeSession.Execute(Begin("命令.安全顺序开始"));
             safeWorld.RemoveRelation(
                 new EntityRelation(
-                    RelationKind.连接对象,
+                    InteractionRelationTypeIds.Connection,
                     new EntityId("器材.试管"),
                     new EntityId("器材.导管")));
             safeSession.Execute(End("命令.先移导管后停热"));
@@ -144,7 +144,7 @@ namespace VirtualLab.Chemistry.Tests.Courses
             var world = HeatingWorld(connected: false);
             Add(world, "器材.水槽");
             world.SetRelation(new EntityRelation(
-                RelationKind.连接对象,
+                InteractionRelationTypeIds.Connection,
                 new EntityId("器材.导管"),
                 new EntityId("器材.水槽")));
             var operations = new HeatingProcessOperations(
@@ -273,7 +273,7 @@ namespace VirtualLab.Chemistry.Tests.Courses
 
         private static ExperimentWorld HeatingWorld(bool connected)
         {
-            var world = new ExperimentWorld();
+            var world = new ExperimentWorld(InteractionRelationSchemas.All);
             Add(world, "学生");
             Add(world, "器材.试管", new HeatableCapability());
             Add(world, "器材.酒精灯", new Heat来源对象能力(100m));
@@ -295,7 +295,7 @@ namespace VirtualLab.Chemistry.Tests.Courses
             {
                 world.SetRelation(
                     new EntityRelation(
-                        RelationKind.连接对象,
+                        InteractionRelationTypeIds.Connection,
                         new EntityId("器材.试管"),
                         new EntityId("器材.导管")));
             }

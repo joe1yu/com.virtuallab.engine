@@ -102,7 +102,7 @@ namespace VirtualLab.Engine.Tests.Courses
 
             Assert.That(
                 context.World.Relations.Count(value =>
-                    value.Kind == RelationKind.覆盖对象
+                    value.TypeId == InteractionRelationTypeIds.Cover
                     && ((value.Source == new EntityId("玻璃片一")
                          && value.Target == new EntityId("集气瓶二"))
                         || (value.Source == new EntityId("玻璃片二")
@@ -573,11 +573,11 @@ namespace VirtualLab.Engine.Tests.Courses
 
             PrepareHeatingApparatus(context.Runtime);
             context.World.RemoveRelation(new EntityRelation(
-                RelationKind.位于容器内,
+                InteractionRelationTypeIds.ContainedBy,
                 new EntityId("棉花团"),
                 new EntityId("大试管")));
             var stopperConnection = context.World.Relations.Single(value =>
-                value.Kind == RelationKind.连接对象
+                value.TypeId == InteractionRelationTypeIds.Connection
                 && (value.Source.Value == "橡胶塞玻璃导管"
                     && value.Target.Value == "大试管"
                     || value.Source.Value == "大试管"

@@ -373,7 +373,7 @@ namespace VirtualLab.Engine.PlayModeTests
                 Does.Contain("interaction.snap-to-anchor"));
             Assert.That(
                 bootstrap.Runtime.ExportState().Relations.Count(value =>
-                    value.Kind == RelationKind.连接对象
+                    value.TypeId == InteractionRelationTypeIds.Connection
                     && (value.SourceEntityId == "折角导气管"
                         || value.TargetEntityId == "折角导气管")),
                 Is.EqualTo(2),

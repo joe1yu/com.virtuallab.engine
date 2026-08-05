@@ -25,6 +25,11 @@ namespace VirtualLab.Application.Courses
 
         public void Register(CourseModuleRegistrationContext context)
         {
+            foreach (var schema in InteractionRelationSchemas.All)
+            {
+                context.RegisterRelationSchema(schema);
+            }
+
             foreach (var reader in CoreCourseRegistrations.CreateFactReaders())
             {
                 context.RegisterFactReader(reader);
@@ -268,7 +273,7 @@ namespace VirtualLab.Application.Courses
             {
                 var source = new EntityId(context.Request.SourceEntityId);
                 var holder = context.World.Relations.FirstOrDefault(
-                    value => value.Kind == RelationKind.由对象持有
+                    value => value.TypeId == InteractionRelationTypeIds.HeldBy
                         && value.Source == source);
                 return holder == null
                     ? StructuredValue.Null()
@@ -288,7 +293,7 @@ namespace VirtualLab.Application.Courses
                 var actor = new EntityId(context.Request.ActorEntityId);
                 return StructuredValue.FromBoolean(
                     context.World.Relations.Any(
-                        value => value.Kind == RelationKind.由对象持有
+                        value => value.TypeId == InteractionRelationTypeIds.HeldBy
                             && value.Source == source
                             && value.Target == actor));
             }
@@ -321,7 +326,7 @@ namespace VirtualLab.Application.Courses
                 var actor = new EntityId(context.Request.ActorEntityId);
                 return StructuredValue.FromBoolean(
                     context.World.Relations.Any(value =>
-                        value.Kind == RelationKind.由对象持有
+                        value.TypeId == InteractionRelationTypeIds.HeldBy
                         && value.Source == entity
                         && value.Target == actor));
             }
@@ -661,7 +666,7 @@ namespace VirtualLab.Application.Courses
             string portId)
         {
             return world.Relations.FirstOrDefault(value =>
-                value.Kind == RelationKind.连接对象
+                value.TypeId == InteractionRelationTypeIds.Connection
                 && ((!value.HasPortEndpoints
                         && (value.Source == entityId
                             || value.Target == entityId))

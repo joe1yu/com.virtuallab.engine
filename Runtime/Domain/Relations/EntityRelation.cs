@@ -5,19 +5,24 @@ namespace VirtualLab.Domain.Relations
 {
     public sealed class EntityRelation
     {
-        public EntityRelation(RelationKind kind, EntityId source, EntityId target)
-            : this(kind, source, target, null, null)
+        public EntityRelation(RelationTypeId typeId, EntityId source, EntityId target)
+            : this(typeId, source, target, null, null)
         {
         }
 
         public EntityRelation(
-            RelationKind kind,
+            RelationTypeId typeId,
             EntityId source,
             EntityId target,
             string sourcePortId,
             string targetPortId)
         {
-            Kind = kind;
+            if (string.IsNullOrWhiteSpace(typeId.Value))
+            {
+                throw new ArgumentException("关系类型标识不能为空。", nameof(typeId));
+            }
+
+            TypeId = typeId;
             Source = source;
             Target = target;
             SourcePortId = Optional(sourcePortId);
@@ -25,19 +30,12 @@ namespace VirtualLab.Domain.Relations
             if ((SourcePortId == null) != (TargetPortId == null))
             {
                 throw new ArgumentException(
-                    "连接关系必须同时声明来源端口和目标端口。",
-                    nameof(sourcePortId));
-            }
-
-            if (Kind != RelationKind.连接对象 && HasPortEndpoints)
-            {
-                throw new ArgumentException(
-                    "只有连接关系可以声明端口端点。",
+                    "关系必须同时声明来源端口和目标端口。",
                     nameof(sourcePortId));
             }
         }
 
-        public RelationKind Kind { get; }
+        public RelationTypeId TypeId { get; }
 
         public EntityId Source { get; }
 

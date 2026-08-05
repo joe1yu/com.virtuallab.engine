@@ -22,7 +22,8 @@ namespace VirtualLab.Application.Courses
                 throw new ArgumentNullException(nameof(course));
             }
 
-            var world = new ExperimentWorld();
+            var world = new ExperimentWorld(
+                CoreCourseRegistrations.CreateModuleScope().RelationSchemas);
             var portsByEntity = course.Ports
                 .GroupBy(value => value.EntityId, StringComparer.Ordinal)
                 .ToDictionary(
@@ -55,7 +56,7 @@ namespace VirtualLab.Application.Courses
             foreach (var relation in course.InitialRelations)
             {
                 world.SetRelation(new EntityRelation(
-                    relation.Kind,
+                    relation.TypeId,
                     new EntityId(relation.SourceEntityId),
                     new EntityId(relation.TargetEntityId)));
             }
