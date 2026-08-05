@@ -115,6 +115,17 @@ namespace VirtualLab.Engine.Tests.Courses
                     "火柴铁丝组合",
                     "组合引燃火柴"
                 }));
+            Assert.That(
+                result.Domain.InitialRelations.Select(value =>
+                    value.TypeId + "|" + value.SourceEntityId + "|"
+                    + value.TargetEntityId),
+                Is.EquivalentTo(new[]
+                {
+                    "交互.关系.覆盖|酒精灯帽|酒精灯",
+                    "交互.关系.覆盖|高锰酸钾瓶盖|高锰酸钾广口瓶",
+                    "交互.关系.覆盖|木炭瓶盖|木炭广口瓶",
+                    "交互.关系.位于容器内|木炭|木炭广口瓶"
+                }));
         }
 
         [Test]
@@ -178,18 +189,19 @@ namespace VirtualLab.Engine.Tests.Courses
                 && value.TargetEntityId == "火柴");
             Assert.That(
                 lampIgnition.Rules.Select(value => value.Field.Id),
-                Does.Contain(TeachingStructuredFactFields.来源对象教学状态.Id)
+                Does.Contain(InteractionStructuredFactFields.来源对象覆盖物.Id)
                     .And.Contain(TeachingStructuredFactFields.目标对象教学状态.Id)
                     .And.Contain(InteractionStructuredFactFields.目标对象已被操作者拿起.Id));
         }
 
         [Test]
-        public void 氧气课程只保留六张聚焦职责的高层蓝图表()
+        public void 氧气课程只保留七张聚焦职责的高层蓝图表()
         {
             var expected = new[]
             {
                 "课程.csv",
                 "实验对象.csv",
+                "初始关系.csv",
                 "交互规则.csv",
                 "学科过程.csv",
                 "表现覆盖.csv",
@@ -458,7 +470,9 @@ namespace VirtualLab.Engine.Tests.Courses
                 + value.CompatibilityGroup));
             result.AddRange(course.InitialRelations.Select(value =>
                 "初始关系|" + value.RelationId + "|" + value.TypeId + "|"
-                + value.SourceEntityId + "|" + value.TargetEntityId));
+                + value.SourceEntityId + "|" + value.TargetEntityId + "|"
+                + (value.SourcePortId ?? string.Empty) + "|"
+                + (value.TargetPortId ?? string.Empty)));
             result.AddRange(course.StateChanges.Select(value =>
                 "状态变化|" + MutationSignature(value)));
             result.AddRange(course.DomainEvents.Select(value =>

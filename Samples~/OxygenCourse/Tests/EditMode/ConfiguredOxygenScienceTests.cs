@@ -118,7 +118,8 @@ namespace VirtualLab.Engine.Tests.Courses
         [Test]
         public void 酒精灯必须取帽划燃并持有火柴后才能点燃()
         {
-            var runtime = CreateRuntime().Runtime;
+            var context = CreateRuntime();
+            var runtime = context.Runtime;
 
             var directIgnition = runtime.Session.Execute(
                 Request(
@@ -136,6 +137,13 @@ namespace VirtualLab.Engine.Tests.Courses
                         "酒精灯帽",
                         null)).IsAccepted,
                 Is.True);
+            Assert.That(
+                context.World.Relations.Any(value =>
+                    value.TypeId == InteractionRelationTypeIds.Cover
+                    && value.Source == new EntityId("酒精灯帽")
+                    && value.Target == new EntityId("酒精灯")),
+                Is.False,
+                "抓起覆盖物后，权威覆盖关系必须同步移除。");
             Assert.That(
                 runtime.Session.Execute(
                     Request(
