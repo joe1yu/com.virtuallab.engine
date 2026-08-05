@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using VirtualLab.Unity.Authoring.Blueprints;
@@ -151,10 +152,14 @@ namespace VirtualLab.Chemistry.Authoring
         private static IReadOnlyDictionary<string, BlueprintValue> Values(
             CourseDisciplineProcessBlueprint record,
             params KeyValuePair<string, string>[] values) =>
-            CourseBlueprint.ReadOnlyValues(values.Select(value =>
-                new KeyValuePair<string, BlueprintValue>(
-                    value.Key,
-                    new BlueprintValue(value.Key, value.Value, record.Source))));
+            new ReadOnlyDictionary<string, BlueprintValue>(
+                values.ToDictionary(
+                    value => value.Key,
+                    value => new BlueprintValue(
+                        value.Key,
+                        value.Value,
+                        record.Source),
+                    StringComparer.Ordinal));
 
         private static KeyValuePair<string, string> Pair(
             string key,

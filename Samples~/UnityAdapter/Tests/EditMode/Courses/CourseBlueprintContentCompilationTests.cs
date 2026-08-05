@@ -48,7 +48,7 @@ namespace VirtualLab.Engine.Tests.Courses
                     value.Code + ": " + value.Reason)));
             var goal = result.Model.TeachingGoals.Single().Definition;
             Assert.That(goal.GoalId, Is.EqualTo("目标.收集氧气"));
-            Assert.That(goal.Conditions, Has.Count.EqualTo(2));
+            Assert.That(goal.Conditions.Count, Is.EqualTo(2));
         }
 
         [Test]
