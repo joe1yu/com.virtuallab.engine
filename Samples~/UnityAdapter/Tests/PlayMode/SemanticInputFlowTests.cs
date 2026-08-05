@@ -6,6 +6,7 @@ using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
 using VirtualLab.Application.Courses;
+using VirtualLab.Spatial.Courses;
 using VirtualLab.Domain;
 using VirtualLab.Domain.Entities;
 using VirtualLab.Interaction.Courses;
@@ -33,10 +34,10 @@ namespace VirtualLab.Engine.PlayModeTests
                     new[]
                     {
                         Pair(
-                            "空间距离米",
+                            SpatialRequestParameterKeys.DistanceMeters,
                             StructuredValue.FromNumber(0.02d)),
                         Pair(
-                            "空间接触",
+                            SpatialRequestParameterKeys.IsContacting,
                             StructuredValue.FromBoolean(true))
                     }));
                 var pointer =
@@ -79,7 +80,8 @@ namespace VirtualLab.Engine.PlayModeTests
                     pointerRequest.Parameters.Keys,
                     Is.EquivalentTo(testRequest.Parameters.Keys));
                 Assert.That(
-                    pointerRequest.Parameters["空间距离米"].Number,
+                    pointerRequest.Parameters[
+                        SpatialRequestParameterKeys.DistanceMeters].Number,
                     Is.EqualTo(0.02d));
             }
             finally

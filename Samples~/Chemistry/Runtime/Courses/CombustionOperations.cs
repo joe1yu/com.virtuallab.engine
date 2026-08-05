@@ -8,6 +8,7 @@ using VirtualLab.Domain.Capabilities;
 using VirtualLab.Domain.Matter;
 using VirtualLab.Domain.Processes;
 using VirtualLab.Kernel;
+using VirtualLab.Spatial.Courses;
 
 namespace VirtualLab.Chemistry.Courses
 {
@@ -146,7 +147,10 @@ namespace VirtualLab.Chemistry.Courses
                     failures.Add(Text(mutation, ChemistryConfigurationKeys.Combustion.IgnitionSourceInvalidRejectionReason));
                 }
 
-                if (RequestNumber(request, ChemistryConfigurationKeys.Combustion.对象间距离Meters) > maximumDistance)
+                if (RequestNumber(
+                        request,
+                        SpatialRequestParameterKeys.DistanceMeters)
+                    > maximumDistance)
                 {
                     failures.Add(Text(mutation, ChemistryConfigurationKeys.Combustion.IgnitionDistanceRejectionReason));
                 }

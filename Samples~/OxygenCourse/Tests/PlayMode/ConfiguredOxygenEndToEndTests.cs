@@ -14,6 +14,7 @@ using VirtualLab.Interaction.Actions;
 using VirtualLab.Interaction.Relations;
 using VirtualLab.Kernel;
 using VirtualLab.Presentation;
+using VirtualLab.Spatial.Courses;
 using VirtualLab.UnityAdapters.Courses;
 using VirtualLab.UnityAdapters.Authoring;
 using VirtualLab.UnityAdapters.Input;
@@ -426,7 +427,8 @@ namespace VirtualLab.Engine.PlayModeTests
                 ChemistrySemanticActionIds.Ignite,
                 "木炭",
                 "酒精灯",
-                ("空间距离米", StructuredValue.FromNumber(0.1d)));
+                (SpatialRequestParameterKeys.DistanceMeters,
+                    StructuredValue.FromNumber(0.1d)));
             chemistry.Advance(1d);
             Execute(bootstrap, "命令.放入木炭",
                 InteractionSemanticActionIds.Place, "木炭", "集气瓶一");
@@ -470,7 +472,8 @@ namespace VirtualLab.Engine.PlayModeTests
                 ChemistrySemanticActionIds.Ignite,
                 "火柴铁丝组合",
                 "组合引燃火柴",
-                ("空间距离米", StructuredValue.FromNumber(0.1d)));
+                (SpatialRequestParameterKeys.DistanceMeters,
+                    StructuredValue.FromNumber(0.1d)));
             chemistry.Advance(1d);
             Execute(bootstrap, "命令.拿起铁丝",
                 InteractionSemanticActionIds.Grab, "火柴铁丝组合", null);

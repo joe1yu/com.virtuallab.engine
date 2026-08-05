@@ -7,6 +7,7 @@ using UnityEditor;
 using UnityEngine;
 using VirtualLab.Application.Courses;
 using VirtualLab.Interaction.Courses;
+using VirtualLab.Spatial.Courses;
 using VirtualLab.Teaching.Courses;
 using VirtualLab.Chemistry.Authoring;
 using VirtualLab.Chemistry.Courses;
@@ -53,6 +54,7 @@ namespace VirtualLab.Engine.Tests.Courses
                     CourseModuleIds.Core,
                     InteractionModuleIds.Interaction,
                     ChemistryModuleIds.Chemistry,
+                    SpatialModuleIds.Spatial,
                     TeachingModuleIds.Teaching
                 }));
             var suckBack = result.Domain.ActionAssessments.Single(value =>

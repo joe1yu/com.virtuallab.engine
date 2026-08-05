@@ -38,9 +38,6 @@ namespace VirtualLab.Application.Courses
     /// </summary>
     public static class CoreCourseRegistrations
     {
-        private const string 对象正在接触Parameter = "空间接触";
-        private const string 对象间距离Parameter = "空间距离米";
-
         public static ConfigDrivenCourseSession CreateSession(
             ExperimentWorld world,
             IEnumerable<ConfiguredActionDefinition> actions)
@@ -127,15 +124,7 @@ namespace VirtualLab.Application.Courses
                     context => context.Request.SourceEntityId),
                 new CapabilityFactReader(
                     CoreStructuredFactFields.目标对象能力,
-                    context => context.Request.TargetEntityId),
-                new RequestParameterFactReader(
-                    SpatialStructuredFactFields.对象正在接触,
-                    对象正在接触Parameter,
-                    StructuredValue.FromBoolean(false)),
-                new RequestParameterFactReader(
-                    SpatialStructuredFactFields.对象间距离,
-                    对象间距离Parameter,
-                    StructuredValue.FromNumber(double.MaxValue))
+                    context => context.Request.TargetEntityId)
             };
         }
 
@@ -207,33 +196,6 @@ namespace VirtualLab.Application.Courses
             {
                 return CapabilityIds(
                     FindEntity(context, _idSelector(context)));
-            }
-        }
-
-        private sealed class RequestParameterFactReader : IStructuredFactReader
-        {
-            private readonly string _parameterName;
-            private readonly StructuredValue _defaultValue;
-
-            public RequestParameterFactReader(
-                StructuredFactField field,
-                string parameterName,
-                StructuredValue defaultValue)
-            {
-                Field = field;
-                _parameterName = parameterName;
-                _defaultValue = defaultValue;
-            }
-
-            public StructuredFactField Field { get; }
-
-            public StructuredValue Read(StructuredRuleContext context)
-            {
-                return context.Request.Parameters.TryGetValue(
-                    _parameterName,
-                    out var value)
-                    ? value
-                    : _defaultValue;
             }
         }
     }

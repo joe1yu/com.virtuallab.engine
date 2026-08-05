@@ -17,6 +17,7 @@ using VirtualLab.Interaction.Capabilities;
 using VirtualLab.Interaction.Courses;
 using VirtualLab.Interaction.Relations;
 using VirtualLab.Kernel;
+using VirtualLab.Spatial.Courses;
 
 namespace VirtualLab.Chemistry.Tests.Courses
 {
@@ -396,8 +397,10 @@ namespace VirtualLab.Chemistry.Tests.Courses
                 "器材.量筒",
                 "器材.试管",
                 Parameters(
-                    ("倾角度数", StructuredValue.FromNumber(angle)),
-                    ("出口是否对准目标入口", StructuredValue.FromBoolean(aligned)),
+                    (SpatialRequestParameterKeys.TiltAngleDegrees,
+                        StructuredValue.FromNumber(angle)),
+                    (SpatialRequestParameterKeys.OutletAligned,
+                        StructuredValue.FromBoolean(aligned)),
                     ("请求流量毫升每秒", StructuredValue.FromNumber(rate))));
         }
 

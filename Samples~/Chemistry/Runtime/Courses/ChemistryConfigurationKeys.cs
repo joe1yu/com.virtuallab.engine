@@ -100,7 +100,6 @@ namespace VirtualLab.Chemistry.Courses
                 "缺少氧化剂拒绝原因";
             public const string FuelTemperatureRejectionReason =
                 "燃料温度不足拒绝原因";
-            public const string 对象间距离Meters = "空间距离米";
             public const string SafeContainerEntityId = "安全容器实体标识";
             public const string MinimumSafeLiquidVolumeMillilitres =
                 "最小安全液体体积毫升";

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using VirtualLab.Application.Courses;
+using VirtualLab.Spatial.Courses;
 using VirtualLab.UnityAdapters.Authoring;
 using VirtualLab.UnityAdapters.Courses;
 using VirtualLab.UnityAdapters.Input;
@@ -78,20 +79,24 @@ namespace VirtualLab.UnityAdapters.Physics
                 sourceCollider.bounds.Intersects(targetCollider.bounds);
             var values = new List<KeyValuePair<string, StructuredValue>>
             {
-                Fact("空间距离米", StructuredValue.FromNumber(distance)),
-                Fact("空间接触", StructuredValue.FromBoolean(contact)),
                 Fact(
-                    "端口是否对齐",
+                    SpatialRequestParameterKeys.DistanceMeters,
+                    StructuredValue.FromNumber(distance)),
+                Fact(
+                    SpatialRequestParameterKeys.IsContacting,
+                    StructuredValue.FromBoolean(contact)),
+                Fact(
+                    SpatialRequestParameterKeys.PortAligned,
                     StructuredValue.FromBoolean(
                         targetTransform != null &&
                         angle <= _alignmentToleranceDegrees)),
                 Fact(
-                    "出口是否对准目标入口",
+                    SpatialRequestParameterKeys.OutletAligned,
                     StructuredValue.FromBoolean(
                         targetTransform != null &&
                         angle <= _alignmentToleranceDegrees)),
                 Fact(
-                    "倾角度数",
+                    SpatialRequestParameterKeys.TiltAngleDegrees,
                     StructuredValue.FromNumber(
                         Normalize(Vector3.Angle(
                             source.transform.up,

@@ -9,6 +9,7 @@ using VirtualLab.Chemistry.Configuration;
 using VirtualLab.Chemistry.Courses;
 using VirtualLab.Domain.Matter;
 using VirtualLab.Kernel;
+using VirtualLab.Spatial.Courses;
 using VirtualLab.Unity.Authoring.Blueprints;
 using VirtualLab.Unity.Authoring.Diagnostics;
 using VirtualLab.Unity.Authoring.Normalized;
@@ -61,7 +62,11 @@ namespace VirtualLab.Chemistry.Authoring
         public string PackageId => Id;
 
         public IReadOnlyList<string> RequiredRuntimeModuleIds { get; } =
-            new[] { ChemistryModuleIds.Chemistry };
+            new[]
+            {
+                ChemistryModuleIds.Chemistry,
+                SpatialModuleIds.Spatial
+            };
 
         public RecipePackage Load()
         {

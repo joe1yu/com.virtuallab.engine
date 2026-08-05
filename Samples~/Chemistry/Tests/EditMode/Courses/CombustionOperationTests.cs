@@ -12,6 +12,7 @@ using VirtualLab.Domain.Entities;
 using VirtualLab.Domain.Matter;
 using VirtualLab.Interaction.Capabilities;
 using VirtualLab.Kernel;
+using VirtualLab.Spatial.Courses;
 
 namespace VirtualLab.Chemistry.Tests.Courses
 {
@@ -280,7 +281,8 @@ namespace VirtualLab.Chemistry.Tests.Courses
                 "器材.燃烧匙",
                 "器材.点火器",
                 Parameters(
-                    ("空间距离米", StructuredValue.FromNumber(distance))));
+                    (SpatialRequestParameterKeys.DistanceMeters,
+                        StructuredValue.FromNumber(distance))));
         }
 
         private static ExperimentWorld CombustionWorld(

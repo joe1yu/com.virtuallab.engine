@@ -15,6 +15,7 @@ using VirtualLab.Interaction.Courses;
 using VirtualLab.Interaction.Relations;
 using VirtualLab.Kernel;
 using VirtualLab.OxygenCourse.Authoring;
+using VirtualLab.Spatial.Courses;
 using VirtualLab.Unity.Authoring.Blueprints;
 using VirtualLab.Unity.Authoring.Recipes;
 
@@ -415,7 +416,7 @@ namespace VirtualLab.Engine.Tests.Courses
                     ChemistrySemanticActionIds.Ignite,
                     "木炭",
                     "酒精灯",
-                    ("空间距离米",
+                    (SpatialRequestParameterKeys.DistanceMeters,
                         StructuredValue.FromNumber(0.1d))));
             runtime.ProcessAdvancer.AdvanceProcesses(
                 1d,
@@ -442,7 +443,7 @@ namespace VirtualLab.Engine.Tests.Courses
                     ChemistrySemanticActionIds.Ignite,
                     "火柴铁丝组合",
                     "组合引燃火柴",
-                    ("空间距离米",
+                    (SpatialRequestParameterKeys.DistanceMeters,
                         StructuredValue.FromNumber(0.1d))));
             runtime.ProcessAdvancer.AdvanceProcesses(
                 1d,
@@ -767,7 +768,7 @@ namespace VirtualLab.Engine.Tests.Courses
                         ChemistrySemanticActionIds.Ignite,
                         "火柴铁丝组合",
                         "组合引燃火柴",
-                        ("空间距离米",
+                        (SpatialRequestParameterKeys.DistanceMeters,
                             StructuredValue.FromNumber(0.1d))))
                     .IsAccepted,
                 Is.True);
@@ -1111,7 +1112,7 @@ namespace VirtualLab.Engine.Tests.Courses
                         ChemistrySemanticActionIds.Ignite,
                         "木炭",
                         "酒精灯",
-                        ("空间距离米",
+                        (SpatialRequestParameterKeys.DistanceMeters,
                             StructuredValue.FromNumber(0.1d))))
                     .IsAccepted,
                 Is.True);

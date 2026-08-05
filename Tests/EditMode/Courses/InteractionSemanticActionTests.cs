@@ -12,6 +12,7 @@ using VirtualLab.Interaction.Capabilities;
 using VirtualLab.Interaction.Courses;
 using VirtualLab.Interaction.Relations;
 using VirtualLab.Kernel;
+using VirtualLab.Spatial.Courses;
 using VirtualLab.Teaching.Courses;
 
 namespace VirtualLab.Engine.Tests.Courses
@@ -147,7 +148,8 @@ namespace VirtualLab.Engine.Tests.Courses
                     InteractionSemanticActionIds.Connect,
                     "端口.来源",
                     "端口.错误目标",
-                    ("空间距离米", StructuredValue.FromNumber(0.5d))));
+                    (SpatialRequestParameterKeys.DistanceMeters,
+                        StructuredValue.FromNumber(0.5d))));
 
             Assert.That(rejected.IsAccepted, Is.False);
             Assert.That(
@@ -173,7 +175,8 @@ namespace VirtualLab.Engine.Tests.Courses
                     InteractionSemanticActionIds.Connect,
                     "端口.空闲来源",
                     "端口.兼容目标",
-                    ("空间距离米", StructuredValue.FromNumber(0.05d))));
+                    (SpatialRequestParameterKeys.DistanceMeters,
+                        StructuredValue.FromNumber(0.05d))));
             Assert.That(connected.IsAccepted, Is.True);
             Assert.That(world.Relations, Has.Count.EqualTo(2));
 
@@ -183,7 +186,8 @@ namespace VirtualLab.Engine.Tests.Courses
                     InteractionSemanticActionIds.Connect,
                     "端口.来源",
                     "端口.兼容目标",
-                    ("空间距离米", StructuredValue.FromNumber(0.05d))));
+                    (SpatialRequestParameterKeys.DistanceMeters,
+                        StructuredValue.FromNumber(0.05d))));
             Assert.That(
                 occupiedTarget.RejectionCodes,
                 Is.EqualTo(new[] { "目标端口已占用" }));
@@ -228,13 +232,15 @@ namespace VirtualLab.Engine.Tests.Courses
                 InteractionSemanticActionIds.Connect,
                 "单孔橡皮塞",
                 "大试管",
-                ("空间距离米", StructuredValue.FromNumber(0.01d))));
+                (SpatialRequestParameterKeys.DistanceMeters,
+                    StructuredValue.FromNumber(0.01d))));
             var pipeToStopper = session.Execute(Request(
                 "命令.导气管连接橡皮塞",
                 InteractionSemanticActionIds.Connect,
                 "导气管",
                 "单孔橡皮塞",
-                ("空间距离米", StructuredValue.FromNumber(0.01d))));
+                (SpatialRequestParameterKeys.DistanceMeters,
+                    StructuredValue.FromNumber(0.01d))));
 
             Assert.That(stopperToTube.IsAccepted, Is.True);
             Assert.That(pipeToStopper.IsAccepted, Is.True);
@@ -266,14 +272,16 @@ namespace VirtualLab.Engine.Tests.Courses
                     InteractionSemanticActionIds.Place,
                     "器材.试管架",
                     "器材.试管",
-                    ("空间接触", StructuredValue.FromBoolean(true))));
+                    (SpatialRequestParameterKeys.IsContacting,
+                        StructuredValue.FromBoolean(true))));
             var covered = session.Execute(
                 Request(
                     "命令.覆盖",
                     InteractionSemanticActionIds.Cover,
                     "器材.瓶塞",
                     "器材.集气瓶",
-                    ("空间接触", StructuredValue.FromBoolean(true))));
+                    (SpatialRequestParameterKeys.IsContacting,
+                        StructuredValue.FromBoolean(true))));
 
             Assert.That(placed.IsAccepted, Is.True);
             Assert.That(covered.IsAccepted, Is.True);
@@ -344,19 +352,22 @@ namespace VirtualLab.Engine.Tests.Courses
                 InteractionSemanticActionIds.Place,
                 "集气瓶一",
                 "水槽",
-                ("空间接触", StructuredValue.FromBoolean(true))));
+                (SpatialRequestParameterKeys.IsContacting,
+                    StructuredValue.FromBoolean(true))));
             var second = session.Execute(Request(
                 "命令.放置第二只集气瓶",
                 InteractionSemanticActionIds.Place,
                 "集气瓶二",
                 "水槽",
-                ("空间接触", StructuredValue.FromBoolean(true))));
+                (SpatialRequestParameterKeys.IsContacting,
+                    StructuredValue.FromBoolean(true))));
             var duplicateLocation = session.Execute(Request(
                 "命令.重复放置第一只集气瓶",
                 InteractionSemanticActionIds.Place,
                 "集气瓶一",
                 "实验台",
-                ("空间接触", StructuredValue.FromBoolean(true))));
+                (SpatialRequestParameterKeys.IsContacting,
+                    StructuredValue.FromBoolean(true))));
 
             Assert.That(first.IsAccepted, Is.True);
             Assert.That(second.IsAccepted, Is.True);
@@ -372,7 +383,15 @@ namespace VirtualLab.Engine.Tests.Courses
             ExperimentWorld world,
             params ConfiguredActionDefinition[] actions)
         {
-            return InteractionCourseRegistrations.CreateSession(world, actions);
+            return new CourseRuntimeDefinition(
+                    CourseRuntimeModuleScope.Create(
+                        new CoreCourseRuntimeModule(),
+                        new InteractionCourseRuntimeModule(),
+                        new SpatialCourseRuntimeModule()),
+                    actions,
+                    Array.Empty<CourseActionAssessmentDefinition>(),
+                    0)
+                .CreateSession(world);
         }
 
         private static ConfiguredActionDefinition GrabAction()

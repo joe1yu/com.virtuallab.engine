@@ -6,6 +6,7 @@ using VirtualLab.Domain;
 using VirtualLab.Domain.Matter;
 using VirtualLab.Interaction.Courses;
 using VirtualLab.Kernel;
+using VirtualLab.Spatial.Courses;
 using VirtualLab.Teaching.Courses;
 
 namespace VirtualLab.Chemistry.Courses
@@ -35,6 +36,9 @@ namespace VirtualLab.Chemistry.Courses
                         new Version(1, 0, 0)),
                     new CourseModuleDependency(
                         InteractionModuleIds.Interaction,
+                        new Version(1, 0, 0)),
+                    new CourseModuleDependency(
+                        SpatialModuleIds.Spatial,
                         new Version(1, 0, 0))
                 });
 
@@ -170,6 +174,7 @@ namespace VirtualLab.Chemistry.Courses
             return CourseRuntimeModuleScope.Create(
                 new CoreCourseRuntimeModule(),
                 new InteractionCourseRuntimeModule(),
+                new SpatialCourseRuntimeModule(),
                 new TeachingCourseRuntimeModule(),
                 new ChemistryCourseRuntimeModule(
                     matterTransferOperations,
@@ -190,11 +195,11 @@ namespace VirtualLab.Chemistry.Courses
                     MatterPhase.Solid),
                 new RequestParameterFactReader(
                     ChemistryStructuredFactFields.倾倒角度,
-                    "倾角度数",
+                    SpatialRequestParameterKeys.TiltAngleDegrees,
                     StructuredValue.FromNumber(0d)),
                 new RequestParameterFactReader(
                     ChemistryStructuredFactFields.倾倒口已对准,
-                    "出口是否对准目标入口",
+                    SpatialRequestParameterKeys.OutletAligned,
                     StructuredValue.FromBoolean(false)),
                 new RequestParameterFactReader(
                     ChemistryStructuredFactFields.请求流量,

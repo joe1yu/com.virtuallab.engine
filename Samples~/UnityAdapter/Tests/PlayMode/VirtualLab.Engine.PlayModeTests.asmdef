@@ -6,6 +6,7 @@
     "VirtualLab.Domain",
     "VirtualLab.Application",
     "VirtualLab.Interaction.Courses",
+    "VirtualLab.Spatial.Courses",
     "VirtualLab.Presentation",
     "VirtualLab.UnityAdapters"
   ],
