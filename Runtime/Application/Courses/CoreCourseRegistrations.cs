@@ -11,6 +11,32 @@ using VirtualLab.Kernel;
 namespace VirtualLab.Application.Courses
 {
     /// <summary>
+    /// 通用课程运行能力的显式模块入口。
+    /// </summary>
+    public sealed class CoreCourseRuntimeModule : ICourseRuntimeModule
+    {
+        private static readonly CourseModuleManifest ModuleManifest =
+            new CourseModuleManifest(
+                CourseModuleIds.Core,
+                "最小课程内核",
+                new Version(1, 0, 0));
+
+        public CourseModuleManifest Manifest => ModuleManifest;
+
+        public void Register(CourseModuleRegistrationContext context)
+        {
+            foreach (var reader in CoreCourseRegistrations.CreateFactReaders())
+            {
+                context.RegisterFactReader(reader);
+            }
+
+            context.RegisterStateOperations(
+                "内核.状态操作.通用",
+                registry => registry.RegisterBuiltInOperations());
+        }
+    }
+
+    /// <summary>
     /// 注册跨学科事实和通用状态操作，不定义任何具体课程实体或阈值。
     /// </summary>
     public static class CoreCourseRegistrations
@@ -22,11 +48,12 @@ namespace VirtualLab.Application.Courses
             ExperimentWorld world,
             IEnumerable<ConfiguredActionDefinition> actions)
         {
-            return new ConfigDrivenCourseSession(
-                world,
-                new StructuredRuleEvaluator(CreateFactReaders()),
-                new ConfiguredStateOperationRegistry(),
-                actions);
+            return new CourseRuntimeDefinition(
+                    CreateModuleScope(),
+                    actions,
+                    Array.Empty<CourseActionAssessmentDefinition>(),
+                    0)
+                .CreateSession(world);
         }
 
         public static ConfigDrivenCourseSession CreateSession(
@@ -39,7 +66,7 @@ namespace VirtualLab.Application.Courses
             }
 
             return new CourseRuntimeDefinition(
-                    CreateFactReaders(),
+                    CreateModuleScope(),
                     course.ConfiguredActions,
                     course.ActionAssessments,
                     course.Assessments.Sum(value => value.MaximumScore))
@@ -60,9 +87,9 @@ namespace VirtualLab.Application.Courses
                 throw new ArgumentNullException(nameof(course));
             }
 
-            var readers = CreateFactReaders();
+            var modules = CreateModuleScope();
             var session = new CourseRuntimeDefinition(
-                    readers,
+                    modules,
                     course.ConfiguredActions,
                     course.ActionAssessments,
                     course.Assessments.Sum(value => value.MaximumScore))
@@ -70,8 +97,13 @@ namespace VirtualLab.Application.Courses
             return new CourseRuntimeFacade(
                 world,
                 session,
-                readers,
+                modules.FactReaders,
                 course.GoalRules);
+        }
+
+        public static CourseRuntimeModuleScope CreateModuleScope()
+        {
+            return CourseRuntimeModuleScope.Create(new CoreCourseRuntimeModule());
         }
 
         public static IReadOnlyList<IStructuredFactReader>

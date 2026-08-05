@@ -205,8 +205,23 @@ namespace VirtualLab.Application.Courses
                     StringComparer.Ordinal);
         private readonly List<ConfiguredEventRecord> _pendingEvents =
             new List<ConfiguredEventRecord>();
+        private bool _isFrozen;
 
-        public ConfiguredStateOperationRegistry()
+        public ConfiguredStateOperationRegistry(bool registerBuiltInOperations = true)
+        {
+            if (registerBuiltInOperations)
+            {
+                RegisterBuiltInOperations();
+            }
+        }
+
+        public bool IsFrozen => _isFrozen;
+
+        /// <summary>
+        /// 显式注册当前通用层提供的状态操作。模块组合使用此入口，
+        /// 避免由注册表构造函数隐式决定课程能力。
+        /// </summary>
+        public void RegisterBuiltInOperations()
         {
             Register(new RelationSetOperation());
             Register(new RelationRemoveOperation());
@@ -218,8 +233,22 @@ namespace VirtualLab.Application.Courses
             Register(new EventEmitWhenScalarOperation(this));
         }
 
+        /// <summary>
+        /// 冻结后不再允许改变操作集合，保证同一会话的协议稳定。
+        /// </summary>
+        public void Freeze()
+        {
+            _isFrozen = true;
+        }
+
         public void Register(IConfiguredStateOperation operation)
         {
+            if (_isFrozen)
+            {
+                throw new InvalidOperationException(
+                    "状态操作注册表已冻结，不能继续注册操作。");
+            }
+
             if (operation == null)
             {
                 throw new ArgumentNullException(nameof(operation));
@@ -264,6 +293,7 @@ namespace VirtualLab.Application.Courses
                     nameof(mutations));
             }
 
+            Freeze();
             _pendingEvents.Clear();
 
             ConfiguredMutationDefinition current = null;

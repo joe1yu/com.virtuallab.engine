@@ -9,6 +9,72 @@ using VirtualLab.Kernel;
 namespace VirtualLab.Chemistry.Courses
 {
     /// <summary>
+    /// 化学模块的稳定标识集中定义，课程配置只引用这些公开协议。
+    /// </summary>
+    public static class ChemistryModuleIds
+    {
+        public const string Chemistry = "化学";
+    }
+
+    /// <summary>
+    /// 化学事实、状态操作和事件投影的显式注册入口。
+    /// </summary>
+    public sealed class ChemistryCourseRuntimeModule : ICourseRuntimeModule
+    {
+        private static readonly CourseModuleManifest ModuleManifest =
+            new CourseModuleManifest(
+                ChemistryModuleIds.Chemistry,
+                "化学实验",
+                new Version(1, 0, 0),
+                new[]
+                {
+                    new CourseModuleDependency(
+                        CourseModuleIds.Core,
+                        new Version(1, 0, 0))
+                });
+
+        private readonly MatterTransferOperations _matterTransferOperations;
+        private readonly CombustionOperations _combustionOperations;
+        private readonly HeatingProcessOperations _heatingOperations;
+        private readonly ShakingOperations _shakingOperations;
+
+        public ChemistryCourseRuntimeModule(
+            MatterTransferOperations matterTransferOperations = null,
+            CombustionOperations combustionOperations = null,
+            HeatingProcessOperations heatingOperations = null,
+            ShakingOperations shakingOperations = null)
+        {
+            _matterTransferOperations = matterTransferOperations;
+            _combustionOperations = combustionOperations;
+            _heatingOperations = heatingOperations;
+            _shakingOperations = shakingOperations;
+        }
+
+        public CourseModuleManifest Manifest => ModuleManifest;
+
+        public void Register(CourseModuleRegistrationContext context)
+        {
+            foreach (var reader in ChemistryCourseRegistrations.CreateFactReaders())
+            {
+                context.RegisterFactReader(reader);
+            }
+
+            context.RegisterStateOperations(
+                "化学.状态操作.课程",
+                registry =>
+                {
+                    _matterTransferOperations?.RegisterWith(registry);
+                    _combustionOperations?.RegisterWith(registry);
+                    _heatingOperations?.RegisterWith(registry);
+                    _shakingOperations?.RegisterWith(registry);
+                });
+            context.RegisterEventProjector(
+                "化学.事件投影.课程",
+                new ChemistryCourseEventProjector());
+        }
+    }
+
+    /// <summary>
     /// 在跨学科内核之上注册化学事实与白名单状态操作。
     /// </summary>
     public static class ChemistryCourseRegistrations
@@ -63,28 +129,30 @@ namespace VirtualLab.Chemistry.Courses
             HeatingProcessOperations heatingOperations = null,
             ShakingOperations shakingOperations = null)
         {
-            var readers = CoreCourseRegistrations
-                .CreateFactReaders()
-                .Concat(CreateFactReaders())
-                .ToArray();
             return new CourseRuntimeDefinition(
-                readers,
+                CreateModuleScope(
+                    matterTransferOperations,
+                    combustionOperations,
+                    heatingOperations,
+                    shakingOperations),
                 actions,
                 actionAssessments,
-                maximumScore,
-                () =>
-                {
-                    var registry = new ConfiguredStateOperationRegistry();
-                    matterTransferOperations?.RegisterWith(registry);
-                    combustionOperations?.RegisterWith(registry);
-                    heatingOperations?.RegisterWith(registry);
-                    shakingOperations?.RegisterWith(registry);
-                    return registry;
-                },
-                new ICourseEventProjector[]
-                {
-                    new ChemistryCourseEventProjector()
-                });
+                maximumScore);
+        }
+
+        public static CourseRuntimeModuleScope CreateModuleScope(
+            MatterTransferOperations matterTransferOperations = null,
+            CombustionOperations combustionOperations = null,
+            HeatingProcessOperations heatingOperations = null,
+            ShakingOperations shakingOperations = null)
+        {
+            return CourseRuntimeModuleScope.Create(
+                new CoreCourseRuntimeModule(),
+                new ChemistryCourseRuntimeModule(
+                    matterTransferOperations,
+                    combustionOperations,
+                    heatingOperations,
+                    shakingOperations));
         }
 
         public static IReadOnlyList<IStructuredFactReader>

@@ -91,12 +91,10 @@ namespace VirtualLab.Chemistry.Courses
                 heating,
                 combustion,
                 shaking);
-            var readers = CoreCourseRegistrations.CreateFactReaders()
-                .Concat(ChemistryCourseRegistrations.CreateFactReaders());
             runtime.Facade = new CourseRuntimeFacade(
                 world,
                 session,
-                readers,
+                runtimeDefinition.FactReaders,
                 course.GoalRules,
                 runtime);
             return runtime;

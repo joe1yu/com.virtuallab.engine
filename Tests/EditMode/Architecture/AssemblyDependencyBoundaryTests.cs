@@ -113,7 +113,7 @@ namespace VirtualLab.Engine.Tests.Architecture
         private static IReadOnlyDictionary<string, AssemblyDefinition> ReadAssemblyDefinitions()
         {
             var packageRoot = Path.Combine(
-                Path.GetFullPath(Path.Combine(Application.dataPath, "..")),
+                Path.GetFullPath(Path.Combine(UnityEngine.Application.dataPath, "..")),
                 "Packages",
                 "com.virtuallab.engine");
 

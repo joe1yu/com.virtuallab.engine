@@ -35,6 +35,22 @@ namespace VirtualLab.Application.Courses
         private readonly IReadOnlyList<ICourseEventProjector> _eventProjectors;
 
         public CourseRuntimeDefinition(
+            CourseRuntimeModuleScope modules,
+            IEnumerable<ConfiguredActionDefinition> actions,
+            IEnumerable<CourseActionAssessmentDefinition> actionAssessments,
+            int maximumScore)
+            : this(
+                (modules ?? throw new ArgumentNullException(nameof(modules)))
+                    .FactReaders,
+                actions,
+                actionAssessments,
+                maximumScore,
+                modules.CreateStateOperationRegistry,
+                modules.EventProjectors)
+        {
+        }
+
+        public CourseRuntimeDefinition(
             IEnumerable<IStructuredFactReader> readers,
             IEnumerable<ConfiguredActionDefinition> actions)
             : this(
@@ -92,6 +108,8 @@ namespace VirtualLab.Application.Courses
         {
             return CreateSession(world, Array.Empty<CourseEventState>());
         }
+
+        public IReadOnlyList<IStructuredFactReader> FactReaders => _readers;
 
         internal ConfigDrivenCourseSession CreateSession(
             ExperimentWorld world,
