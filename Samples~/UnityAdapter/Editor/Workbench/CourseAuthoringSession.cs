@@ -81,6 +81,18 @@ namespace VirtualLab.Unity.Authoring.Workbench
             string entityId,
             string displayName)
         {
+            return AddSupplies(
+                templateId,
+                new[] { Pair(entityId, displayName) }).Single();
+        }
+
+        /// <summary>
+        /// 批量用品在同一次会话变更中加入，任一标识无效时不会留下部分结果。
+        /// </summary>
+        public IReadOnlyList<CourseDraftObject> AddSupplies(
+            string templateId,
+            IEnumerable<KeyValuePair<string, string>> supplies)
+        {
             if (!Catalog.TryGetTemplate(templateId, out var template))
             {
                 throw new ArgumentException(
@@ -88,27 +100,61 @@ namespace VirtualLab.Unity.Authoring.Workbench
                     nameof(templateId));
             }
 
-            entityId = Required(entityId, "实体标识");
-            if (Draft.Objects.Any(value => value.EntityId == entityId))
+            var requested = (supplies
+                             ?? throw new ArgumentNullException(nameof(supplies)))
+                .Select(value => new KeyValuePair<string, string>(
+                    Required(value.Key, "实体标识"),
+                    Text(value.Value, value.Key)))
+                .ToArray();
+            if (requested.Length == 0)
             {
-                throw new InvalidOperationException(
-                    $"实验对象“{entityId}”已经存在。");
+                throw new ArgumentException("至少提供一个要添加的实验用品。", nameof(supplies));
             }
 
-            Mutate(() => Document(CourseAuthoringTableNames.Objects)
-                .AddConfiguredRow(new[]
+            var existing = new HashSet<string>(
+                Draft.Objects.Select(value => value.EntityId),
+                StringComparer.Ordinal);
+            foreach (var duplicate in requested
+                         .GroupBy(value => value.Key, StringComparer.Ordinal)
+                         .Where(value => value.Count() > 1))
+            {
+                throw new InvalidOperationException(
+                    $"批量添加中重复使用了实体标识“{duplicate.Key}”。");
+            }
+
+            foreach (var item in requested.Where(value => existing.Contains(value.Key)))
+            {
+                throw new InvalidOperationException(
+                    $"实验对象“{item.Key}”已经存在。");
+            }
+
+            Mutate(() =>
+            {
+                var document = Document(CourseAuthoringTableNames.Objects);
+                foreach (var item in requested)
                 {
-                    Pair(CourseAuthoringColumns.Object.EntityId, entityId),
-                    Pair(CourseAuthoringColumns.Object.DisplayName,
-                        Text(displayName, entityId)),
-                    Pair(CourseAuthoringColumns.Object.EntityType,
-                        template.TemplateId),
-                    Pair(CourseAuthoringColumns.Object.Roles, string.Empty),
-                    Pair(CourseAuthoringColumns.Object.Tags, string.Empty),
-                    Pair(CourseAuthoringColumns.Object.InitialPosition, "0|0|0"),
-                    Pair(CourseAuthoringColumns.Object.InitialRotation, "0|0|0")
-                }));
-            return Draft.Objects.Single(value => value.EntityId == entityId);
+                    document.AddConfiguredRow(new[]
+                    {
+                        Pair(CourseAuthoringColumns.Object.EntityId, item.Key),
+                        Pair(CourseAuthoringColumns.Object.DisplayName,
+                            item.Value),
+                        Pair(CourseAuthoringColumns.Object.EntityType,
+                            template.TemplateId),
+                        Pair(CourseAuthoringColumns.Object.Roles, string.Empty),
+                        Pair(CourseAuthoringColumns.Object.Tags, string.Empty),
+                        Pair(CourseAuthoringColumns.Object.InitialPosition, "0|0|0"),
+                        Pair(CourseAuthoringColumns.Object.InitialRotation, "0|0|0")
+                    });
+                }
+            });
+            var requestedIds = new HashSet<string>(
+                requested.Select(value => value.Key),
+                StringComparer.Ordinal);
+            return Draft.Objects.Where(value => requestedIds.Contains(value.EntityId))
+                .OrderBy(value => Array.FindIndex(
+                    requested,
+                    item => item.Key == value.EntityId))
+                .ToArray();
         }
 
         public void RemoveSupply(string entityId)

@@ -1,6 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using VirtualLab.Unity.Authoring.Catalogs;
+using VirtualLab.Unity.Authoring.Diagnostics;
+using VirtualLab.Unity.Authoring.Drafts;
 
 namespace VirtualLab.Unity.Authoring.Workbench
 {
@@ -18,6 +21,24 @@ namespace VirtualLab.Unity.Authoring.Workbench
         public string DisplayName { get; }
         public IReadOnlyList<string> MissingItems { get; }
         public bool IsComplete => MissingItems.Count == 0;
+    }
+
+    public sealed class CourseAuthoringCommandResult
+    {
+        private CourseAuthoringCommandResult(bool isSuccess, string message)
+        {
+            IsSuccess = isSuccess;
+            Message = message ?? string.Empty;
+        }
+
+        public bool IsSuccess { get; }
+        public string Message { get; }
+
+        public static CourseAuthoringCommandResult Success() =>
+            new CourseAuthoringCommandResult(true, string.Empty);
+
+        public static CourseAuthoringCommandResult Failure(string message) =>
+            new CourseAuthoringCommandResult(false, message);
     }
 
     /// <summary>
@@ -41,8 +62,192 @@ namespace VirtualLab.Unity.Authoring.Workbench
         }
 
         public CourseAuthoringSession Session { get; }
+        public CourseDraftCourse Course => Session.Draft.Course;
+        public IReadOnlyList<CourseDraftObject> Objects => Session.Draft.Objects;
+        public IReadOnlyList<CourseDraftInitialRelation> InitialRelations =>
+            Session.Draft.InitialRelations;
         public IReadOnlyList<CourseAuthoringSectionStatus> Sections =>
             BuildSections();
+
+        public IReadOnlyList<AuthoringCategoryDescriptor> Categories =>
+            Session.Catalog.Categories;
+
+        public IReadOnlyList<AuthoringItemTemplateDescriptor> TemplatesIn(
+            string categoryId) =>
+            Session.Catalog.Templates
+                .Where(value => value.CategoryId == categoryId)
+                .OrderBy(value => value.DisplayOrder)
+                .ThenBy(value => value.TemplateId, StringComparer.Ordinal)
+                .ToArray();
+
+        public IReadOnlyList<AuthoringOptionDescriptor> RelationTypes =>
+            Session.Catalog.Options
+                .Where(value => value.Kind == AuthoringOptionKind.RelationType)
+                .OrderBy(value => value.DisplayName, StringComparer.Ordinal)
+                .ThenBy(value => value.OptionId, StringComparer.Ordinal)
+                .ToArray();
+
+        public IReadOnlyList<AuthoringPortDescriptor> PortsOf(string entityId)
+        {
+            var item = Session.Draft.Objects.SingleOrDefault(value =>
+                value.EntityId == entityId);
+            if (item == null
+                || !Session.Catalog.TryGetTemplate(item.EntityType, out var template))
+            {
+                return Array.Empty<AuthoringPortDescriptor>();
+            }
+
+            return template.ComponentIds
+                .Select(id => Session.Catalog.TryGetComponent(id, out var component)
+                    ? component
+                    : null)
+                .Where(value => value != null)
+                .SelectMany(value => value.Ports)
+                .GroupBy(value => value.PortId, StringComparer.Ordinal)
+                .Select(value => value.First())
+                .OrderBy(value => value.DisplayName, StringComparer.Ordinal)
+                .ThenBy(value => value.PortId, StringComparer.Ordinal)
+                .ToArray();
+        }
+
+        public IReadOnlyList<CourseDraftObject> AddSupplies(
+            string categoryId,
+            string templateId,
+            int quantity)
+        {
+            if (quantity < 1 || quantity > 99)
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(quantity),
+                    "单次添加数量必须在 1 到 99 之间。");
+            }
+
+            var category = Categories.SingleOrDefault(value =>
+                value.CategoryId == categoryId
+                || value.DisplayName == categoryId);
+            if (category == null)
+            {
+                throw new ArgumentException(
+                    $"用品类别“{categoryId}”未由模块注册。",
+                    nameof(categoryId));
+            }
+
+            var template = Session.Catalog.Templates.SingleOrDefault(value =>
+                (value.TemplateId == templateId
+                 || value.DisplayName == templateId)
+                && value.CategoryId == category.CategoryId);
+            if (template == null)
+            {
+                throw new ArgumentException(
+                    $"类别“{category.DisplayName}”中没有用品模板“{templateId}”。",
+                    nameof(templateId));
+            }
+
+            var existing = new HashSet<string>(
+                Session.Draft.Objects.Select(value => value.EntityId),
+                StringComparer.Ordinal);
+            var identities = new List<string>();
+            if (quantity == 1 && existing.Add(template.DisplayName))
+            {
+                identities.Add(template.DisplayName);
+            }
+            else
+            {
+                for (var index = 1; identities.Count < quantity; index++)
+                {
+                    var candidate = template.DisplayName + ChineseNumber(index);
+                    if (existing.Add(candidate))
+                    {
+                        identities.Add(candidate);
+                    }
+                }
+            }
+
+            return Session.AddSupplies(
+                template.TemplateId,
+                identities.Select(identity =>
+                    new KeyValuePair<string, string>(identity, identity)));
+        }
+
+        public CourseAuthoringCommandResult TrySetRelation(
+            string relationType,
+            string sourceEntityId,
+            string targetEntityId,
+            string sourcePortId = "",
+            string targetPortId = "")
+        {
+            var option = RelationTypes.SingleOrDefault(value =>
+                value.OptionId == relationType
+                || value.DisplayName == relationType);
+            if (option == null)
+            {
+                return CourseAuthoringCommandResult.Failure(
+                    $"关系类型“{relationType}”未由模块注册。");
+            }
+
+            var entityIds = new HashSet<string>(
+                Session.Draft.Objects.Select(value => value.EntityId),
+                StringComparer.Ordinal);
+            if (!entityIds.Contains(sourceEntityId)
+                || !entityIds.Contains(targetEntityId))
+            {
+                return CourseAuthoringCommandResult.Failure(
+                    "关系来源和目标必须是当前课程中的实验对象。");
+            }
+
+            if (sourceEntityId == targetEntityId)
+            {
+                return CourseAuthoringCommandResult.Failure(
+                    "关系来源和目标不能是同一个实验对象。");
+            }
+
+            if (!PortIsValid(sourceEntityId, sourcePortId)
+                || !PortIsValid(targetEntityId, targetPortId))
+            {
+                return CourseAuthoringCommandResult.Failure(
+                    "所选端口未由对应用品组件注册。");
+            }
+
+            if (Session.Draft.InitialRelations.Any(value =>
+                    value.RelationType == option.OptionId
+                    && value.SourceEntityId == sourceEntityId
+                    && value.TargetEntityId == targetEntityId
+                    && value.SourcePortId == sourcePortId
+                    && value.TargetPortId == targetPortId))
+            {
+                return CourseAuthoringCommandResult.Failure(
+                    "相同来源、目标和类型的关系已经存在。");
+            }
+
+            var relationId = string.Join(".", new[]
+            {
+                "关系",
+                option.DisplayName,
+                sourceEntityId,
+                sourcePortId,
+                targetEntityId,
+                targetPortId
+            }.Where(value => !string.IsNullOrWhiteSpace(value)));
+            Session.SetInitialRelation(new CourseDraftInitialRelation(
+                relationId,
+                option.OptionId,
+                sourceEntityId,
+                targetEntityId,
+                sourcePortId,
+                targetPortId,
+                new ConfigurationSource(
+                    ConfigurationLayer.Course,
+                    Session.Draft.Course.CourseId,
+                    CourseAuthoringTableNames.InitialRelations,
+                    1,
+                    1,
+                    relationId)));
+            return CourseAuthoringCommandResult.Success();
+        }
+
+        private bool PortIsValid(string entityId, string portId) =>
+            string.IsNullOrWhiteSpace(portId)
+            || PortsOf(entityId).Any(value => value.PortId == portId);
 
         public CourseAuthoringSectionStatus Section(string displayName) =>
             Sections.Single(value => value.DisplayName == displayName);
@@ -106,6 +311,18 @@ namespace VirtualLab.Unity.Authoring.Workbench
             {
                 target.Add("填写" + displayName);
             }
+        }
+
+        private static string ChineseNumber(int value)
+        {
+            var digits = new[]
+            {
+                "零", "一", "二", "三", "四", "五", "六", "七", "八", "九"
+            };
+            if (value < 10) return digits[value];
+            if (value < 20) return "十" + (value == 10 ? string.Empty : digits[value % 10]);
+            return digits[value / 10] + "十"
+                   + (value % 10 == 0 ? string.Empty : digits[value % 10]);
         }
     }
 }
