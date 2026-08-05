@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Linq;
 using VirtualLab.Application.Courses;
 using VirtualLab.Unity.Authoring.Blueprints;
+using VirtualLab.Unity.Authoring.Catalogs;
 using VirtualLab.Unity.Authoring.Diagnostics;
 using VirtualLab.Unity.Authoring.Normalized;
 
@@ -30,6 +31,18 @@ namespace VirtualLab.Unity.Authoring.Recipes
     /// </summary>
     public sealed class RecipeExpander
     {
+        /// <summary>
+        /// 校验创作目录与共享配方对同一抽象操作的解释一致。
+        /// 只比较共享配方实际声明的阶段；目录可以先提供尚未被配方使用的操作。
+        /// </summary>
+        public static IReadOnlyList<CourseCompilationDiagnostic>
+            ValidateAuthoringOperationContracts(
+                CourseAuthoringCatalog authoringCatalog,
+                RecipeCatalog recipeCatalog) =>
+            RecipeAuthoringOperationContractValidator.Validate(
+                authoringCatalog,
+                recipeCatalog);
+
         public RecipeExpansionResult Expand(
             CourseBlueprint blueprint,
             RecipeCatalog catalog)

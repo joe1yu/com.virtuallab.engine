@@ -81,7 +81,10 @@ namespace VirtualLab.Unity.Authoring.Blueprints
             BlueprintVector3 initialPosition,
             BlueprintVector3 initialRotation,
             IReadOnlyDictionary<string, BlueprintValue> extensionValues,
-            ConfigurationSource source)
+            ConfigurationSource source,
+            string entityType = "",
+            IEnumerable<string> roleIds = null,
+            IEnumerable<string> tagIds = null)
         {
             EntityId = entityId;
             DisplayName = displayName;
@@ -90,6 +93,9 @@ namespace VirtualLab.Unity.Authoring.Blueprints
             InitialRotation = initialRotation;
             ExtensionValues = extensionValues;
             Source = source;
+            EntityType = entityType ?? string.Empty;
+            RoleIds = (roleIds ?? Array.Empty<string>()).ToArray();
+            TagIds = (tagIds ?? Array.Empty<string>()).ToArray();
         }
 
         public string EntityId { get; }
@@ -99,6 +105,9 @@ namespace VirtualLab.Unity.Authoring.Blueprints
         public BlueprintVector3 InitialRotation { get; }
         public IReadOnlyDictionary<string, BlueprintValue> ExtensionValues { get; }
         public ConfigurationSource Source { get; }
+        public string EntityType { get; }
+        public IReadOnlyList<string> RoleIds { get; }
+        public IReadOnlyList<string> TagIds { get; }
     }
 
     /// <summary>
@@ -177,6 +186,7 @@ namespace VirtualLab.Unity.Authoring.Blueprints
         public string ResultRecipeId => Value("结果配方");
         public string FeedbackRecipeId => Value("反馈配方");
         public string RejectionMessage => Value("拒绝文案");
+        public string ConsequenceTemplateId => Value("后果模板");
 
         private static int ParseInteger(string value) =>
             int.TryParse(value, out var result) ? result : 0;
@@ -229,6 +239,7 @@ namespace VirtualLab.Unity.Authoring.Blueprints
         public string PromptMessage => Value("提示文案");
         public string ConsequenceSeverity => Value("后果严重度");
         public string Recoverability => Value("可恢复性");
+        public string Continuation => Value("发生后如何继续");
         public string BlockedGoalIds => Value("受阻目标");
     }
 
