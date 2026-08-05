@@ -1,7 +1,12 @@
 namespace VirtualLab.Domain.Capabilities
 {
+    /// <summary>
+    /// 实体能力的最小稳定契约。能力标识由声明该能力的模块拥有，
+    /// 通用领域层只负责存储、判重和对外枚举，不解释标识含义。
+    /// </summary>
     public interface ICapability
     {
+        string CapabilityId { get; }
     }
 
     /// <summary>
@@ -10,7 +15,6 @@ namespace VirtualLab.Domain.Capabilities
     /// </summary>
     public interface IConfiguredCapability : ICapability
     {
-        string CapabilityId { get; }
         decimal NumberValue { get; }
         string TextValue { get; }
     }

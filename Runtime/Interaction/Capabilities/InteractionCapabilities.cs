@@ -11,6 +11,7 @@ namespace VirtualLab.Interaction.Capabilities
     /// </summary>
     public sealed class GrabbableCapability : ICapability
     {
+        public string CapabilityId => InteractionCapabilityIds.Grabbable;
     }
 
     /// <summary>
@@ -31,6 +32,8 @@ namespace VirtualLab.Interaction.Capabilities
         }
 
         public decimal CapacityMillilitres { get; }
+
+        public string CapabilityId => InteractionCapabilityIds.Container;
     }
 
     /// <summary>
@@ -121,6 +124,8 @@ namespace VirtualLab.Interaction.Capabilities
 
         public IReadOnlyList<ConnectionPortDefinition> Ports { get; }
 
+        public string CapabilityId => InteractionCapabilityIds.Connector;
+
         public bool TryGetPort(
             string portId,
             out ConnectionPortDefinition port)
@@ -135,17 +140,21 @@ namespace VirtualLab.Interaction.Capabilities
 
     public sealed class ObservableCapability : ICapability
     {
+        public string CapabilityId => InteractionCapabilityIds.Observable;
     }
 
     public sealed class ClampableCapability : ICapability
     {
+        public string CapabilityId => InteractionCapabilityIds.Clampable;
     }
 
     public sealed class CoverableCapability : ICapability
     {
+        public string CapabilityId => InteractionCapabilityIds.Coverable;
     }
 
     public sealed class BreakableCapability : ICapability
     {
+        public string CapabilityId => InteractionCapabilityIds.Breakable;
     }
 }

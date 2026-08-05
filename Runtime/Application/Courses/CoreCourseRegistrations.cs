@@ -2,9 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using VirtualLab.Domain;
-using VirtualLab.Domain.Capabilities;
 using VirtualLab.Domain.Entities;
-using VirtualLab.Interaction.Capabilities;
 using VirtualLab.Kernel;
 
 namespace VirtualLab.Application.Courses
@@ -155,25 +153,9 @@ namespace VirtualLab.Application.Courses
             }
 
             var ids = entity.Capabilities
-                .Select(CapabilityId)
+                .Select(value => value.CapabilityId)
                 .OrderBy(value => value, StringComparer.Ordinal);
             return StructuredValue.FromTextList(ids);
-        }
-
-        private static string CapabilityId(ICapability capability)
-        {
-            return capability switch
-            {
-                GrabbableCapability _ => InteractionCapabilityIds.Grabbable,
-                ContainerCapability _ => InteractionCapabilityIds.Container,
-                ConnectorCapability _ => InteractionCapabilityIds.Connector,
-                IConfiguredCapability configured => configured.CapabilityId,
-                ObservableCapability _ => InteractionCapabilityIds.Observable,
-                ClampableCapability _ => InteractionCapabilityIds.Clampable,
-                CoverableCapability _ => InteractionCapabilityIds.Coverable,
-                BreakableCapability _ => InteractionCapabilityIds.Breakable,
-                _ => capability.GetType().FullName
-            };
         }
 
         private static ExperimentEntity FindEntity(

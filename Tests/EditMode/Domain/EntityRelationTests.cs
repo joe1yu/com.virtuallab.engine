@@ -1,3 +1,4 @@
+using System.Linq;
 using NUnit.Framework;
 using VirtualLab.Domain;
 using VirtualLab.Domain.Capabilities;
@@ -32,6 +33,29 @@ namespace VirtualLab.Engine.Tests.Domain
                     "可定位目标"
                 },
                 InteractionCapabilityIds.All);
+            CollectionAssert.AreEqual(
+                new[]
+                {
+                    InteractionCapabilityIds.Grabbable,
+                    InteractionCapabilityIds.Container,
+                    InteractionCapabilityIds.Connector,
+                    InteractionCapabilityIds.Observable,
+                    InteractionCapabilityIds.Clampable,
+                    InteractionCapabilityIds.Coverable,
+                    InteractionCapabilityIds.Breakable
+                },
+                new ICapability[]
+                    {
+                        new GrabbableCapability(),
+                        new ContainerCapability(100m),
+                        new ConnectorCapability(),
+                        new ObservableCapability(),
+                        new ClampableCapability(),
+                        new CoverableCapability(),
+                        new BreakableCapability()
+                    }
+                    .Select(value => value.CapabilityId),
+                "交互能力实例必须自行暴露所属模块声明的稳定标识。");
             Assert.That(
                 typeof(ICapability).Assembly.GetType(
                     "VirtualLab.Domain.Capabilities.CoreCapabilityIds"),
@@ -111,6 +135,18 @@ namespace VirtualLab.Engine.Tests.Domain
 
             Assert.That(
                 () => graph.Set(new EntityRelation(InteractionRelationTypeIds.ContainedBy, tube, tube)),
+                Throws.InvalidOperationException);
+        }
+
+        [Test]
+        public void Entity_uses_protocol_id_instead_of_runtime_type_for_duplicates()
+        {
+            var tube = new ExperimentEntity(new EntityId("tube-1"));
+            tube.AddCapability(new ContainerCapability(100m));
+
+            Assert.That(
+                () => tube.AddCapability(new ConfiguredCapability(
+                    InteractionCapabilityIds.Container)),
                 Throws.InvalidOperationException);
         }
 

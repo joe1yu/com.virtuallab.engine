@@ -35,15 +35,17 @@ namespace VirtualLab.Domain.Entities
                 throw new ArgumentNullException(nameof(capability));
             }
 
-            var duplicate = capability is IConfiguredCapability configured
-                ? _capabilities
-                    .OfType<IConfiguredCapability>()
-                    .Any(value => string.Equals(
-                        value.CapabilityId,
-                        configured.CapabilityId,
-                        StringComparison.Ordinal))
-                : _capabilities.Any(value =>
-                    value.GetType() == capability.GetType());
+            if (string.IsNullOrWhiteSpace(capability.CapabilityId))
+            {
+                throw new ArgumentException(
+                    "能力协议 ID 不能为空。",
+                    nameof(capability));
+            }
+
+            var duplicate = _capabilities.Any(value => string.Equals(
+                value.CapabilityId,
+                capability.CapabilityId,
+                StringComparison.Ordinal));
             if (duplicate)
             {
                 throw new InvalidOperationException(
