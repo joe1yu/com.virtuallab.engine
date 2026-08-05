@@ -8,6 +8,7 @@ using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
 using VirtualLab.Domain.Matter;
 using VirtualLab.Kernel;
+using VirtualLab.Measurement;
 
 namespace VirtualLab.Chemistry.Configuration
 {

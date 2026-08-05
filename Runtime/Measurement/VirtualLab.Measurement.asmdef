@@ -1,0 +1,6 @@
+{
+  "name": "VirtualLab.Measurement",
+  "rootNamespace": "VirtualLab.Measurement",
+  "references": [],
+  "autoReferenced": true
+}

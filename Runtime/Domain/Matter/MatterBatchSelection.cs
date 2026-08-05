@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using VirtualLab.Kernel;
+using VirtualLab.Measurement;
 
 namespace VirtualLab.Domain.Matter
 {

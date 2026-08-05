@@ -6,6 +6,7 @@ using VirtualLab.Domain.Entities;
 using VirtualLab.Domain.Matter;
 using VirtualLab.Domain.Relations;
 using VirtualLab.Kernel;
+using VirtualLab.Measurement;
 
 namespace VirtualLab.Domain
 {

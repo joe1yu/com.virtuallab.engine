@@ -17,6 +17,7 @@ using VirtualLab.Interaction.Capabilities;
 using VirtualLab.Interaction.Courses;
 using VirtualLab.Interaction.Relations;
 using VirtualLab.Kernel;
+using VirtualLab.Measurement;
 using VirtualLab.Spatial.Courses;
 
 namespace VirtualLab.Chemistry.Tests.Courses

@@ -1,14 +1,23 @@
 using System;
 
-namespace VirtualLab.Kernel
+namespace VirtualLab.Measurement
 {
+    /// <summary>
+    /// 当前引擎支持的基础计量单位。单位换算尚未进入最小契约，
+    /// 因此不同单位的量值不能直接运算。
+    /// </summary>
     public enum Unit
     {
         Gram,
         Millilitre
     }
 
-    public readonly struct Quantity : IEquatable<Quantity>, IComparable<Quantity>
+    /// <summary>
+    /// 带单位的十进制量值，运算时强制要求单位一致。
+    /// </summary>
+    public readonly struct Quantity :
+        IEquatable<Quantity>,
+        IComparable<Quantity>
     {
         public Quantity(decimal value, Unit unit)
         {
@@ -95,7 +104,8 @@ namespace VirtualLab.Kernel
         {
             if (Unit != other.Unit)
             {
-                throw new InvalidOperationException("Quantities must use the same unit.");
+                throw new InvalidOperationException(
+                    "不同单位的量值不能直接运算。");
             }
         }
     }

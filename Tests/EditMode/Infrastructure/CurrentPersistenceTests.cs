@@ -7,6 +7,7 @@ using VirtualLab.Application.Courses;
 using VirtualLab.Infrastructure.Persistence;
 using VirtualLab.Infrastructure.Reporting;
 using VirtualLab.Kernel;
+using VirtualLab.Measurement;
 
 namespace VirtualLab.Engine.Tests.Infrastructure
 {

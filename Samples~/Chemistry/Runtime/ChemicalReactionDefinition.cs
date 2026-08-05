@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using VirtualLab.Domain.Matter;
 using VirtualLab.Kernel;
+using VirtualLab.Measurement;
 
 namespace VirtualLab.Chemistry
 {

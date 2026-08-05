@@ -3,6 +3,7 @@
   "rootNamespace": "VirtualLab.Infrastructure",
   "references": [
     "VirtualLab.Kernel",
+    "VirtualLab.Measurement",
     "VirtualLab.Domain",
     "VirtualLab.Application"
   ],

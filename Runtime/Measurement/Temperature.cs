@@ -1,7 +1,10 @@
 using System;
 
-namespace VirtualLab.Kernel
+namespace VirtualLab.Measurement
 {
+    /// <summary>
+    /// 以摄氏度为权威存储的温度值。
+    /// </summary>
     public readonly struct Temperature : IEquatable<Temperature>
     {
         private const decimal KelvinOffset = 273.15m;
@@ -30,12 +33,16 @@ namespace VirtualLab.Kernel
             return Celsius.GetHashCode();
         }
 
-        public static bool operator ==(Temperature left, Temperature right)
+        public static bool operator ==(
+            Temperature left,
+            Temperature right)
         {
             return left.Equals(right);
         }
 
-        public static bool operator !=(Temperature left, Temperature right)
+        public static bool operator !=(
+            Temperature left,
+            Temperature right)
         {
             return !left.Equals(right);
         }

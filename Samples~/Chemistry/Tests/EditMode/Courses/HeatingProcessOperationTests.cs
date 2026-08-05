@@ -15,6 +15,7 @@ using VirtualLab.Domain.Relations;
 using VirtualLab.Interaction.Capabilities;
 using VirtualLab.Interaction.Relations;
 using VirtualLab.Kernel;
+using VirtualLab.Measurement;
 
 namespace VirtualLab.Chemistry.Tests.Courses
 {

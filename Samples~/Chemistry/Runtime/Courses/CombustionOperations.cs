@@ -8,6 +8,7 @@ using VirtualLab.Domain.Capabilities;
 using VirtualLab.Domain.Matter;
 using VirtualLab.Domain.Processes;
 using VirtualLab.Kernel;
+using VirtualLab.Measurement;
 using VirtualLab.Spatial.Courses;
 
 namespace VirtualLab.Chemistry.Courses

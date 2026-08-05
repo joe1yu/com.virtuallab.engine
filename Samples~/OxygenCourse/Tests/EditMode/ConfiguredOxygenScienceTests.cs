@@ -14,6 +14,7 @@ using VirtualLab.Interaction.Actions;
 using VirtualLab.Interaction.Courses;
 using VirtualLab.Interaction.Relations;
 using VirtualLab.Kernel;
+using VirtualLab.Measurement;
 using VirtualLab.OxygenCourse.Authoring;
 using VirtualLab.Spatial.Courses;
 using VirtualLab.Unity.Authoring.Blueprints;

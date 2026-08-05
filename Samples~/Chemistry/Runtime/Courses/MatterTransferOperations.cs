@@ -9,6 +9,7 @@ using VirtualLab.Domain.Matter;
 using VirtualLab.Domain.Processes;
 using VirtualLab.Interaction.Capabilities;
 using VirtualLab.Kernel;
+using VirtualLab.Measurement;
 
 namespace VirtualLab.Chemistry.Courses
 {

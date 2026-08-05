@@ -3,6 +3,7 @@
   "rootNamespace": "VirtualLab.Chemistry.Tests",
   "references": [
     "VirtualLab.Kernel",
+    "VirtualLab.Measurement",
     "VirtualLab.Domain",
     "VirtualLab.Application",
     "VirtualLab.Interaction",

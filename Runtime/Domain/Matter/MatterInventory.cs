@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using VirtualLab.Domain.Events;
 using VirtualLab.Domain.Processes;
 using VirtualLab.Kernel;
+using VirtualLab.Measurement;
 
 namespace VirtualLab.Domain.Matter
 {

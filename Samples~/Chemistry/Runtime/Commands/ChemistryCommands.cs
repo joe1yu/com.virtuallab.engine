@@ -1,6 +1,7 @@
 using System;
 using VirtualLab.Application.Commands;
 using VirtualLab.Kernel;
+using VirtualLab.Measurement;
 
 namespace VirtualLab.Chemistry.Commands
 {

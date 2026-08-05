@@ -14,9 +14,11 @@ namespace VirtualLab.Engine.Tests.Architecture
             new Dictionary<string, string[]>(StringComparer.Ordinal)
             {
                 ["VirtualLab.Kernel"] = Array.Empty<string>(),
+                ["VirtualLab.Measurement"] = Array.Empty<string>(),
                 ["VirtualLab.Domain"] = new[]
                 {
-                    "VirtualLab.Kernel"
+                    "VirtualLab.Kernel",
+                    "VirtualLab.Measurement"
                 },
                 ["VirtualLab.Interaction"] = new[]
                 {
@@ -41,6 +43,7 @@ namespace VirtualLab.Engine.Tests.Architecture
                 ["VirtualLab.Application"] = new[]
                 {
                     "VirtualLab.Kernel",
+                    "VirtualLab.Measurement",
                     "VirtualLab.Domain",
                     "VirtualLab.Interaction"
                 },
@@ -48,12 +51,14 @@ namespace VirtualLab.Engine.Tests.Architecture
                 ["VirtualLab.Infrastructure"] = new[]
                 {
                     "VirtualLab.Kernel",
+                    "VirtualLab.Measurement",
                     "VirtualLab.Domain",
                     "VirtualLab.Application"
                 },
                 ["VirtualLab.Chemistry"] = new[]
                 {
                     "VirtualLab.Kernel",
+                    "VirtualLab.Measurement",
                     "VirtualLab.Domain",
                     "VirtualLab.Application",
                     "VirtualLab.Interaction",

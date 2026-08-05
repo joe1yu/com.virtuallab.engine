@@ -6,6 +6,7 @@ using VirtualLab.Domain;
 using VirtualLab.Domain.Matter;
 using VirtualLab.Interaction.Courses;
 using VirtualLab.Kernel;
+using VirtualLab.Measurement;
 using VirtualLab.Spatial.Courses;
 using VirtualLab.Teaching.Courses;
 

@@ -2,7 +2,8 @@
   "name": "VirtualLab.Domain",
   "rootNamespace": "VirtualLab.Domain",
   "references": [
-    "VirtualLab.Kernel"
+    "VirtualLab.Kernel",
+    "VirtualLab.Measurement"
   ],
   "autoReferenced": true
 }

@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using VirtualLab.Domain.Matter;
 using VirtualLab.Kernel;
+using VirtualLab.Measurement;
 
 namespace VirtualLab.Chemistry.Configuration
 {

@@ -9,6 +9,7 @@ using VirtualLab.Chemistry.Configuration;
 using VirtualLab.Chemistry.Courses;
 using VirtualLab.Domain.Matter;
 using VirtualLab.Kernel;
+using VirtualLab.Measurement;
 using VirtualLab.Spatial.Courses;
 using VirtualLab.Unity.Authoring.Blueprints;
 using VirtualLab.Unity.Authoring.Diagnostics;

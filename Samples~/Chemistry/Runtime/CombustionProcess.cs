@@ -3,6 +3,7 @@ using System.Linq;
 using VirtualLab.Domain;
 using VirtualLab.Domain.Processes;
 using VirtualLab.Kernel;
+using VirtualLab.Measurement;
 
 namespace VirtualLab.Chemistry
 {

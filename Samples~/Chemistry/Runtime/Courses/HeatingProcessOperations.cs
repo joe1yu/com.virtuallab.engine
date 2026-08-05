@@ -10,6 +10,7 @@ using VirtualLab.Domain.Processes;
 using VirtualLab.Domain.Relations;
 using VirtualLab.Interaction.Relations;
 using VirtualLab.Kernel;
+using VirtualLab.Measurement;
 
 namespace VirtualLab.Chemistry.Courses
 {

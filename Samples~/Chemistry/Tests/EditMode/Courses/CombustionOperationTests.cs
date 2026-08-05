@@ -12,6 +12,7 @@ using VirtualLab.Domain.Entities;
 using VirtualLab.Domain.Matter;
 using VirtualLab.Interaction.Capabilities;
 using VirtualLab.Kernel;
+using VirtualLab.Measurement;
 using VirtualLab.Spatial.Courses;
 
 namespace VirtualLab.Chemistry.Tests.Courses

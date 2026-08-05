@@ -1,5 +1,6 @@
 using NUnit.Framework;
 using VirtualLab.Kernel;
+using VirtualLab.Measurement;
 
 namespace VirtualLab.Engine.Tests.Kernel
 {

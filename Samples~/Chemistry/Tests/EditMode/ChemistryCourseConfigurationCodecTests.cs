@@ -4,6 +4,7 @@ using NUnit.Framework;
 using VirtualLab.Chemistry.Configuration;
 using VirtualLab.Domain.Matter;
 using VirtualLab.Kernel;
+using VirtualLab.Measurement;
 
 namespace VirtualLab.Chemistry.Tests
 {
