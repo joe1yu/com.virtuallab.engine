@@ -291,7 +291,7 @@ namespace VirtualLab.Unity.Authoring.Recipes
                 knownOperationIds: catalog.Packages
                     .SelectMany(value => value.Operations)
                     .Select(value => value.ProtocolOperationId)
-                    .Concat(ConfiguredStateOperationIds.All),
+                    .Concat(catalog.RegisteredStateOperationIds),
                 knownPresentationProtocolIds: catalog.Packages
                     .SelectMany(value => value.Presentations)
                     .Select(value => value.ProtocolId));

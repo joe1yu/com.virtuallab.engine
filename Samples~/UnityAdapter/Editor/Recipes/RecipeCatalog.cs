@@ -16,11 +16,17 @@ namespace VirtualLab.Unity.Authoring.Recipes
             IEnumerable<RecipePackage> packages,
             IEnumerable<RecipeDefinition> recipes,
             IEnumerable<RecipeDefinition> effectiveRecipes,
+            IEnumerable<string> registeredStateOperationIds,
             IEnumerable<CourseCompilationDiagnostic> diagnostics)
         {
             Packages = packages.ToArray();
             Recipes = recipes.ToArray();
             EffectiveRecipes = effectiveRecipes.ToArray();
+            RegisteredStateOperationIds = registeredStateOperationIds
+                .Where(value => !string.IsNullOrWhiteSpace(value))
+                .Distinct(StringComparer.Ordinal)
+                .OrderBy(value => value, StringComparer.Ordinal)
+                .ToArray();
             Diagnostics = diagnostics.ToArray();
         }
 
@@ -28,6 +34,7 @@ namespace VirtualLab.Unity.Authoring.Recipes
         public IReadOnlyList<RecipePackage> Packages { get; }
         public IReadOnlyList<RecipeDefinition> Recipes { get; }
         public IReadOnlyList<RecipeDefinition> EffectiveRecipes { get; }
+        public IReadOnlyList<string> RegisteredStateOperationIds { get; }
         public IReadOnlyList<CourseCompilationDiagnostic> Diagnostics { get; }
 
         public static RecipeCatalog Create(
@@ -98,6 +105,7 @@ namespace VirtualLab.Unity.Authoring.Recipes
                 packages,
                 ownedRecipes.Select(value => value.Recipe),
                 effective,
+                loaded.SelectMany(value => value.RegisteredStateOperationIds),
                 orderedDiagnostics);
         }
 
@@ -130,7 +138,11 @@ namespace VirtualLab.Unity.Authoring.Recipes
                     return;
                 }
 
-                loaded.Add(new LoadedPackage(package, expectedLayer, provider.PackageId));
+                loaded.Add(new LoadedPackage(
+                    package,
+                    expectedLayer,
+                    provider.PackageId,
+                    provider.RegisteredStateOperationIds));
             }
             catch (Exception exception)
             {
@@ -771,16 +783,21 @@ namespace VirtualLab.Unity.Authoring.Recipes
             public LoadedPackage(
                 RecipePackage package,
                 RecipeLayer expectedLayer,
-                string providerPackageId)
+                string providerPackageId,
+                IEnumerable<string> registeredStateOperationIds)
             {
                 Package = package;
                 ExpectedLayer = expectedLayer;
                 ProviderPackageId = providerPackageId ?? string.Empty;
+                RegisteredStateOperationIds =
+                    (registeredStateOperationIds ?? Array.Empty<string>())
+                    .ToArray();
             }
 
             public RecipePackage Package { get; }
             public RecipeLayer ExpectedLayer { get; }
             public string ProviderPackageId { get; }
+            public IReadOnlyList<string> RegisteredStateOperationIds { get; }
         }
 
         private sealed class OwnedRecipe

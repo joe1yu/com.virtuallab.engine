@@ -360,6 +360,9 @@ namespace VirtualLab.Engine.Tests.Courses
                 RelationTypeIds { get; } =
                 Array.Empty<VirtualLab.Domain.Relations.RelationTypeId>();
 
+            public IReadOnlyList<string> RegisteredStateOperationIds { get; } =
+                Array.Empty<string>();
+
             public RecipePackage Load() =>
                 new RecipePackage(
                     PackageId,

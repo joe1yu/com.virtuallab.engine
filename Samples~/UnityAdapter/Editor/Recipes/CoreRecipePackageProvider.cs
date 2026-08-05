@@ -33,6 +33,11 @@ namespace VirtualLab.Unity.Authoring.Recipes
                 .Select(value => value.TypeId)
                 .ToArray();
 
+        public IReadOnlyList<string> RegisteredStateOperationIds { get; } =
+            ConfiguredStateOperationIds.All
+                .Concat(TeachingConfiguredStateOperationIds.All)
+                .ToArray();
+
         public RecipePackage Load()
         {
             // 从程序集定义所在目录推导配方位置，使 Sample 可导入到任意 Assets 路径。

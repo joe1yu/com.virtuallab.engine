@@ -116,6 +116,11 @@ namespace VirtualLab.Teaching.Courses
                 throw new ArgumentNullException(nameof(request));
             }
 
+            if (!ShouldApply(world, mutation))
+            {
+                return;
+            }
+
             var entityId = ReadOptionalText(
                     mutation,
                     TeachingConfigurationKeys.EntityId)
@@ -125,6 +130,10 @@ namespace VirtualLab.Teaching.Courses
                 entityId,
                 ReadRequiredText(mutation, TeachingConfigurationKeys.StateId));
         }
+
+        protected virtual bool ShouldApply(
+            ExperimentWorld world,
+            ConfiguredMutationDefinition mutation) => true;
 
         protected abstract void Apply(
             TeachingStateCollection states,
@@ -158,6 +167,24 @@ namespace VirtualLab.Teaching.Courses
 
             return value.Text.Trim();
         }
+
+        protected static string RequiredText(
+            ConfiguredMutationDefinition mutation,
+            string key) => ReadRequiredText(mutation, key);
+
+        protected static double RequiredNumber(
+            ConfiguredMutationDefinition mutation,
+            string key)
+        {
+            if (!mutation.Parameters.TryGetValue(key, out var value)
+                || value.Kind != StructuredValueKind.Number)
+            {
+                throw new ArgumentException(
+                    $"状态变更“{mutation.MutationId}”的参数“{key}”必须是数值。");
+            }
+
+            return value.Number;
+        }
     }
 
     internal sealed class AddTeachingStateOperation : TeachingStateOperation
@@ -180,5 +207,34 @@ namespace VirtualLab.Teaching.Courses
             TeachingStateCollection states,
             string entityId,
             string stateId) => states.Remove(entityId, stateId);
+    }
+
+    /// <summary>
+    /// 仅当权威世界标量等于期望值时记录教学结果，避免错误后果与成功目标并存。
+    /// </summary>
+    internal sealed class ConditionalAddTeachingStateOperation :
+        TeachingStateOperation
+    {
+        public override string OperationId =>
+            TeachingConfiguredStateOperationIds.AddStateWhenScalarEquals;
+
+        protected override bool ShouldApply(
+            ExperimentWorld world,
+            ConfiguredMutationDefinition mutation)
+        {
+            var scalarKey = RequiredText(
+                mutation,
+                TeachingConfigurationKeys.ScalarKey);
+            var expected = RequiredNumber(
+                mutation,
+                TeachingConfigurationKeys.ExpectedValue);
+            return world.TryGetScalar(scalarKey, out var actual)
+                   && Math.Abs(actual.Value - expected) <= 0.000001d;
+        }
+
+        protected override void Apply(
+            TeachingStateCollection states,
+            string entityId,
+            string stateId) => states.Add(entityId, stateId);
     }
 }

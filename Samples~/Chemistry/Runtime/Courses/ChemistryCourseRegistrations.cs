@@ -21,6 +21,24 @@ namespace VirtualLab.Chemistry.Courses
     }
 
     /// <summary>
+    /// 化学模块注册的配置状态操作全集，供运行时注册与编辑期校验共享。
+    /// </summary>
+    public static class ChemistryConfiguredStateOperationIds
+    {
+        public static IReadOnlyList<string> All { get; } = new[]
+        {
+            MatterTransferOperations.BeginOperationId,
+            MatterTransferOperations.EndOperationId,
+            MatterTransferOperations.TransferOperationId,
+            HeatingProcessOperations.BeginOperationId,
+            HeatingProcessOperations.EndOperationId,
+            CombustionOperations.IgniteOperationId,
+            CombustionOperations.ExtinguishOperationId,
+            ShakingOperations.OperationId
+        };
+    }
+
+    /// <summary>
     /// 化学事实、状态操作和事件投影的显式注册入口。
     /// </summary>
     public sealed class ChemistryCourseRuntimeModule : ICourseRuntimeModule

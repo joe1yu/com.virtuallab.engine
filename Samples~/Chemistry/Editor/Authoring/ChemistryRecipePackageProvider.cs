@@ -75,6 +75,9 @@ namespace VirtualLab.Chemistry.Authoring
                 .Select(value => value.TypeId)
                 .ToArray();
 
+        public IReadOnlyList<string> RegisteredStateOperationIds =>
+            ChemistryConfiguredStateOperationIds.All;
+
         public RecipePackage Load()
         {
             var authoringRoot = Path.Combine(

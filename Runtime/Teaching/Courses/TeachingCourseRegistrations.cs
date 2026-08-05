@@ -20,6 +20,9 @@ namespace VirtualLab.Teaching.Courses
     {
         public const string EntityId = CourseConfigurationKeys.Mutation.EntityId;
         public const string StateId = "教学状态";
+        public const string ScalarKey = CourseConfigurationKeys.Mutation.StateKey;
+        public const string ExpectedValue =
+            CourseConfigurationKeys.Mutation.ExpectedValue;
     }
 
     /// <summary>
@@ -29,6 +32,14 @@ namespace VirtualLab.Teaching.Courses
     {
         public const string AddState = "添加教学状态";
         public const string RemoveState = "移除教学状态";
+        public const string AddStateWhenScalarEquals = "条件添加教学状态";
+
+        public static IReadOnlyList<string> All { get; } = new[]
+        {
+            AddState,
+            RemoveState,
+            AddStateWhenScalarEquals
+        };
     }
 
     /// <summary>
@@ -71,6 +82,7 @@ namespace VirtualLab.Teaching.Courses
         {
             registry.Register(new AddTeachingStateOperation());
             registry.Register(new RemoveTeachingStateOperation());
+            registry.Register(new ConditionalAddTeachingStateOperation());
         }
     }
 

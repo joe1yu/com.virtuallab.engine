@@ -342,6 +342,59 @@ namespace VirtualLab.Engine.Tests.Courses
         }
 
         [Test]
+        public void 条件教学状态只在权威标量满足时添加()
+        {
+            var scope = TeachingCourseRegistrations.CreateModuleScope();
+            var world = new ExperimentWorld();
+            world.AddEntity(new ExperimentEntity(new EntityId("大试管")));
+            scope.PrepareWorld(world);
+            var request = new SemanticActionRequest(
+                "命令.结束加热",
+                "结束加热",
+                "学生",
+                "大试管",
+                "酒精灯",
+                Array.Empty<KeyValuePair<string, StructuredValue>>());
+            var mutation = new ConfiguredMutationDefinition(
+                "变化.标记安全停热",
+                TeachingConfiguredStateOperationIds.AddStateWhenScalarEquals,
+                new Dictionary<string, StructuredValue>
+                {
+                    [TeachingConfigurationKeys.EntityId] =
+                        StructuredValue.FromText("大试管"),
+                    [TeachingConfigurationKeys.StateId] =
+                        StructuredValue.FromText("已安全停止加热"),
+                    [TeachingConfigurationKeys.ScalarKey] =
+                        StructuredValue.FromText("大试管.风险.冷凝水倒吸"),
+                    [TeachingConfigurationKeys.ExpectedValue] =
+                        StructuredValue.FromNumber(0d)
+                });
+            var operations = scope.CreateStateOperationRegistry();
+
+            world.SetScalar(
+                "大试管.风险.冷凝水倒吸",
+                1d,
+                new WorldScalarUnit("无量纲"),
+                null,
+                null);
+            operations.ApplyAtomically(request, world, new[] { mutation });
+            Assert.That(
+                world.RequireTeachingStates().StatesOf("大试管"),
+                Is.Empty);
+
+            world.SetScalar(
+                "大试管.风险.冷凝水倒吸",
+                0d,
+                new WorldScalarUnit("无量纲"),
+                null,
+                null);
+            operations.ApplyAtomically(request, world, new[] { mutation });
+            Assert.That(
+                world.RequireTeachingStates().StatesOf("大试管"),
+                Is.EqualTo(new[] { "已安全停止加热" }));
+        }
+
+        [Test]
         public void 课程所需模块必须全部安装()
         {
             var scope = CourseRuntimeModuleScope.Create(
