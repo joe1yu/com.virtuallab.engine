@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using VirtualLab.Application.Courses;
+using VirtualLab.Interaction.Courses;
 using UnityEditor.Compilation;
 
 namespace VirtualLab.Unity.Authoring.Recipes
@@ -16,7 +17,11 @@ namespace VirtualLab.Unity.Authoring.Recipes
         public string PackageId => Id;
 
         public IReadOnlyList<string> RequiredRuntimeModuleIds { get; } =
-            new[] { CourseModuleIds.Core };
+            new[]
+            {
+                CourseModuleIds.Core,
+                InteractionModuleIds.Interaction
+            };
 
         public RecipePackage Load()
         {

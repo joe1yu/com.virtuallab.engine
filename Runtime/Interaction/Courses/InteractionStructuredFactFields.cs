@@ -1,0 +1,45 @@
+using System;
+using System.Collections.Generic;
+using VirtualLab.Application.Courses;
+
+namespace VirtualLab.Interaction.Courses
+{
+    /// <summary>
+    /// 交互模块拥有的持有、拿取与连接事实协议。
+    /// </summary>
+    public static class InteractionStructuredFactFields
+    {
+        public static readonly StructuredFactField 来源对象持有者 =
+            New("来源对象持有者");
+        public static readonly StructuredFactField 来源对象已被操作者拿起 =
+            New("来源对象已被操作者拿起");
+        public static readonly StructuredFactField 目标对象已被操作者拿起 =
+            New("目标对象已被操作者拿起");
+        public static readonly StructuredFactField 来源连接点占用状态 =
+            New("来源连接点占用状态");
+        public static readonly StructuredFactField 目标连接点占用状态 =
+            New("目标连接点占用状态");
+        public static readonly StructuredFactField 来源连接标签 =
+            New("来源连接标签");
+        public static readonly StructuredFactField 目标连接标签 =
+            New("目标连接标签");
+        public static readonly StructuredFactField 连接标签相匹配 =
+            New("连接标签相匹配");
+
+        public static IReadOnlyList<StructuredFactField> All { get; } =
+            Array.AsReadOnly(new[]
+            {
+                来源对象持有者,
+                来源对象已被操作者拿起,
+                目标对象已被操作者拿起,
+                来源连接点占用状态,
+                目标连接点占用状态,
+                来源连接标签,
+                目标连接标签,
+                连接标签相匹配
+            });
+
+        private static StructuredFactField New(string id) =>
+            new StructuredFactField(id);
+    }
+}

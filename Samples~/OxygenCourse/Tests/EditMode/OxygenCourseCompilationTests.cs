@@ -6,6 +6,7 @@ using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
 using VirtualLab.Application.Courses;
+using VirtualLab.Interaction.Courses;
 using VirtualLab.Chemistry.Authoring;
 using VirtualLab.Chemistry.Courses;
 using VirtualLab.OxygenCourse.Authoring;
@@ -49,6 +50,7 @@ namespace VirtualLab.Engine.Tests.Courses
                 Is.EquivalentTo(new[]
                 {
                     CourseModuleIds.Core,
+                    InteractionModuleIds.Interaction,
                     ChemistryModuleIds.Chemistry
                 }));
             var suckBack = result.Domain.ActionAssessments.Single(value =>

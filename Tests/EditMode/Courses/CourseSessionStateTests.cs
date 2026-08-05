@@ -9,6 +9,7 @@ using VirtualLab.Domain.Entities;
 using VirtualLab.Domain.Matter;
 using VirtualLab.Domain.Relations;
 using VirtualLab.Interaction.Capabilities;
+using VirtualLab.Interaction.Courses;
 using VirtualLab.Interaction.Relations;
 using VirtualLab.Kernel;
 
@@ -162,8 +163,10 @@ namespace VirtualLab.Engine.Tests.Courses
                             ("事件类型", StructuredValue.FromText("课程.状态已记录"))))
                 });
             return new CourseRuntimeDefinition(
-                CoreCourseRegistrations.CreateFactReaders(),
-                new[] { action });
+                InteractionCourseRegistrations.CreateModuleScope(),
+                new[] { action },
+                Array.Empty<CourseActionAssessmentDefinition>(),
+                0);
         }
 
         private static SemanticActionRequest Request(string commandId)

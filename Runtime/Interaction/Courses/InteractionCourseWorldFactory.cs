@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using VirtualLab.Application.Courses;
 using VirtualLab.Domain;
 using VirtualLab.Domain.Capabilities;
 using VirtualLab.Domain.Entities;
@@ -8,13 +9,13 @@ using VirtualLab.Domain.Relations;
 using VirtualLab.Interaction.Capabilities;
 using VirtualLab.Kernel;
 
-namespace VirtualLab.Application.Courses
+namespace VirtualLab.Interaction.Courses
 {
     /// <summary>
-    /// 根据跨学科课程定义建立权威世界。这里只注册能力类型，
-    /// 具体实验参数仍由对应学科的结构化配置和状态操作提供。
+    /// 根据课程定义建立带通用交互能力的权威世界。
+    /// 具体学科参数仍由对应模块的结构化配置和状态操作提供。
     /// </summary>
-    public static class CourseWorldFactory
+    public static class InteractionCourseWorldFactory
     {
         public static ExperimentWorld Create(CompiledCourseDefinition course)
         {
@@ -24,7 +25,8 @@ namespace VirtualLab.Application.Courses
             }
 
             var world = new ExperimentWorld(
-                CoreCourseRegistrations.CreateModuleScope().RelationSchemas);
+                InteractionCourseRegistrations.CreateModuleScope()
+                    .RelationSchemas);
             var portsByEntity = course.Ports
                 .GroupBy(value => value.EntityId, StringComparer.Ordinal)
                 .ToDictionary(

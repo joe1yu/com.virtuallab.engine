@@ -11,6 +11,7 @@ using VirtualLab.Domain;
 using VirtualLab.Domain.Matter;
 using VirtualLab.Domain.Relations;
 using VirtualLab.Interaction.Actions;
+using VirtualLab.Interaction.Courses;
 using VirtualLab.Interaction.Relations;
 using VirtualLab.Kernel;
 using VirtualLab.OxygenCourse.Authoring;
@@ -565,7 +566,8 @@ namespace VirtualLab.Engine.Tests.Courses
         public void 实验目标开局未完成且不规范操作会执行并形成后果证据()
         {
             var context = CreateRuntime();
-            var readers = CoreCourseRegistrations.CreateFactReaders()
+            var readers = InteractionCourseRegistrations
+                .CreateModuleScope().FactReaders
                 .Concat(ChemistryCourseRegistrations.CreateFactReaders());
             var initialGoals = new CourseGoalEvaluator(
                     new StructuredRuleEvaluator(readers))
@@ -792,7 +794,8 @@ namespace VirtualLab.Engine.Tests.Courses
 
             var completed = new CourseGoalEvaluator(
                     new StructuredRuleEvaluator(
-                        CoreCourseRegistrations.CreateFactReaders()
+                        InteractionCourseRegistrations
+                            .CreateModuleScope().FactReaders
                             .Concat(
                                 ChemistryCourseRegistrations
                                     .CreateFactReaders())))
@@ -854,7 +857,8 @@ namespace VirtualLab.Engine.Tests.Courses
                     chemistryPayload,
                     compilation.Domain.Entities.Select(
                         value => value.EntityId));
-            var world = CourseWorldFactory.Create(compilation.Domain);
+            var world = InteractionCourseWorldFactory.Create(
+                compilation.Domain);
             return new RuntimeContext(
                 world,
                 compilation.Domain,

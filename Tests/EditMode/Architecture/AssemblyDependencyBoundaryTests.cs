@@ -22,6 +22,13 @@ namespace VirtualLab.Engine.Tests.Architecture
                 {
                     "VirtualLab.Domain"
                 },
+                ["VirtualLab.Interaction.Courses"] = new[]
+                {
+                    "VirtualLab.Kernel",
+                    "VirtualLab.Domain",
+                    "VirtualLab.Interaction",
+                    "VirtualLab.Application"
+                },
                 ["VirtualLab.Application"] = new[]
                 {
                     "VirtualLab.Kernel",
@@ -40,7 +47,8 @@ namespace VirtualLab.Engine.Tests.Architecture
                     "VirtualLab.Kernel",
                     "VirtualLab.Domain",
                     "VirtualLab.Application",
-                    "VirtualLab.Interaction"
+                    "VirtualLab.Interaction",
+                    "VirtualLab.Interaction.Courses"
                 },
                 ["VirtualLab.UnityAdapters"] = new[]
                 {
@@ -48,6 +56,7 @@ namespace VirtualLab.Engine.Tests.Architecture
                     "VirtualLab.Domain",
                     "VirtualLab.Application",
                     "VirtualLab.Interaction",
+                    "VirtualLab.Interaction.Courses",
                     "VirtualLab.Presentation",
                     "Unity.ugui"
                 },

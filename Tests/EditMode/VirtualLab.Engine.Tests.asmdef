@@ -6,6 +6,7 @@
     "VirtualLab.Domain",
     "VirtualLab.Application",
     "VirtualLab.Interaction",
+    "VirtualLab.Interaction.Courses",
     "VirtualLab.Presentation",
     "VirtualLab.Infrastructure"
   ],

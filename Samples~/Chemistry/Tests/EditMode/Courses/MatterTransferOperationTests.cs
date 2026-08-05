@@ -14,6 +14,7 @@ using VirtualLab.Domain.Relations;
 using VirtualLab.Domain.Events;
 using VirtualLab.Domain.Processes;
 using VirtualLab.Interaction.Capabilities;
+using VirtualLab.Interaction.Courses;
 using VirtualLab.Interaction.Relations;
 using VirtualLab.Kernel;
 

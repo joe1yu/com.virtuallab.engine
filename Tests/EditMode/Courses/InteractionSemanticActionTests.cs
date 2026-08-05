@@ -9,6 +9,7 @@ using VirtualLab.Domain.Entities;
 using VirtualLab.Domain.Relations;
 using VirtualLab.Interaction.Actions;
 using VirtualLab.Interaction.Capabilities;
+using VirtualLab.Interaction.Courses;
 using VirtualLab.Interaction.Relations;
 using VirtualLab.Kernel;
 
@@ -309,7 +310,8 @@ namespace VirtualLab.Engine.Tests.Courses
             var context = new StructuredRuleContext(
                 Request("命令.检查目标事实", "test.inspect", "来源", "目标"),
                 world);
-            var readers = CoreCourseRegistrations.CreateFactReaders();
+            var readers = InteractionCourseRegistrations
+                .CreateModuleScope().FactReaders;
 
             Assert.That(
                 readers.Single(value =>
@@ -367,7 +369,7 @@ namespace VirtualLab.Engine.Tests.Courses
             ExperimentWorld world,
             params ConfiguredActionDefinition[] actions)
         {
-            return CoreCourseRegistrations.CreateSession(world, actions);
+            return InteractionCourseRegistrations.CreateSession(world, actions);
         }
 
         private static ConfiguredActionDefinition GrabAction()

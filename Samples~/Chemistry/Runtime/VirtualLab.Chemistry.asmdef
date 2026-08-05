@@ -5,7 +5,8 @@
     "VirtualLab.Kernel",
     "VirtualLab.Domain",
     "VirtualLab.Application",
-    "VirtualLab.Interaction"
+    "VirtualLab.Interaction",
+    "VirtualLab.Interaction.Courses"
   ],
   "overrideReferences": true,
   "precompiledReferences": [

@@ -7,6 +7,8 @@ using VirtualLab.Application.Events;
 using VirtualLab.Domain;
 using VirtualLab.Domain.Processes;
 using VirtualLab.Domain.Relations;
+using VirtualLab.Interaction.Courses;
+using VirtualLab.Interaction.Relations;
 using VirtualLab.Kernel;
 
 namespace VirtualLab.Engine.Tests.Courses
@@ -158,6 +160,33 @@ namespace VirtualLab.Engine.Tests.Courses
                 fields.Select(value => value.Id).Distinct().Count(),
                 Is.EqualTo(fields.Length),
                 "不同模块不能拥有相同的事实字段标识。");
+        }
+
+        [Test]
+        public void 交互关系和事实只由显式交互模块安装()
+        {
+            var core = CoreCourseRegistrations.CreateModuleScope();
+            Assert.That(core.RelationSchemas, Is.Empty);
+            Assert.That(
+                core.FactReaders.Select(value => value.Field)
+                    .Intersect(InteractionStructuredFactFields.All),
+                Is.Empty);
+
+            var interaction = InteractionCourseRegistrations
+                .CreateModuleScope();
+            Assert.That(
+                interaction.Manifests.Select(value => value.ModuleId),
+                Is.EqualTo(new[]
+                {
+                    CourseModuleIds.Core,
+                    InteractionModuleIds.Interaction
+                }));
+            Assert.That(
+                interaction.RelationSchemas,
+                Is.EquivalentTo(InteractionRelationSchemas.All));
+            Assert.That(
+                interaction.FactReaders.Select(value => value.Field),
+                Is.SupersetOf(InteractionStructuredFactFields.All));
         }
 
         [Test]

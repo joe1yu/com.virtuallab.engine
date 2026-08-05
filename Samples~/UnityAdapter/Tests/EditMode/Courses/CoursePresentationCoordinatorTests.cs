@@ -8,6 +8,7 @@ using VirtualLab.Domain;
 using VirtualLab.Domain.Entities;
 using VirtualLab.Domain.Relations;
 using VirtualLab.Interaction.Relations;
+using VirtualLab.Interaction.Courses;
 using VirtualLab.Kernel;
 using VirtualLab.Presentation;
 using VirtualLab.UnityAdapters.Presentation;

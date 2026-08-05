@@ -12,6 +12,7 @@ using VirtualLab.Domain.Entities;
 using VirtualLab.Domain.Relations;
 using VirtualLab.Interaction.Actions;
 using VirtualLab.Interaction.Capabilities;
+using VirtualLab.Interaction.Courses;
 using VirtualLab.Interaction.Relations;
 using VirtualLab.Kernel;
 
@@ -24,7 +25,8 @@ namespace VirtualLab.Engine.Tests.Courses
         {
             var evaluator = new CourseAssessmentEvaluator(
                 new StructuredRuleEvaluator(
-                    CoreCourseRegistrations.CreateFactReaders()));
+                    InteractionCourseRegistrations
+                        .CreateModuleScope().FactReaders));
             var request = new SemanticActionRequest(
                 "命令.不规范加热",
                 "化学.开始加热",
@@ -111,7 +113,8 @@ namespace VirtualLab.Engine.Tests.Courses
             var actionResult = session.Execute(request);
             var evaluator = new CourseAssessmentEvaluator(
                 new StructuredRuleEvaluator(
-                    CoreCourseRegistrations.CreateFactReaders()
+                    InteractionCourseRegistrations
+                        .CreateModuleScope().FactReaders
                         .Concat(ChemistryCourseRegistrations.CreateFactReaders())));
             var before = world.TryGetScalar("器材.甲.温度", out var temperature)
                 ? temperature.Value
@@ -193,7 +196,8 @@ namespace VirtualLab.Engine.Tests.Courses
                 null);
             var evaluator = new CourseAssessmentEvaluator(
                 new StructuredRuleEvaluator(
-                    CoreCourseRegistrations.CreateFactReaders()
+                    InteractionCourseRegistrations
+                        .CreateModuleScope().FactReaders
                         .Concat(ChemistryCourseRegistrations
                             .CreateFactReaders())));
             var condition = new CourseConditionDefinition(
@@ -274,7 +278,8 @@ namespace VirtualLab.Engine.Tests.Courses
                 },
                 Array.Empty<ConfiguredMutationDefinition>());
             var runtime = new CourseRuntimeDefinition(
-                CoreCourseRegistrations.CreateFactReaders()
+                InteractionCourseRegistrations
+                    .CreateModuleScope().FactReaders
                     .Concat(ChemistryCourseRegistrations.CreateFactReaders()),
                 new[] { action },
                 new[]
@@ -347,7 +352,8 @@ namespace VirtualLab.Engine.Tests.Courses
             world.SetRelation(Relation(InteractionRelationTypeIds.HeldBy, second, "学生"));
             var evaluator = new CourseGoalEvaluator(
                 new StructuredRuleEvaluator(
-                    CoreCourseRegistrations.CreateFactReaders()));
+                    InteractionCourseRegistrations
+                        .CreateModuleScope().FactReaders));
             return evaluator.Evaluate(
                 world,
                 new[]

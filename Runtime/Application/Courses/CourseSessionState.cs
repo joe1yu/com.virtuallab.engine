@@ -10,7 +10,6 @@ using VirtualLab.Domain.Entities;
 using VirtualLab.Domain.Matter;
 using VirtualLab.Domain.Relations;
 using VirtualLab.Interaction.Capabilities;
-using VirtualLab.Interaction.Relations;
 using VirtualLab.Kernel;
 
 namespace VirtualLab.Application.Courses
@@ -113,7 +112,7 @@ namespace VirtualLab.Application.Courses
             _eventProjectors = (eventProjectors
                 ?? Array.Empty<ICourseEventProjector>()).ToArray();
             _processAdvancerFactory = processAdvancerFactory;
-            _worldPreparation = worldPreparation ?? PrepareCoreRelations;
+            _worldPreparation = worldPreparation ?? FreezeRegisteredRelations;
         }
 
         public ConfigDrivenCourseSession CreateSession(ExperimentWorld world)
@@ -140,22 +139,11 @@ namespace VirtualLab.Application.Courses
                 world ?? throw new ArgumentNullException(nameof(world)));
         }
 
-        private static void PrepareCoreRelations(ExperimentWorld world)
+        private static void FreezeRegisteredRelations(ExperimentWorld world)
         {
             if (!world.RelationSchemasFrozen)
             {
-                world.RegisterRelationSchemas(InteractionRelationSchemas.All);
                 world.FreezeRelationSchemas();
-                return;
-            }
-
-            foreach (var schema in InteractionRelationSchemas.All)
-            {
-                if (!world.RequireRelationSchema(schema.TypeId).Equals(schema))
-                {
-                    throw new InvalidOperationException(
-                        $"世界中的关系模式“{schema.TypeId}”与交互模块不一致。");
-                }
             }
         }
 

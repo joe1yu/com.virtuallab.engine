@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using NUnit.Framework;
 using VirtualLab.Application.Courses;
 using VirtualLab.Domain;
+using VirtualLab.Interaction.Courses;
 
 namespace VirtualLab.Engine.Tests.Courses
 {

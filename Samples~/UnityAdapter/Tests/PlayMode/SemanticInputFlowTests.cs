@@ -8,6 +8,7 @@ using UnityEngine.TestTools;
 using VirtualLab.Application.Courses;
 using VirtualLab.Domain;
 using VirtualLab.Domain.Entities;
+using VirtualLab.Interaction.Courses;
 using VirtualLab.Kernel;
 using VirtualLab.Presentation;
 using VirtualLab.UnityAdapters;
@@ -135,7 +136,7 @@ namespace VirtualLab.Engine.PlayModeTests
                 world.AddEntity(new ExperimentEntity(new EntityId("学生")));
                 world.AddEntity(
                     new ExperimentEntity(new EntityId("器材.试管")));
-                var session = CoreCourseRegistrations.CreateSession(
+                var session = InteractionCourseRegistrations.CreateSession(
                     world,
                     new[]
                     {

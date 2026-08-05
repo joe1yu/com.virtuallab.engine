@@ -6,6 +6,7 @@ using UnityEngine;
 using VirtualLab.Application.Commands;
 using VirtualLab.Application.Courses;
 using VirtualLab.Domain;
+using VirtualLab.Interaction.Courses;
 using VirtualLab.Presentation;
 using VirtualLab.UnityAdapters.Presentation;
 
@@ -258,7 +259,7 @@ namespace VirtualLab.UnityAdapters.Courses
                     domain,
                     runtimeResources,
                     transform);
-            var world = CourseWorldFactory.Create(domain);
+            var world = InteractionCourseWorldFactory.Create(domain);
             ConfiguredCourseRuntimeCatalog.EnsureInstalled(
                 gameObject,
                 domain.DisciplinePackageIds);
@@ -279,7 +280,7 @@ namespace VirtualLab.UnityAdapters.Courses
                 : sessionFactory != null
                     ? new CourseRuntimeFacade(
                         sessionFactory.CreateSession(world, domain))
-                    : CoreCourseRegistrations.CreateRuntimeFacade(
+                    : InteractionCourseRegistrations.CreateRuntimeFacade(
                         world,
                         domain);
             if (!uiSimulationMode)

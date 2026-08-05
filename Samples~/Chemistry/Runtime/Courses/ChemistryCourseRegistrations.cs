@@ -4,6 +4,7 @@ using System.Linq;
 using VirtualLab.Application.Courses;
 using VirtualLab.Domain;
 using VirtualLab.Domain.Matter;
+using VirtualLab.Interaction.Courses;
 using VirtualLab.Kernel;
 
 namespace VirtualLab.Chemistry.Courses
@@ -30,6 +31,9 @@ namespace VirtualLab.Chemistry.Courses
                 {
                     new CourseModuleDependency(
                         CourseModuleIds.Core,
+                        new Version(1, 0, 0)),
+                    new CourseModuleDependency(
+                        InteractionModuleIds.Interaction,
                         new Version(1, 0, 0))
                 });
 
@@ -164,6 +168,7 @@ namespace VirtualLab.Chemistry.Courses
         {
             return CourseRuntimeModuleScope.Create(
                 new CoreCourseRuntimeModule(),
+                new InteractionCourseRuntimeModule(),
                 new ChemistryCourseRuntimeModule(
                     matterTransferOperations,
                     combustionOperations,

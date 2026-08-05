@@ -5,6 +5,7 @@ using System.Linq;
 using VirtualLab.Application.Events;
 using VirtualLab.Domain;
 using VirtualLab.Domain.Relations;
+using VirtualLab.Interaction.Relations;
 using VirtualLab.Kernel;
 
 namespace VirtualLab.Application.Courses
@@ -199,6 +200,9 @@ namespace VirtualLab.Application.Courses
     /// </summary>
     public sealed class ConfiguredStateOperationRegistry
     {
+        private const string SourceAnchorId = "来源锚点ID";
+        private const string TargetAnchorId = "目标锚点ID";
+
         private readonly Dictionary<string, IConfiguredStateOperation>
             _operations =
                 new Dictionary<string, IConfiguredStateOperation>(
@@ -492,7 +496,7 @@ namespace VirtualLab.Application.Courses
             if (sourcePortId == null
                 && schema.PortPolicy != RelationPortPolicy.禁止)
             {
-                if (ConnectionPortResolver.TryResolve(
+                if (TryResolveConnectionPorts(
                         world,
                         request,
                         out var resolved))
@@ -513,6 +517,40 @@ namespace VirtualLab.Application.Courses
                 target,
                 sourcePortId,
                 targetPortId);
+        }
+
+        private static bool TryResolveConnectionPorts(
+            ExperimentWorld world,
+            SemanticActionRequest request,
+            out ConnectionPortPair pair)
+        {
+            pair = null;
+            if (string.IsNullOrWhiteSpace(request.TargetEntityId))
+            {
+                return false;
+            }
+
+            return ConnectionPortResolver.TryResolve(
+                world,
+                new EntityId(request.SourceEntityId),
+                new EntityId(request.TargetEntityId),
+                PreferredPortId(request, SourceAnchorId),
+                PreferredPortId(request, TargetAnchorId),
+                out pair);
+        }
+
+        private static string PreferredPortId(
+            SemanticActionRequest request,
+            string key)
+        {
+            if (!request.Parameters.TryGetValue(key, out var value)
+                || value.Kind != StructuredValueKind.Text
+                || string.IsNullOrWhiteSpace(value.Text))
+            {
+                return null;
+            }
+
+            return value.Text.Trim();
         }
 
         private static IReadOnlyDictionary<string, StructuredValue>
