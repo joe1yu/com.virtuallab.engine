@@ -449,7 +449,7 @@ namespace VirtualLab.Interaction.Courses
 
         /// <summary>
         /// 返回从动作来源沿无向连接关系可达的全部对象。
-        /// 课程可用该事实判断装置链路，无需维护与连接图重复的教学状态。
+        /// 课程可用该事实判断装置链路，无需记录与连接图重复的课程里程碑。
         /// </summary>
         private sealed class ConnectedNetworkFactReader : IStructuredFactReader
         {

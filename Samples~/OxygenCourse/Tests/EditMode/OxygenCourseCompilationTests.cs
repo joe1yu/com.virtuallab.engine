@@ -190,7 +190,7 @@ namespace VirtualLab.Engine.Tests.Courses
             Assert.That(
                 lampIgnition.Rules.Select(value => value.Field.Id),
                 Does.Contain(InteractionStructuredFactFields.来源对象覆盖物.Id)
-                    .And.Contain(TeachingStructuredFactFields.目标对象教学状态.Id)
+                    .And.Contain(ChemistryStructuredFactFields.目标对象已点燃.Id)
                     .And.Contain(InteractionStructuredFactFields.目标对象已被操作者拿起.Id));
         }
 

@@ -300,7 +300,7 @@ namespace VirtualLab.Engine.Tests.Courses
         }
 
         [Test]
-        public void 目标持有和目标教学状态事实读取动作目标而不是来源()
+        public void 目标持有和目标课程里程碑事实读取动作目标而不是来源()
         {
             var world = WorldWith(
                 Entity("学生"),
@@ -315,7 +315,7 @@ namespace VirtualLab.Engine.Tests.Courses
                 new InteractionCourseRuntimeModule(),
                 new TeachingCourseRuntimeModule());
             modules.PrepareWorld(world);
-            world.RequireTeachingStates().Add("目标", "已准备");
+            world.RequireCourseMilestones().Record("目标", "已准备");
             var context = new StructuredRuleContext(
                 Request("命令.检查目标事实", "test.inspect", "来源", "目标"),
                 world);
@@ -328,7 +328,7 @@ namespace VirtualLab.Engine.Tests.Courses
                 Is.True);
             Assert.That(
                 readers.Single(value =>
-                        value.Field == TeachingStructuredFactFields.目标对象教学状态)
+                        value.Field == TeachingStructuredFactFields.目标对象课程里程碑)
                     .Read(context).TextList,
                 Is.EqualTo(new[] { "已准备" }));
         }

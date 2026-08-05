@@ -313,7 +313,7 @@ namespace VirtualLab.Engine.Tests.Courses
                     new StructuredRuleDefinition(
                         "条件.外部进展",
                         0,
-                        TeachingStructuredFactFields.来源对象教学状态,
+                        TeachingStructuredFactFields.来源对象课程里程碑,
                         StructuredRuleOperator.包含,
                         StructuredValue.FromText("外部过程已推进"),
                         "过程尚未推进")
@@ -325,7 +325,7 @@ namespace VirtualLab.Engine.Tests.Courses
                 dispatcher);
             coordinator.InitializeOrRestore();
             calls.Clear();
-            world.RequireTeachingStates().Add(
+            world.RequireCourseMilestones().Record(
                 "器材.试管",
                 "外部过程已推进");
 
@@ -358,7 +358,7 @@ namespace VirtualLab.Engine.Tests.Courses
                         new 来源对象持有者FactReader(),
                         TeachingCourseRegistrations.CreateFactReaders()
                             .Single(value => value.Field ==
-                                TeachingStructuredFactFields.来源对象教学状态)
+                                TeachingStructuredFactFields.来源对象课程里程碑)
                     }),
                     new ConfiguredStateOperationRegistry(),
                     new[]

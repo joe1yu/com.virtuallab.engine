@@ -282,11 +282,11 @@ namespace VirtualLab.Engine.Tests.Courses
                 {
                     new ConfiguredMutationDefinition(
                         "变化.标记课程完成",
-                        TeachingConfiguredStateOperationIds.AddState,
+                        TeachingConfiguredMilestoneOperationIds.RecordMilestone,
                         Parameters(
                             (TeachingConfigurationKeys.EntityId,
                                 StructuredValue.FromText("器材")),
-                            (TeachingConfigurationKeys.StateId,
+                            (TeachingConfigurationKeys.MilestoneId,
                                 StructuredValue.FromText("课程已完成")))),
                     new ConfiguredMutationDefinition(
                         "变化.发布完成事件",
@@ -332,7 +332,7 @@ namespace VirtualLab.Engine.Tests.Courses
                             new StructuredRuleDefinition(
                                 "规则.课程完成",
                                 10,
-                                TeachingStructuredFactFields.来源对象教学状态,
+                                TeachingStructuredFactFields.来源对象课程里程碑,
                                 StructuredRuleOperator.包含,
                                 StructuredValue.FromText("课程已完成"),
                                 "课程尚未完成")

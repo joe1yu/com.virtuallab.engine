@@ -35,7 +35,7 @@ namespace VirtualLab.Unity.Authoring.Recipes
 
         public IReadOnlyList<string> RegisteredStateOperationIds { get; } =
             ConfiguredStateOperationIds.All
-                .Concat(TeachingConfiguredStateOperationIds.All)
+                .Concat(TeachingConfiguredMilestoneOperationIds.All)
                 .ToArray();
 
         public RecipePackage Load()

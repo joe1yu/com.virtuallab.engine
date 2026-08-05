@@ -8,11 +8,11 @@ using VirtualLab.Kernel;
 namespace VirtualLab.Teaching.Courses
 {
     /// <summary>
-    /// 教学模块状态的世界访问入口。
+    /// 教学模块课程里程碑的世界访问入口。
     /// </summary>
-    public static class TeachingStateWorldExtensions
+    public static class TeachingMilestoneWorldExtensions
     {
-        public static TeachingStateCollection RequireTeachingStates(
+        public static TeachingMilestoneCollection RequireCourseMilestones(
             this ExperimentWorld world)
         {
             if (world == null)
@@ -20,41 +20,41 @@ namespace VirtualLab.Teaching.Courses
                 throw new ArgumentNullException(nameof(world));
             }
 
-            return world.RequireWorldState<TeachingStateCollection>(
-                TeachingWorldStateTypeIds.NamedStates);
+            return world.RequireWorldState<TeachingMilestoneCollection>(
+                TeachingWorldStateTypeIds.CourseMilestones);
         }
     }
 
     /// <summary>
-    /// 命名教学状态存档协议字段。
+    /// 课程里程碑存档协议字段。
     /// </summary>
-    public static class TeachingStateSnapshotKeys
+    public static class TeachingMilestoneSnapshotKeys
     {
-        public const string StateEntry = "命名教学状态";
+        public const string MilestoneEntry = "课程里程碑";
         public const string EntityId = "实体标识";
-        public const string StateId = "教学状态";
+        public const string MilestoneId = "里程碑名称";
     }
 
     /// <summary>
-    /// Teaching 模块负责自己的状态存档格式，Application 只传递通用条目。
+    /// Teaching 模块负责自己的里程碑存档格式，Application 只传递通用条目。
     /// </summary>
-    public sealed class TeachingStateCourseCodec : ICourseWorldStateCodec
+    public sealed class TeachingMilestoneCourseCodec : ICourseWorldStateCodec
     {
         public VirtualLab.Domain.WorldStates.WorldStateTypeId TypeId =>
-            TeachingWorldStateTypeIds.NamedStates;
+            TeachingWorldStateTypeIds.CourseMilestones;
 
         public CourseWorldState Capture(ExperimentWorld world)
         {
-            var entries = world.RequireTeachingStates().Entries.Select(value =>
+            var entries = world.RequireCourseMilestones().Entries.Select(value =>
                 new CourseWorldStateEntry(
-                    TeachingStateSnapshotKeys.StateEntry,
+                    TeachingMilestoneSnapshotKeys.MilestoneEntry,
                     new[]
                     {
                         new KeyValuePair<string, string>(
-                            TeachingStateSnapshotKeys.EntityId,
+                            TeachingMilestoneSnapshotKeys.EntityId,
                             value.Key.Value),
                         new KeyValuePair<string, string>(
-                            TeachingStateSnapshotKeys.StateId,
+                            TeachingMilestoneSnapshotKeys.MilestoneId,
                             value.Value)
                     }));
             return new CourseWorldState(TypeId, entries);
@@ -70,23 +70,25 @@ namespace VirtualLab.Teaching.Courses
             if (state.TypeId != TypeId)
             {
                 throw new InvalidOperationException(
-                    $"命名教学状态不能从世界状态“{state.TypeId}”恢复。");
+                    $"课程里程碑不能从世界状态“{state.TypeId}”恢复。");
             }
 
             var entries = state.Entries.Select(entry =>
             {
-                if (entry.EntryType != TeachingStateSnapshotKeys.StateEntry
+                if (entry.EntryType != TeachingMilestoneSnapshotKeys.MilestoneEntry
                     || entry.Values.Count != 2)
                 {
                     throw new InvalidOperationException(
-                        $"命名教学状态包含未知或字段不完整的条目“{entry.EntryType}”。");
+                        $"课程里程碑包含未知或字段不完整的条目“{entry.EntryType}”。");
                 }
 
                 return new KeyValuePair<EntityId, string>(
-                    new EntityId(Read(entry, TeachingStateSnapshotKeys.EntityId)),
-                    Read(entry, TeachingStateSnapshotKeys.StateId));
+                    new EntityId(Read(
+                        entry,
+                        TeachingMilestoneSnapshotKeys.EntityId)),
+                    Read(entry, TeachingMilestoneSnapshotKeys.MilestoneId));
             });
-            world.RequireTeachingStates().ReplaceContents(entries);
+            world.RequireCourseMilestones().ReplaceContents(entries);
         }
 
         private static string Read(CourseWorldStateEntry entry, string key)
@@ -95,14 +97,14 @@ namespace VirtualLab.Teaching.Courses
                 || string.IsNullOrWhiteSpace(value))
             {
                 throw new InvalidOperationException(
-                    $"命名教学状态条目缺少字段“{key}”。");
+                    $"课程里程碑条目缺少字段“{key}”。");
             }
 
             return value;
         }
     }
 
-    internal abstract class TeachingStateOperation : IConfiguredStateOperation
+    internal abstract class TeachingMilestoneOperation : IConfiguredStateOperation
     {
         public abstract string OperationId { get; }
 
@@ -125,20 +127,22 @@ namespace VirtualLab.Teaching.Courses
                     mutation,
                     TeachingConfigurationKeys.EntityId)
                 ?? request.SourceEntityId;
-            Apply(
-                world.RequireTeachingStates(),
+            Record(
+                world.RequireCourseMilestones(),
                 entityId,
-                ReadRequiredText(mutation, TeachingConfigurationKeys.StateId));
+                ReadRequiredText(
+                    mutation,
+                    TeachingConfigurationKeys.MilestoneId));
         }
 
         protected virtual bool ShouldApply(
             ExperimentWorld world,
             ConfiguredMutationDefinition mutation) => true;
 
-        protected abstract void Apply(
-            TeachingStateCollection states,
+        protected abstract void Record(
+            TeachingMilestoneCollection milestones,
             string entityId,
-            string stateId);
+            string milestoneId);
 
         private static string ReadRequiredText(
             ConfiguredMutationDefinition mutation,
@@ -187,36 +191,27 @@ namespace VirtualLab.Teaching.Courses
         }
     }
 
-    internal sealed class AddTeachingStateOperation : TeachingStateOperation
+    internal sealed class RecordCourseMilestoneOperation :
+        TeachingMilestoneOperation
     {
         public override string OperationId =>
-            TeachingConfiguredStateOperationIds.AddState;
+            TeachingConfiguredMilestoneOperationIds.RecordMilestone;
 
-        protected override void Apply(
-            TeachingStateCollection states,
+        protected override void Record(
+            TeachingMilestoneCollection milestones,
             string entityId,
-            string stateId) => states.Add(entityId, stateId);
-    }
-
-    internal sealed class RemoveTeachingStateOperation : TeachingStateOperation
-    {
-        public override string OperationId =>
-            TeachingConfiguredStateOperationIds.RemoveState;
-
-        protected override void Apply(
-            TeachingStateCollection states,
-            string entityId,
-            string stateId) => states.Remove(entityId, stateId);
+            string milestoneId) => milestones.Record(entityId, milestoneId);
     }
 
     /// <summary>
     /// 仅当权威世界标量等于期望值时记录教学结果，避免错误后果与成功目标并存。
     /// </summary>
-    internal sealed class ConditionalAddTeachingStateOperation :
-        TeachingStateOperation
+    internal sealed class ConditionalRecordCourseMilestoneOperation :
+        TeachingMilestoneOperation
     {
         public override string OperationId =>
-            TeachingConfiguredStateOperationIds.AddStateWhenScalarEquals;
+            TeachingConfiguredMilestoneOperationIds
+                .RecordMilestoneWhenScalarEquals;
 
         protected override bool ShouldApply(
             ExperimentWorld world,
@@ -232,9 +227,9 @@ namespace VirtualLab.Teaching.Courses
                    && Math.Abs(actual.Value - expected) <= 0.000001d;
         }
 
-        protected override void Apply(
-            TeachingStateCollection states,
+        protected override void Record(
+            TeachingMilestoneCollection milestones,
             string entityId,
-            string stateId) => states.Add(entityId, stateId);
+            string milestoneId) => milestones.Record(entityId, milestoneId);
     }
 }

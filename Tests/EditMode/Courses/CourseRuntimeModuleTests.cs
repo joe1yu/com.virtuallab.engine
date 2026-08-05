@@ -295,7 +295,7 @@ namespace VirtualLab.Engine.Tests.Courses
         }
 
         [Test]
-        public void 教学模块统一负责命名状态的操作事实和存档()
+        public void 教学模块统一负责课程里程碑的记录事实和存档()
         {
             var scope = TeachingCourseRegistrations.CreateModuleScope();
             var world = new ExperimentWorld();
@@ -310,12 +310,12 @@ namespace VirtualLab.Engine.Tests.Courses
                 Array.Empty<KeyValuePair<string, StructuredValue>>());
             var mutation = new ConfiguredMutationDefinition(
                 "变化.器材已准备",
-                TeachingConfiguredStateOperationIds.AddState,
+                TeachingConfiguredMilestoneOperationIds.RecordMilestone,
                 new Dictionary<string, StructuredValue>
                 {
                     [TeachingConfigurationKeys.EntityId] =
                         StructuredValue.FromText("器材"),
-                    [TeachingConfigurationKeys.StateId] =
+                    [TeachingConfigurationKeys.MilestoneId] =
                         StructuredValue.FromText("已准备")
                 });
 
@@ -325,7 +325,7 @@ namespace VirtualLab.Engine.Tests.Courses
                 new[] { mutation });
 
             var reader = scope.FactReaders.Single(value =>
-                value.Field == TeachingStructuredFactFields.来源对象教学状态);
+                value.Field == TeachingStructuredFactFields.来源对象课程里程碑);
             Assert.That(
                 reader.Read(new StructuredRuleContext(request, world)).TextList,
                 Is.EqualTo(new[] { "已准备" }));
@@ -337,12 +337,12 @@ namespace VirtualLab.Engine.Tests.Courses
             scope.WorldStateCodecs.Restore(restored, snapshot);
 
             Assert.That(
-                restored.RequireTeachingStates().StatesOf("器材"),
+                restored.RequireCourseMilestones().MilestonesOf("器材"),
                 Is.EqualTo(new[] { "已准备" }));
         }
 
         [Test]
-        public void 条件教学状态只在权威标量满足时添加()
+        public void 条件课程里程碑只在权威标量满足时记录()
         {
             var scope = TeachingCourseRegistrations.CreateModuleScope();
             var world = new ExperimentWorld();
@@ -357,12 +357,13 @@ namespace VirtualLab.Engine.Tests.Courses
                 Array.Empty<KeyValuePair<string, StructuredValue>>());
             var mutation = new ConfiguredMutationDefinition(
                 "变化.标记安全停热",
-                TeachingConfiguredStateOperationIds.AddStateWhenScalarEquals,
+                TeachingConfiguredMilestoneOperationIds
+                    .RecordMilestoneWhenScalarEquals,
                 new Dictionary<string, StructuredValue>
                 {
                     [TeachingConfigurationKeys.EntityId] =
                         StructuredValue.FromText("大试管"),
-                    [TeachingConfigurationKeys.StateId] =
+                    [TeachingConfigurationKeys.MilestoneId] =
                         StructuredValue.FromText("已安全停止加热"),
                     [TeachingConfigurationKeys.ScalarKey] =
                         StructuredValue.FromText("大试管.风险.冷凝水倒吸"),
@@ -379,7 +380,7 @@ namespace VirtualLab.Engine.Tests.Courses
                 null);
             operations.ApplyAtomically(request, world, new[] { mutation });
             Assert.That(
-                world.RequireTeachingStates().StatesOf("大试管"),
+                world.RequireCourseMilestones().MilestonesOf("大试管"),
                 Is.Empty);
 
             world.SetScalar(
@@ -390,7 +391,7 @@ namespace VirtualLab.Engine.Tests.Courses
                 null);
             operations.ApplyAtomically(request, world, new[] { mutation });
             Assert.That(
-                world.RequireTeachingStates().StatesOf("大试管"),
+                world.RequireCourseMilestones().MilestonesOf("大试管"),
                 Is.EqualTo(new[] { "已安全停止加热" }));
         }
 

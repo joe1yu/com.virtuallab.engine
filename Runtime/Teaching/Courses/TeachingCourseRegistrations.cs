@@ -10,7 +10,7 @@ namespace VirtualLab.Teaching.Courses
     public static class TeachingProtocolIds
     {
         public const string Module = "教学";
-        public const string StateOperationGroup = "教学.命名状态操作";
+        public const string MilestoneOperationGroup = "教学.课程里程碑操作";
     }
 
     /// <summary>
@@ -19,31 +19,30 @@ namespace VirtualLab.Teaching.Courses
     public static class TeachingConfigurationKeys
     {
         public const string EntityId = CourseConfigurationKeys.Mutation.EntityId;
-        public const string StateId = "教学状态";
+        public const string MilestoneId = "课程里程碑";
         public const string ScalarKey = CourseConfigurationKeys.Mutation.StateKey;
         public const string ExpectedValue =
             CourseConfigurationKeys.Mutation.ExpectedValue;
     }
 
     /// <summary>
-    /// 教学配置可调用的状态操作。
+    /// 教学配置可调用的课程里程碑操作。
     /// </summary>
-    public static class TeachingConfiguredStateOperationIds
+    public static class TeachingConfiguredMilestoneOperationIds
     {
-        public const string AddState = "添加教学状态";
-        public const string RemoveState = "移除教学状态";
-        public const string AddStateWhenScalarEquals = "条件添加教学状态";
+        public const string RecordMilestone = "记录课程里程碑";
+        public const string RecordMilestoneWhenScalarEquals =
+            "条件记录课程里程碑";
 
         public static IReadOnlyList<string> All { get; } = new[]
         {
-            AddState,
-            RemoveState,
-            AddStateWhenScalarEquals
+            RecordMilestone,
+            RecordMilestoneWhenScalarEquals
         };
     }
 
     /// <summary>
-    /// 显式安装命名教学状态；最小课程内核不解释任何教学语义。
+    /// 显式安装课程里程碑；最小课程内核不解释任何教学语义。
     /// </summary>
     public sealed class TeachingCourseRuntimeModule : ICourseRuntimeModule
     {
@@ -64,11 +63,11 @@ namespace VirtualLab.Teaching.Courses
         public void Register(CourseModuleRegistrationContext context)
         {
             context.RegisterWorldState(
-                TeachingWorldStateTypeIds.NamedStates,
-                world => new TeachingStateCollection(world.ContainsEntity));
-            context.RegisterWorldStateCodec(new TeachingStateCourseCodec());
+                TeachingWorldStateTypeIds.CourseMilestones,
+                world => new TeachingMilestoneCollection(world.ContainsEntity));
+            context.RegisterWorldStateCodec(new TeachingMilestoneCourseCodec());
             context.RegisterStateOperations(
-                TeachingProtocolIds.StateOperationGroup,
+                TeachingProtocolIds.MilestoneOperationGroup,
                 RegisterStateOperations);
 
             foreach (var reader in TeachingCourseRegistrations.CreateFactReaders())
@@ -80,9 +79,8 @@ namespace VirtualLab.Teaching.Courses
         private static void RegisterStateOperations(
             ConfiguredStateOperationRegistry registry)
         {
-            registry.Register(new AddTeachingStateOperation());
-            registry.Register(new RemoveTeachingStateOperation());
-            registry.Register(new ConditionalAddTeachingStateOperation());
+            registry.Register(new RecordCourseMilestoneOperation());
+            registry.Register(new ConditionalRecordCourseMilestoneOperation());
         }
     }
 
@@ -97,20 +95,20 @@ namespace VirtualLab.Teaching.Courses
         {
             return new IStructuredFactReader[]
             {
-                new TeachingStateFactReader(
-                    TeachingStructuredFactFields.来源对象教学状态,
+                new TeachingMilestoneFactReader(
+                    TeachingStructuredFactFields.来源对象课程里程碑,
                     context => context.Request.SourceEntityId),
-                new TeachingStateFactReader(
-                    TeachingStructuredFactFields.目标对象教学状态,
+                new TeachingMilestoneFactReader(
+                    TeachingStructuredFactFields.目标对象课程里程碑,
                     context => context.Request.TargetEntityId)
             };
         }
 
-        private sealed class TeachingStateFactReader : IStructuredFactReader
+        private sealed class TeachingMilestoneFactReader : IStructuredFactReader
         {
             private readonly Func<StructuredRuleContext, string> _idSelector;
 
-            public TeachingStateFactReader(
+            public TeachingMilestoneFactReader(
                 StructuredFactField field,
                 Func<StructuredRuleContext, string> idSelector)
             {
@@ -129,7 +127,9 @@ namespace VirtualLab.Teaching.Courses
                 }
 
                 return StructuredValue.FromTextList(
-                    context.World.RequireTeachingStates().StatesOf(entityId));
+                    context.World
+                        .RequireCourseMilestones()
+                        .MilestonesOf(entityId));
             }
         }
     }
