@@ -6,6 +6,7 @@ using VirtualLab.Application.Courses;
 using VirtualLab.Domain;
 using VirtualLab.Domain.Entities;
 using VirtualLab.Domain.Relations;
+using VirtualLab.Interaction.Relations;
 using VirtualLab.Kernel;
 
 namespace VirtualLab.Engine.Tests.Courses
@@ -221,7 +222,9 @@ namespace VirtualLab.Engine.Tests.Courses
                     "变更.建立持有关系",
                     "设置关系",
                     Parameters(
-                        ("关系类型", StructuredValue.FromText("交互.关系.持有")))),
+                        (CourseConfigurationKeys.Mutation.RelationTypeId,
+                            StructuredValue.FromText(
+                            InteractionRelationTypeIds.HeldBy.Value)))),
                 new ConfiguredMutationDefinition(
                     "变更.记录温度",
                     "设置标量",
@@ -423,7 +426,8 @@ namespace VirtualLab.Engine.Tests.Courses
                             "变更.非法关系",
                             "设置关系",
                             Parameters(
-                                ("关系类型", StructuredValue.FromText("999"))))
+                                (CourseConfigurationKeys.Mutation.RelationTypeId,
+                                    StructuredValue.FromText("999"))))
                     }));
 
             registry.ApplyAtomically(
@@ -435,7 +439,9 @@ namespace VirtualLab.Engine.Tests.Courses
                         "变更.首次持有",
                         "设置关系",
                         Parameters(
-                            ("关系类型", StructuredValue.FromText("交互.关系.持有"))))
+                            (CourseConfigurationKeys.Mutation.RelationTypeId,
+                                StructuredValue.FromText(
+                                InteractionRelationTypeIds.HeldBy.Value))))
                 });
             Assert.DoesNotThrow(() => registry.ApplyAtomically(
                 request,
@@ -446,7 +452,9 @@ namespace VirtualLab.Engine.Tests.Courses
                         "变更.重复设置首次持有",
                         "设置关系",
                         Parameters(
-                            ("关系类型", StructuredValue.FromText("交互.关系.持有"))))
+                            (CourseConfigurationKeys.Mutation.RelationTypeId,
+                                StructuredValue.FromText(
+                                InteractionRelationTypeIds.HeldBy.Value))))
                 }));
             Assert.Throws<ConfiguredStateOperationException>(() =>
                 registry.ApplyAtomically(
@@ -458,7 +466,9 @@ namespace VirtualLab.Engine.Tests.Courses
                             "变更.第二持有者",
                             "设置关系",
                             Parameters(
-                                ("关系类型", StructuredValue.FromText("交互.关系.持有")),
+                                (CourseConfigurationKeys.Mutation.RelationTypeId,
+                                    StructuredValue.FromText(
+                                    InteractionRelationTypeIds.HeldBy.Value)),
                                 ("目标实体标识", StructuredValue.FromText(
                                     "另一学生"))))
                     }));
@@ -592,7 +602,7 @@ namespace VirtualLab.Engine.Tests.Courses
 
         private static ExperimentWorld WorldWith(params string[] entityIds)
         {
-            var world = new ExperimentWorld();
+            var world = new ExperimentWorld(InteractionRelationSchemas.All);
             foreach (var entityId in entityIds)
             {
                 world.AddEntity(new ExperimentEntity(new EntityId(entityId)));

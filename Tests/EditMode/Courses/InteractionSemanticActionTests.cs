@@ -134,12 +134,16 @@ namespace VirtualLab.Engine.Tests.Courses
                 Relation(
                     InteractionRelationTypeIds.Connection,
                     "端口.来源",
-                    "端口.已连接"));
+                    "端口.已连接",
+                    InteractionPortIds.Default,
+                    InteractionPortIds.Default));
             world.SetRelation(
                 Relation(
                     InteractionRelationTypeIds.Connection,
                     "端口.另一来源",
-                    "端口.另一目标"));
+                    "端口.另一目标",
+                    InteractionPortIds.Default,
+                    InteractionPortIds.Default));
             var session = Session(world, ConnectAction(), DisconnectAction());
 
             var rejected = session.Execute(
@@ -563,7 +567,9 @@ namespace VirtualLab.Engine.Tests.Courses
                 Mutation(
                     "建立持有关系",
                     ConfiguredStateOperationIds.RelationSet,
-                    ("关系类型", StructuredValue.FromText("交互.关系.持有")),
+                    (CourseConfigurationKeys.Mutation.RelationTypeId,
+                        StructuredValue.FromText(
+                        InteractionRelationTypeIds.HeldBy.Value)),
                     ("目标实体引用", StructuredValue.FromText("操作者"))));
         }
 
@@ -578,7 +584,9 @@ namespace VirtualLab.Engine.Tests.Courses
                 Mutation(
                     "移除持有关系",
                     ConfiguredStateOperationIds.RelationRemove,
-                    ("关系类型", StructuredValue.FromText("交互.关系.持有")),
+                    (CourseConfigurationKeys.Mutation.RelationTypeId,
+                        StructuredValue.FromText(
+                        InteractionRelationTypeIds.HeldBy.Value)),
                     ("目标实体引用", StructuredValue.FromText("操作者"))));
         }
 
@@ -593,7 +601,12 @@ namespace VirtualLab.Engine.Tests.Courses
                     Rule(30, InteractionStructuredFactFields.连接标签相匹配, StructuredRuleOperator.等于, StructuredValue.FromBoolean(true), "端口不兼容"),
                     Rule(40, SpatialStructuredFactFields.对象间距离, StructuredRuleOperator.小于等于, StructuredValue.FromNumber(0.1d), "连接距离过远")
                 },
-                Mutation("建立端口连接", ConfiguredStateOperationIds.RelationSet, ("关系类型", StructuredValue.FromText("交互.关系.连接"))));
+                Mutation(
+                    "建立端口连接",
+                    ConfiguredStateOperationIds.RelationSet,
+                    (CourseConfigurationKeys.Mutation.RelationTypeId,
+                        StructuredValue.FromText(
+                            InteractionRelationTypeIds.Connection.Value))));
         }
 
         private static ConfiguredActionDefinition DisconnectAction()
@@ -601,7 +614,12 @@ namespace VirtualLab.Engine.Tests.Courses
             return Action(
                 InteractionSemanticActionIds.Disconnect,
                 Array.Empty<StructuredRuleDefinition>(),
-                Mutation("移除端口连接", ConfiguredStateOperationIds.RelationRemove, ("关系类型", StructuredValue.FromText("交互.关系.连接"))));
+                Mutation(
+                    "移除端口连接",
+                    ConfiguredStateOperationIds.RelationRemove,
+                    (CourseConfigurationKeys.Mutation.RelationTypeId,
+                        StructuredValue.FromText(
+                            InteractionRelationTypeIds.Connection.Value))));
         }
 
         private static ConfiguredActionDefinition PlaceAction()
@@ -612,7 +630,12 @@ namespace VirtualLab.Engine.Tests.Courses
                 {
                     Rule(10, SpatialStructuredFactFields.对象正在接触, StructuredRuleOperator.等于, StructuredValue.FromBoolean(true), "未接触放置位置")
                 },
-                Mutation("建立放置关系", ConfiguredStateOperationIds.RelationSet, ("关系类型", StructuredValue.FromText("交互.关系.位于容器内"))));
+                Mutation(
+                    "建立放置关系",
+                    ConfiguredStateOperationIds.RelationSet,
+                    (CourseConfigurationKeys.Mutation.RelationTypeId,
+                        StructuredValue.FromText(
+                            InteractionRelationTypeIds.ContainedBy.Value))));
         }
 
         private static ConfiguredActionDefinition CoverAction()
@@ -623,7 +646,12 @@ namespace VirtualLab.Engine.Tests.Courses
                 {
                     Rule(10, SpatialStructuredFactFields.对象正在接触, StructuredRuleOperator.等于, StructuredValue.FromBoolean(true), "未接触覆盖位置")
                 },
-                Mutation("建立覆盖关系", ConfiguredStateOperationIds.RelationSet, ("关系类型", StructuredValue.FromText("交互.关系.覆盖"))));
+                Mutation(
+                    "建立覆盖关系",
+                    ConfiguredStateOperationIds.RelationSet,
+                    (CourseConfigurationKeys.Mutation.RelationTypeId,
+                        StructuredValue.FromText(
+                            InteractionRelationTypeIds.Cover.Value))));
         }
 
         private static ConfiguredActionDefinition Action(
@@ -736,12 +764,16 @@ namespace VirtualLab.Engine.Tests.Courses
         private static EntityRelation Relation(
             RelationTypeId kind,
             string source,
-            string target)
+            string target,
+            string sourcePortId = null,
+            string targetPortId = null)
         {
             return new EntityRelation(
                 kind,
                 new EntityId(source),
-                new EntityId(target));
+                new EntityId(target),
+                sourcePortId,
+                targetPortId);
         }
     }
 }

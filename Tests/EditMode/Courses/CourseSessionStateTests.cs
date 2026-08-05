@@ -61,12 +61,12 @@ namespace VirtualLab.Engine.Tests.Courses
             Assert.That(restored.ExportState(), Is.EqualTo(state));
             Assert.That(
                 restored.ExportState().Relations.Single().SourcePortId,
-                Is.EqualTo("默认端口"));
+                Is.EqualTo(InteractionPortIds.Default));
             Assert.That(
                 restored.ExportState().Entities
                     .Single(value => value.EntityId == "端口.来源")
                     .Capabilities.Single().TextProperties.Single().Key,
-                Is.EqualTo("默认端口"));
+                Is.EqualTo(InteractionPortIds.Default));
             Assert.That(replay.IsAccepted, Is.True);
             Assert.That(replay.Events, Has.Count.EqualTo(1));
             Assert.That(rejectedReplay.RejectionCode,
@@ -126,7 +126,10 @@ namespace VirtualLab.Engine.Tests.Courses
                         "变更.建立连接",
                         ConfiguredStateOperationIds.RelationSet,
                         Parameters(
-                            ("关系类型", StructuredValue.FromText("交互.关系.连接")))),
+                            (CourseConfigurationKeys.Mutation.RelationTypeId,
+                                StructuredValue.FromText(
+                                    InteractionRelationTypeIds.Connection
+                                        .Value)))),
                     new ConfiguredMutationDefinition(
                         "变更.温度",
                         ConfiguredStateOperationIds.ScalarSet,

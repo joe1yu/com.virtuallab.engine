@@ -80,7 +80,7 @@ namespace VirtualLab.Interaction.Capabilities
                 : new[]
                 {
                     new ConnectionPortDefinition(
-                        "默认端口",
+                        InteractionPortIds.Default,
                         compatibilityGroup)
                 })
         {

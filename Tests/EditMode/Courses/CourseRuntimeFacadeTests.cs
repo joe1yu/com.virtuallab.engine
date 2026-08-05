@@ -211,7 +211,22 @@ namespace VirtualLab.Engine.Tests.Courses
             var world = World();
             var session = CoreCourseRegistrations.CreateSession(
                 world,
-                Actions());
+                new[]
+                {
+                    ConfiguredActionDefinition.CreateGeneric(
+                        "动作.完成",
+                        Array.Empty<StructuredRuleDefinition>(),
+                        new[]
+                        {
+                            new ConfiguredMutationDefinition(
+                                "变化.发布完成事件",
+                                ConfiguredStateOperationIds.EventEmit,
+                                Parameters((
+                                    CourseConfigurationKeys.Mutation.EventType,
+                                    StructuredValue.FromText(
+                                        "课程门面.命令已接受"))))
+                        })
+                });
             var facade = new CourseRuntimeFacade(
                 world,
                 session,
