@@ -3,13 +3,47 @@ using System;
 namespace VirtualLab.Measurement
 {
     /// <summary>
-    /// 当前引擎支持的基础计量单位。单位换算尚未进入最小契约，
-    /// 因此不同单位的量值不能直接运算。
+    /// 类型化计量单位标识。具体单位由业务模块声明，测量模块不维护固定单位表。
     /// </summary>
-    public enum Unit
+    public readonly struct Unit : IEquatable<Unit>, IComparable<Unit>
     {
-        Gram,
-        Millilitre
+        public Unit(string id)
+        {
+            if (string.IsNullOrWhiteSpace(id))
+            {
+                throw new ArgumentException("计量单位标识不能为空。", nameof(id));
+            }
+
+            Id = id.Trim();
+        }
+
+        public string Id { get; }
+
+        public bool IsEmpty => string.IsNullOrWhiteSpace(Id);
+
+        public bool Equals(Unit other) => string.Equals(
+            Id,
+            other.Id,
+            StringComparison.Ordinal);
+
+        public override bool Equals(object obj) =>
+            obj is Unit other && Equals(other);
+
+        public override int GetHashCode() =>
+            StringComparer.Ordinal.GetHashCode(Id ?? string.Empty);
+
+        public int CompareTo(Unit other) => string.Compare(
+            Id,
+            other.Id,
+            StringComparison.Ordinal);
+
+        public override string ToString() => Id ?? string.Empty;
+
+        public static bool operator ==(Unit left, Unit right) =>
+            left.Equals(right);
+
+        public static bool operator !=(Unit left, Unit right) =>
+            !left.Equals(right);
     }
 
     /// <summary>
@@ -21,6 +55,13 @@ namespace VirtualLab.Measurement
     {
         public Quantity(decimal value, Unit unit)
         {
+            if (unit.IsEmpty)
+            {
+                throw new ArgumentException(
+                    "量值必须使用非空计量单位。",
+                    nameof(unit));
+            }
+
             Value = value;
             Unit = unit;
         }
@@ -60,7 +101,7 @@ namespace VirtualLab.Measurement
         {
             unchecked
             {
-                return (Value.GetHashCode() * 397) ^ (int)Unit;
+                return (Value.GetHashCode() * 397) ^ Unit.GetHashCode();
             }
         }
 

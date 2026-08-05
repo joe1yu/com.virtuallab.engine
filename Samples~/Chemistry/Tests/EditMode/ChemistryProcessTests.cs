@@ -19,7 +19,7 @@ namespace VirtualLab.Chemistry.Tests
     public sealed class ChemistryProcessTests
     {
         [Test]
-        public void Pour_normalizes_before_validation_and_rejects_unknown_units()
+        public void Pour_normalizes_before_validation_and_rejects_empty_units()
         {
             Assert.That(
                 () => new PourCommand(
@@ -27,7 +27,7 @@ namespace VirtualLab.Chemistry.Tests
                     "session-1",
                     new EntityId("source"),
                     new EntityId("target"),
-                    new Quantity(0.0000004m, Unit.Gram),
+                    new Quantity(0.0000004m, ChemistryUnits.Gram),
                     new SimulationTick(0)),
                 Throws.TypeOf<ArgumentOutOfRangeException>());
             Assert.That(
@@ -36,7 +36,7 @@ namespace VirtualLab.Chemistry.Tests
                     "session-1",
                     new EntityId("source"),
                     new EntityId("target"),
-                    new Quantity(1m, (Unit)999),
+                    default,
                     new SimulationTick(0)),
                 Throws.TypeOf<ArgumentOutOfRangeException>());
         }
@@ -50,7 +50,7 @@ namespace VirtualLab.Chemistry.Tests
 
             Assert.That(
                 fixture.World.RequireMatterInventory().Total("oxygen"),
-                Is.GreaterThan(Quantity.Zero(Unit.Millilitre)));
+                Is.GreaterThan(Quantity.Zero(ChemistryUnits.Millilitre)));
             Assert.That(fixture.Events.Events.Any(e => e.EventType == "气体.已生成"), Is.True);
         }
 
@@ -64,7 +64,7 @@ namespace VirtualLab.Chemistry.Tests
                     fixture.Source,
                     fixture.Target,
                     "water",
-                    new Quantity(-1m, Unit.Millilitre),
+                    new Quantity(-1m, ChemistryUnits.Millilitre),
                     new SimulationTick(1),
                     fixture.Events),
                 Throws.TypeOf<ArgumentOutOfRangeException>());
@@ -80,7 +80,7 @@ namespace VirtualLab.Chemistry.Tests
                     fixture.Source,
                     fixture.Target,
                     "water",
-                    new Quantity(11m, Unit.Millilitre),
+                    new Quantity(11m, ChemistryUnits.Millilitre),
                     new SimulationTick(1),
                     fixture.Events),
                 Throws.TypeOf<InvalidOperationException>());
@@ -96,7 +96,7 @@ namespace VirtualLab.Chemistry.Tests
                 fixture.Source,
                 fixture.Target,
                 "water",
-                new Quantity(4m, Unit.Millilitre),
+                new Quantity(4m, ChemistryUnits.Millilitre),
                 new SimulationTick(3),
                 fixture.Events);
 
@@ -115,14 +115,14 @@ namespace VirtualLab.Chemistry.Tests
                 fixture.Source,
                 new SubstanceBatch(
                     "calcium-hydroxide",
-                    new Quantity(0.74092m, Unit.Gram),
+                    new Quantity(0.74092m, ChemistryUnits.Gram),
                     MatterPhase.Solid,
                     new Temperature(20m)));
             fixture.World.RequireMatterInventory().Add(
                 fixture.Target,
                 new SubstanceBatch(
                     "carbon-dioxide",
-                    new Quantity(44.0095m, Unit.Gram),
+                    new Quantity(44.0095m, ChemistryUnits.Gram),
                     MatterPhase.Gas,
                     new Temperature(20m)));
 
@@ -134,10 +134,10 @@ namespace VirtualLab.Chemistry.Tests
                 {
                     new MixtureTransferComponent(
                         "water",
-                        new Quantity(10m, Unit.Millilitre)),
+                        new Quantity(10m, ChemistryUnits.Millilitre)),
                     new MixtureTransferComponent(
                         "calcium-hydroxide",
-                        new Quantity(0.74092m, Unit.Gram))
+                        new Quantity(0.74092m, ChemistryUnits.Gram))
                 },
                 "pour:mixture",
                 new SimulationTick(1),
@@ -152,8 +152,8 @@ namespace VirtualLab.Chemistry.Tests
                     value.Quantity.Unit),
                 Is.EqualTo(new[]
                 {
-                    "water:10:Millilitre",
-                    "calcium-hydroxide:0.74092:Gram"
+                    "water:10:毫升",
+                    "calcium-hydroxide:0.74092:克"
                 }));
 
             var reaction = new ChemistryReactionDefinition(
@@ -161,19 +161,19 @@ namespace VirtualLab.Chemistry.Tests
                 new[]
                 {
                     new ChemistryReactionTerm(
-                        "carbon-dioxide", 44.0095m, Unit.Gram,
+                        "carbon-dioxide", 44.0095m, ChemistryUnits.Gram,
                         MatterPhase.Gas, 1m),
                     new ChemistryReactionTerm(
-                        "calcium-hydroxide", 74.092m, Unit.Gram,
+                        "calcium-hydroxide", 74.092m, ChemistryUnits.Gram,
                         MatterPhase.Solid, 1m)
                 },
                 new[]
                 {
                     new ChemistryReactionTerm(
-                        "calcium-carbonate", 100.0865m, Unit.Gram,
+                        "calcium-carbonate", 100.0865m, ChemistryUnits.Gram,
                         MatterPhase.Solid, 1m),
                     new ChemistryReactionTerm(
-                        "water", 18.015m, Unit.Millilitre,
+                        "water", 18.015m, ChemistryUnits.Millilitre,
                         MatterPhase.Liquid, 1m)
                 },
                 ChemistryReactionProcessKind.Mixing,
@@ -208,25 +208,25 @@ namespace VirtualLab.Chemistry.Tests
                 fixture.World.RequireMatterInventory().Total(
                     fixture.Target,
                     "carbon-dioxide",
-                    Unit.Gram).Value,
+                    ChemistryUnits.Gram).Value,
                 Is.EqualTo(43.569405m));
             Assert.That(
                 fixture.World.RequireMatterInventory().Total(
                     fixture.Target,
                     "calcium-hydroxide",
-                    Unit.Gram).Value,
+                    ChemistryUnits.Gram).Value,
                 Is.EqualTo(0m));
             Assert.That(
                 fixture.World.RequireMatterInventory().Total(
                     fixture.Target,
                     "calcium-carbonate",
-                    Unit.Gram).Value,
+                    ChemistryUnits.Gram).Value,
                 Is.EqualTo(1.000865m));
             Assert.That(
                 fixture.World.RequireMatterInventory().Total(
                     fixture.Target,
                     "water",
-                    Unit.Millilitre).Value,
+                    ChemistryUnits.Millilitre).Value,
                 Is.EqualTo(10.18015m));
             Assert.That(
                 fixture.Events.Events.Count(value =>
@@ -242,7 +242,7 @@ namespace VirtualLab.Chemistry.Tests
                 fixture.Source,
                 new SubstanceBatch(
                     "calcium-hydroxide",
-                    new Quantity(0.74092m, Unit.Gram),
+                    new Quantity(0.74092m, ChemistryUnits.Gram),
                     MatterPhase.Solid,
                     new Temperature(20m)));
 
@@ -255,10 +255,10 @@ namespace VirtualLab.Chemistry.Tests
                     {
                         new MixtureTransferComponent(
                             "water",
-                            new Quantity(10m, Unit.Millilitre)),
+                            new Quantity(10m, ChemistryUnits.Millilitre)),
                         new MixtureTransferComponent(
                             "calcium-hydroxide",
-                            new Quantity(1m, Unit.Gram))
+                            new Quantity(1m, ChemistryUnits.Gram))
                     },
                     "pour:insufficient",
                     new SimulationTick(1),
@@ -268,13 +268,13 @@ namespace VirtualLab.Chemistry.Tests
                 fixture.World.RequireMatterInventory().Total(
                     fixture.Source,
                     "water",
-                    Unit.Millilitre).Value,
+                    ChemistryUnits.Millilitre).Value,
                 Is.EqualTo(10m));
             Assert.That(
                 fixture.World.RequireMatterInventory().Total(
                     fixture.Source,
                     "calcium-hydroxide",
-                    Unit.Gram).Value,
+                    ChemistryUnits.Gram).Value,
                 Is.EqualTo(0.74092m));
             Assert.That(fixture.Events.Events, Is.Empty);
         }
@@ -286,7 +286,7 @@ namespace VirtualLab.Chemistry.Tests
             var components = Enumerable.Range(0, 21)
                 .Select(index => new MixtureTransferComponent(
                     "component-" + index,
-                    new Quantity(1m, Unit.Gram)))
+                    new Quantity(1m, ChemistryUnits.Gram)))
                 .ToArray();
             foreach (var component in components)
             {
@@ -322,13 +322,13 @@ namespace VirtualLab.Chemistry.Tests
                     fixture.World.RequireMatterInventory().Total(
                         fixture.Source,
                         component.SubstanceId,
-                        Unit.Gram).Value,
+                        ChemistryUnits.Gram).Value,
                     Is.EqualTo(1m));
                 Assert.That(
                     fixture.World.RequireMatterInventory().Total(
                         fixture.Target,
                         component.SubstanceId,
-                        Unit.Gram).Value,
+                        ChemistryUnits.Gram).Value,
                     Is.EqualTo(0m));
             }
         }
@@ -342,7 +342,7 @@ namespace VirtualLab.Chemistry.Tests
                     MixtureTransferExecutor.MaxComponents)
                 .Select(index => new MixtureTransferComponent(
                     "bounded-" + index,
-                    new Quantity(1m, Unit.Gram)))
+                    new Quantity(1m, ChemistryUnits.Gram)))
                 .ToArray();
             foreach (var component in components)
             {
@@ -376,7 +376,7 @@ namespace VirtualLab.Chemistry.Tests
                         's',
                         MixtureTransferExecutor
                             .MaxSubstanceIdCharacters + 1),
-                    new Quantity(1m, Unit.Gram)),
+                    new Quantity(1m, ChemistryUnits.Gram)),
                 Throws.TypeOf<ArgumentException>());
             Assert.That(
                 () => new MixtureTransferredEvent(
@@ -397,7 +397,7 @@ namespace VirtualLab.Chemistry.Tests
                 fixture.Target,
                 new SubstanceBatch(
                     "source",
-                    new Quantity(1m, Unit.Gram),
+                    new Quantity(1m, ChemistryUnits.Gram),
                     MatterPhase.Solid,
                     new Temperature(19m)));
             var reaction = new ChemistryReactionDefinition(
@@ -405,13 +405,13 @@ namespace VirtualLab.Chemistry.Tests
                 new[]
                 {
                     new ChemistryReactionTerm(
-                        "source", 1m, Unit.Gram,
+                        "source", 1m, ChemistryUnits.Gram,
                         MatterPhase.Solid, 1m)
                 },
                 new[]
                 {
                     new ChemistryReactionTerm(
-                        "product", 1m, Unit.Gram,
+                        "product", 1m, ChemistryUnits.Gram,
                         MatterPhase.Solid, 1m)
                 },
                 ChemistryReactionProcessKind.Mixing,
@@ -436,7 +436,7 @@ namespace VirtualLab.Chemistry.Tests
                 fixture.Target,
                 new SubstanceBatch(
                     "source",
-                    new Quantity(1m, Unit.Gram),
+                    new Quantity(1m, ChemistryUnits.Gram),
                     MatterPhase.Solid,
                     new Temperature(20m)));
             var warm = executor.Execute(
@@ -454,13 +454,13 @@ namespace VirtualLab.Chemistry.Tests
                 fixture.World.RequireMatterInventory().Total(
                     fixture.Target,
                     "source",
-                    Unit.Gram).Value,
+                    ChemistryUnits.Gram).Value,
                 Is.EqualTo(1m));
             Assert.That(
                 fixture.World.RequireMatterInventory().Total(
                     fixture.Target,
                     "product",
-                    Unit.Gram).Value,
+                    ChemistryUnits.Gram).Value,
                 Is.EqualTo(1m));
         }
 
@@ -474,7 +474,7 @@ namespace VirtualLab.Chemistry.Tests
                     fixture.Source,
                     fixture.Target,
                     "oxygen",
-                    new Quantity(1m, Unit.Millilitre),
+                    new Quantity(1m, ChemistryUnits.Millilitre),
                     new SimulationTick(1),
                     fixture.Events),
                 Throws.TypeOf<InvalidOperationException>());
@@ -493,7 +493,7 @@ namespace VirtualLab.Chemistry.Tests
                     fixture.Source,
                     fixture.Target,
                     "water",
-                    new Quantity(4m, Unit.Millilitre),
+                    new Quantity(4m, ChemistryUnits.Millilitre),
                     new SimulationTick(1),
                     new ThrowingCollector()),
                 Throws.TypeOf<RecordingException>());
@@ -541,7 +541,7 @@ namespace VirtualLab.Chemistry.Tests
                 fixture.Source,
                 fixture.Target,
                 "water",
-                new Quantity(4m, Unit.Millilitre),
+                new Quantity(4m, ChemistryUnits.Millilitre),
                 new SimulationTick(1),
                 collector);
 
@@ -576,7 +576,7 @@ namespace VirtualLab.Chemistry.Tests
                     new EntityId("missing"),
                     new SubstanceBatch(
                         "water",
-                        new Quantity(3m, Unit.Millilitre),
+                        new Quantity(3m, ChemistryUnits.Millilitre),
                         MatterPhase.Liquid,
                         new Temperature(20m))),
                 Throws.TypeOf<InvalidOperationException>());
@@ -593,7 +593,7 @@ namespace VirtualLab.Chemistry.Tests
                     fixture.Source,
                     new EntityId("missing"),
                     "water",
-                    new Quantity(4m, Unit.Millilitre),
+                    new Quantity(4m, ChemistryUnits.Millilitre),
                     new SimulationTick(1),
                     fixture.Events),
                 Throws.TypeOf<InvalidOperationException>());
@@ -664,18 +664,18 @@ namespace VirtualLab.Chemistry.Tests
 
             Assert.That(
                 hotFirst.World.RequireMatterInventory().Total("potassium-permanganate"),
-                Is.EqualTo(new Quantity(1.75m, Unit.Gram)));
+                Is.EqualTo(new Quantity(1.75m, ChemistryUnits.Gram)));
             Assert.That(
                 coldFirst.World.RequireMatterInventory().Total("potassium-permanganate"),
-                Is.EqualTo(new Quantity(1.75m, Unit.Gram)));
+                Is.EqualTo(new Quantity(1.75m, ChemistryUnits.Gram)));
             Assert.That(
                 hotFirst.World.RequireMatterInventory().Total(
                     new EntityId("test-tube-1"),
                     MatterBatchSelection.AtOrAboveTemperature(
                         "potassium-permanganate",
                         new Temperature(240m)),
-                    Unit.Gram),
-                Is.EqualTo(Quantity.Zero(Unit.Gram)));
+                    ChemistryUnits.Gram),
+                Is.EqualTo(Quantity.Zero(ChemistryUnits.Gram)));
             Assert.That(
                 coldFirst.World.RequireMatterInventory().Total("oxygen"),
                 Is.EqualTo(hotFirst.World.RequireMatterInventory().Total("oxygen")));
@@ -691,10 +691,10 @@ namespace VirtualLab.Chemistry.Tests
                 Throws.TypeOf<RecordingException>());
             Assert.That(
                 fixture.World.RequireMatterInventory().Total("potassium-permanganate"),
-                Is.EqualTo(new Quantity(2m, Unit.Gram)));
+                Is.EqualTo(new Quantity(2m, ChemistryUnits.Gram)));
             Assert.That(
-                fixture.World.RequireMatterInventory().Total("oxygen", Unit.Millilitre),
-                Is.EqualTo(Quantity.Zero(Unit.Millilitre)));
+                fixture.World.RequireMatterInventory().Total("oxygen", ChemistryUnits.Millilitre),
+                Is.EqualTo(Quantity.Zero(ChemistryUnits.Millilitre)));
         }
 
         [Test]
@@ -707,7 +707,7 @@ namespace VirtualLab.Chemistry.Tests
                     {
                         new ReactionTerm(
                             "carbon",
-                            new Quantity(1m, Unit.Gram),
+                            new Quantity(1m, ChemistryUnits.Gram),
                             MatterPhase.Solid,
                             gramsPerDeclaredUnit: 1m)
                     },
@@ -715,7 +715,7 @@ namespace VirtualLab.Chemistry.Tests
                     {
                         new ReactionTerm(
                             "carbon-dioxide",
-                            new Quantity(2m, Unit.Millilitre),
+                            new Quantity(2m, ChemistryUnits.Millilitre),
                             MatterPhase.Gas,
                             gramsPerDeclaredUnit: 1m)
                     }),
@@ -728,7 +728,7 @@ namespace VirtualLab.Chemistry.Tests
             Assert.That(
                 () => new ReactionTerm(
                     "oxygen",
-                    new Quantity(1m, Unit.Millilitre),
+                    new Quantity(1m, ChemistryUnits.Millilitre),
                     MatterPhase.Gas,
                     gramsPerDeclaredUnit: 0m),
                 Throws.TypeOf<ArgumentOutOfRangeException>());
@@ -744,7 +744,7 @@ namespace VirtualLab.Chemistry.Tests
                     {
                         new ReactionTerm(
                             "input",
-                            new Quantity(2m, Unit.Gram),
+                            new Quantity(2m, ChemistryUnits.Gram),
                             MatterPhase.Solid,
                             gramsPerDeclaredUnit: 0.5m)
                     },
@@ -752,7 +752,7 @@ namespace VirtualLab.Chemistry.Tests
                     {
                         new ReactionTerm(
                             "output",
-                            new Quantity(1m, Unit.Gram),
+                            new Quantity(1m, ChemistryUnits.Gram),
                             MatterPhase.Solid,
                             gramsPerDeclaredUnit: 1m)
                     }),
@@ -906,7 +906,7 @@ namespace VirtualLab.Chemistry.Tests
                         _target,
                         new SubstanceBatch(
                             "water",
-                            new Quantity(1m, Unit.Millilitre),
+                            new Quantity(1m, ChemistryUnits.Millilitre),
                             MatterPhase.Liquid,
                             new Temperature(20m)));
                     return;
@@ -918,7 +918,7 @@ namespace VirtualLab.Chemistry.Tests
                         _source,
                         _target,
                         "water",
-                        new Quantity(1m, Unit.Millilitre),
+                        new Quantity(1m, ChemistryUnits.Millilitre),
                         new SimulationTick(1),
                         this);
                     return;
@@ -929,7 +929,7 @@ namespace VirtualLab.Chemistry.Tests
                     _world.RequireMatterInventory().Consume(
                         _source,
                         MatterBatchSelection.All("water"),
-                        new Quantity(1m, Unit.Millilitre));
+                        new Quantity(1m, ChemistryUnits.Millilitre));
                     return;
                 }
 

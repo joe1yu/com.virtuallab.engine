@@ -21,8 +21,8 @@ namespace VirtualLab.Engine.Tests.Kernel
         [Test]
         public void Quantity_rejects_different_units_when_adding()
         {
-            var grams = new Quantity(2m, Unit.Gram);
-            var millilitres = new Quantity(3m, Unit.Millilitre);
+            var grams = new Quantity(2m, new Unit("克"));
+            var millilitres = new Quantity(3m, new Unit("毫升"));
 
             Assert.That(() => grams.Add(millilitres), Throws.InvalidOperationException);
         }
@@ -30,11 +30,32 @@ namespace VirtualLab.Engine.Tests.Kernel
         [Test]
         public void Quantity_adds_and_subtracts_values_with_the_same_unit()
         {
-            var grams = new Quantity(5m, Unit.Gram);
-            var additionalGrams = new Quantity(2m, Unit.Gram);
+            var gram = new Unit("克");
+            var grams = new Quantity(5m, gram);
+            var additionalGrams = new Quantity(2m, gram);
 
-            Assert.That(grams.Add(additionalGrams), Is.EqualTo(new Quantity(7m, Unit.Gram)));
-            Assert.That(grams.Subtract(additionalGrams), Is.EqualTo(new Quantity(3m, Unit.Gram)));
+            Assert.That(grams.Add(additionalGrams), Is.EqualTo(new Quantity(7m, gram)));
+            Assert.That(grams.Subtract(additionalGrams), Is.EqualTo(new Quantity(3m, gram)));
+        }
+
+        [Test]
+        public void Quantity支持模块声明新的类型化单位()
+        {
+            var mole = new Unit("摩尔");
+
+            Assert.That(
+                new Quantity(1m, mole).Add(new Quantity(2m, mole)),
+                Is.EqualTo(new Quantity(3m, mole)));
+            Assert.That(mole.ToString(), Is.EqualTo("摩尔"));
+        }
+
+        [Test]
+        public void 类型化单位拒绝空标识()
+        {
+            Assert.That(() => new Unit(" "), Throws.ArgumentException);
+            Assert.That(
+                () => new Quantity(1m, default),
+                Throws.ArgumentException);
         }
 
         [Test]

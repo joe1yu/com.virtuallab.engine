@@ -81,9 +81,7 @@ namespace VirtualLab.Chemistry.Matter
                         EnsureFields(entry, 2);
                         units.Add(new KeyValuePair<string, Unit>(
                             Read(entry, MatterInventorySnapshotKeys.SubstanceId),
-                            ParseEnum<Unit>(
-                                entry,
-                                MatterInventorySnapshotKeys.Unit)));
+                            ParseUnit(entry)));
                         break;
                     case MatterInventorySnapshotKeys.BatchEntry:
                         EnsureFields(entry, 6);
@@ -97,9 +95,7 @@ namespace VirtualLab.Chemistry.Matter
                                     ParseDecimal(
                                         entry,
                                         MatterInventorySnapshotKeys.Value),
-                                    ParseEnum<Unit>(
-                                        entry,
-                                        MatterInventorySnapshotKeys.Unit)),
+                                    ParseUnit(entry)),
                                 ParseEnum<MatterPhase>(
                                     entry,
                                     MatterInventorySnapshotKeys.Phase),
@@ -166,6 +162,19 @@ namespace VirtualLab.Chemistry.Matter
             }
 
             return value;
+        }
+
+        private static Unit ParseUnit(CourseWorldStateEntry entry)
+        {
+            try
+            {
+                return new Unit(Read(entry, MatterInventorySnapshotKeys.Unit));
+            }
+            catch (ArgumentException)
+            {
+                throw new InvalidOperationException(
+                    "物质库存字段“单位”不是有效计量单位标识。");
+            }
         }
 
         private static TEnum ParseEnum<TEnum>(

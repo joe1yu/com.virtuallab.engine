@@ -325,12 +325,7 @@ namespace VirtualLab.Chemistry.Authoring
         private static string Number(decimal value) =>
             value.ToString("0.####", CultureInfo.InvariantCulture);
 
-        private static string UnitName(Unit value) => value switch
-        {
-            Unit.Gram => "克",
-            Unit.Millilitre => "毫升",
-            _ => value.ToString()
-        };
+        private static string UnitName(Unit value) => value.ToString();
 
         private static string PhaseName(MatterPhase value) => value switch
         {
@@ -583,19 +578,15 @@ namespace VirtualLab.Chemistry.Authoring
 
         private static Unit UnitValue(string value)
         {
-            switch (value)
+            try
             {
-                case "克":
-                    return Unit.Gram;
-                case "毫升":
-                    return Unit.Millilitre;
+                return new Unit(value);
             }
-
-            return Enum.TryParse(value, true, out Unit parsed)
-                   && Enum.IsDefined(typeof(Unit), parsed)
-                ? parsed
-                : throw new InvalidOperationException(
+            catch (ArgumentException)
+            {
+                throw new InvalidOperationException(
                     $"单位“{value}”未注册。");
+            }
         }
 
         private static ChemistryReactionProcessKind ProcessKind(

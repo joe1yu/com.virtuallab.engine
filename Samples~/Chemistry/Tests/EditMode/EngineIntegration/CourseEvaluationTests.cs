@@ -33,7 +33,7 @@ namespace VirtualLab.Engine.Tests.Courses
                 new EntityId("药匙"),
                 new SubstanceBatch(
                     "高锰酸钾",
-                    new Quantity(1m, Unit.Gram),
+                    new Quantity(1m, ChemistryUnits.Gram),
                     MatterPhase.Solid,
                     new Temperature(20m)));
             world.SetScalar(

@@ -18,7 +18,7 @@ namespace VirtualLab.Chemistry.Tests.Fixtures
                 {
                     new SubstanceBatch(
                         "potassium-permanganate",
-                        new Quantity(grams, Unit.Gram),
+                        new Quantity(grams, ChemistryUnits.Gram),
                         MatterPhase.Solid,
                         new Temperature(temperatureCelsius))
                 },
@@ -29,12 +29,12 @@ namespace VirtualLab.Chemistry.Tests.Fixtures
         {
             var hot = new SubstanceBatch(
                 "potassium-permanganate",
-                new Quantity(0.25m, Unit.Gram),
+                new Quantity(0.25m, ChemistryUnits.Gram),
                 MatterPhase.Solid,
                 new Temperature(260m));
             var cold = new SubstanceBatch(
                 "potassium-permanganate",
-                new Quantity(1.75m, Unit.Gram),
+                new Quantity(1.75m, ChemistryUnits.Gram),
                 MatterPhase.Solid,
                 new Temperature(20m));
             return PotassiumPermanganate(
@@ -50,7 +50,7 @@ namespace VirtualLab.Chemistry.Tests.Fixtures
                 {
                     new SubstanceBatch(
                         "potassium-permanganate",
-                        new Quantity(2m, Unit.Gram),
+                        new Quantity(2m, ChemistryUnits.Gram),
                         MatterPhase.Solid,
                         new Temperature(260m))
                 },
@@ -74,7 +74,7 @@ namespace VirtualLab.Chemistry.Tests.Fixtures
                 {
                     new ReactionTerm(
                         "potassium-permanganate",
-                        new Quantity(1m, Unit.Gram),
+                        new Quantity(1m, ChemistryUnits.Gram),
                         MatterPhase.Solid,
                         gramsPerDeclaredUnit: 1m)
                 },
@@ -82,17 +82,17 @@ namespace VirtualLab.Chemistry.Tests.Fixtures
                 {
                     new ReactionTerm(
                         "potassium-manganate",
-                        new Quantity(197.132m / 316.068m, Unit.Gram),
+                        new Quantity(197.132m / 316.068m, ChemistryUnits.Gram),
                         MatterPhase.Solid,
                         gramsPerDeclaredUnit: 1m),
                     new ReactionTerm(
                         "manganese-dioxide",
-                        new Quantity(86.936m / 316.068m, Unit.Gram),
+                        new Quantity(86.936m / 316.068m, ChemistryUnits.Gram),
                         MatterPhase.Solid,
                         gramsPerDeclaredUnit: 1m),
                     new ReactionTerm(
                         "oxygen",
-                        new Quantity(22400m / 316.068m, Unit.Millilitre),
+                        new Quantity(22400m / 316.068m, ChemistryUnits.Millilitre),
                         MatterPhase.Gas,
                         gramsPerDeclaredUnit: 32m / 22400m)
                 });
@@ -115,7 +115,7 @@ namespace VirtualLab.Chemistry.Tests.Fixtures
                 source,
                 new SubstanceBatch(
                     "water",
-                    new Quantity(millilitres, Unit.Millilitre),
+                    new Quantity(millilitres, ChemistryUnits.Millilitre),
                     MatterPhase.Liquid,
                     new Temperature(20m)));
             return new InventoryFixture(world, source, target, new EventCollector());
@@ -131,7 +131,7 @@ namespace VirtualLab.Chemistry.Tests.Fixtures
                     bottle,
                     new SubstanceBatch(
                         "carbon",
-                        new Quantity(1m, Unit.Gram),
+                        new Quantity(1m, ChemistryUnits.Gram),
                         MatterPhase.Solid,
                         new Temperature(600m)));
             }
@@ -142,7 +142,7 @@ namespace VirtualLab.Chemistry.Tests.Fixtures
                     bottle,
                     new SubstanceBatch(
                         "oxygen",
-                        new Quantity(1000m, Unit.Millilitre),
+                        new Quantity(1000m, ChemistryUnits.Millilitre),
                         MatterPhase.Gas,
                         new Temperature(20m)));
             }
@@ -153,12 +153,12 @@ namespace VirtualLab.Chemistry.Tests.Fixtures
                 {
                     new ReactionTerm(
                         "carbon",
-                        new Quantity(1m, Unit.Gram),
+                        new Quantity(1m, ChemistryUnits.Gram),
                         MatterPhase.Solid,
                         gramsPerDeclaredUnit: 1m),
                     new ReactionTerm(
                         "oxygen",
-                        new Quantity(22400m / 12m, Unit.Millilitre),
+                        new Quantity(22400m / 12m, ChemistryUnits.Millilitre),
                         MatterPhase.Gas,
                         gramsPerDeclaredUnit: 32m / 22400m)
                 },
@@ -166,7 +166,7 @@ namespace VirtualLab.Chemistry.Tests.Fixtures
                 {
                     new ReactionTerm(
                         "carbon-dioxide",
-                        new Quantity(22400m / 12m, Unit.Millilitre),
+                        new Quantity(22400m / 12m, ChemistryUnits.Millilitre),
                         MatterPhase.Gas,
                         gramsPerDeclaredUnit: 44m / 22400m)
                 });

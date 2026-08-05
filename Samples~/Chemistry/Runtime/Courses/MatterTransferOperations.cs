@@ -197,13 +197,13 @@ namespace VirtualLab.Chemistry.Courses
                 var unit = ReadUnit(mutation);
                 var rate = ReadRequestNumber(
                     request,
-                    unit == Unit.Gram
+                    unit == ChemistryUnits.Gram
                         ? ChemistryConfigurationKeys.Pour.RequestedFlowGramsPerSecond
                         : ChemistryConfigurationKeys.Pour.RequestedFlowMillilitresPerSecond);
                 if (rate <= 0d)
                 {
                     throw new ArgumentOutOfRangeException(
-                        unit == Unit.Gram
+                        unit == ChemistryUnits.Gram
                             ? ChemistryConfigurationKeys.Pour.RequestedFlowGramsPerSecond
                             : ChemistryConfigurationKeys.Pour.RequestedFlowMillilitresPerSecond,
                         "倾倒流量必须大于零。");
@@ -229,7 +229,7 @@ namespace VirtualLab.Chemistry.Courses
                     && capacityValue.Kind == StructuredValueKind.Number
                     ? (decimal)capacityValue.Number
                     : 0m;
-                if (unit == Unit.Gram && configuredCapacity <= 0m)
+                if (unit == ChemistryUnits.Gram && configuredCapacity <= 0m)
                 {
                     throw new ArgumentException(
                         "固体倾倒必须配置大于零的目标容量。");
@@ -451,7 +451,7 @@ namespace VirtualLab.Chemistry.Courses
         {
             if (!mutation.Parameters.TryGetValue(ChemistryConfigurationKeys.Common.MeasurementUnit, out var value))
             {
-                return Unit.Millilitre;
+                return ChemistryUnits.Millilitre;
             }
 
             if (value.Kind != StructuredValueKind.Text)
@@ -460,21 +460,27 @@ namespace VirtualLab.Chemistry.Courses
                     "倾倒配置参数“计量单位”必须是文本。");
             }
 
-            return value.Text switch
+            var unit = new Unit(value.Text);
+            if (!ChemistryUnits.SupportsMatterTransfer(unit))
             {
-                "克" => Unit.Gram,
-                "毫升" => Unit.Millilitre,
-                _ => throw new ArgumentException(
-                    $"未知倾倒计量单位“{value.Text}”。")
-            };
+                throw new ArgumentException(
+                    $"当前倾倒模型不支持计量单位“{value.Text}”。");
+            }
+
+            return unit;
         }
 
         private static Unit ParseStoredUnit(string value)
         {
-            return Enum.TryParse(value, out Unit unit)
-                ? unit
-                : throw new InvalidOperationException(
+            try
+            {
+                return new Unit(value);
+            }
+            catch (ArgumentException)
+            {
+                throw new InvalidOperationException(
                     $"倾倒过程计量单位“{value}”无效。");
+            }
         }
     }
 

@@ -25,7 +25,7 @@ namespace VirtualLab.Chemistry
                 throw new ArgumentOutOfRangeException(nameof(quantity), "A reaction quantity must be positive.");
             }
 
-            if (!Enum.IsDefined(typeof(Unit), quantity.Unit))
+            if (quantity.Unit.IsEmpty)
             {
                 throw new ArgumentOutOfRangeException(nameof(quantity), "A reaction quantity must use a known unit.");
             }
@@ -42,7 +42,7 @@ namespace VirtualLab.Chemistry
                     "A reaction term mass equivalence must be positive.");
             }
 
-            if (quantity.Unit == Unit.Gram && gramsPerDeclaredUnit != 1m)
+            if (quantity.Unit == ChemistryUnits.Gram && gramsPerDeclaredUnit != 1m)
             {
                 throw new ArgumentException(
                     "A quantity declared in grams must use exactly one gram per declared unit.",

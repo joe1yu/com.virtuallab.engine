@@ -57,7 +57,7 @@ namespace VirtualLab.Chemistry.Tests.Courses
                 world.RequireMatterInventory().Total(
                     new EntityId("器材.试管"),
                     "产物",
-                    Unit.Gram).Value,
+                    ChemistryUnits.Gram).Value,
                 Is.EqualTo(1m));
             Assert.That(
                 world.IsProcessActive(
@@ -94,7 +94,7 @@ namespace VirtualLab.Chemistry.Tests.Courses
                 world.RequireMatterInventory().Total(
                     new EntityId("器材.试管"),
                     "反应物",
-                    Unit.Gram).Value,
+                    ChemistryUnits.Gram).Value,
                 Is.EqualTo(1m));
         }
 
@@ -291,7 +291,7 @@ namespace VirtualLab.Chemistry.Tests.Courses
                 new EntityId("器材.试管"),
                 new SubstanceBatch(
                     "反应物",
-                    new Quantity(1m, Unit.Gram),
+                    new Quantity(1m, ChemistryUnits.Gram),
                     MatterPhase.Solid,
                     new Temperature(20m)));
             if (connected)
@@ -312,11 +312,11 @@ namespace VirtualLab.Chemistry.Tests.Courses
                 "反应.受热",
                 new[]
                 {
-                    new ReactionTerm("反应物", new Quantity(1m, Unit.Gram), MatterPhase.Solid, 1m)
+                    new ReactionTerm("反应物", new Quantity(1m, ChemistryUnits.Gram), MatterPhase.Solid, 1m)
                 },
                 new[]
                 {
-                    new ReactionTerm("产物", new Quantity(1m, Unit.Gram), MatterPhase.Solid, 1m)
+                    new ReactionTerm("产物", new Quantity(1m, ChemistryUnits.Gram), MatterPhase.Solid, 1m)
                 });
         }
 

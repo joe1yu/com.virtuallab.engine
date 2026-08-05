@@ -379,7 +379,7 @@ namespace VirtualLab.Chemistry.Courses
             var actual = world.RequireMatterInventory().Entries
                 .Where(value => value.LocationId == container
                     && value.Batch.Phase == MatterPhase.Liquid
-                    && value.Batch.Quantity.Unit == Unit.Millilitre)
+                    && value.Batch.Quantity.Unit == ChemistryUnits.Millilitre)
                 .Sum(value => value.Batch.Quantity.Value);
             var riskStateKey = mutation.Parameters.ContainsKey(
                     ChemistryConfigurationKeys.Combustion.InsufficientLiquidRiskStateKey)

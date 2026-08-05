@@ -23,20 +23,19 @@ namespace VirtualLab.Chemistry.Tests
                 new EntityId("器材.试管"),
                 new SubstanceBatch(
                     "水",
-                    new Quantity(quantity, Unit.Millilitre),
+                    new Quantity(quantity, ChemistryUnits.Millilitre),
                     MatterPhase.Liquid,
                     new Temperature(23.456789m)));
             var runtime = Runtime();
             var state = runtime.CreateSession(world).ExportState();
 
             var restored = ConfigDrivenCourseSession.Restore(runtime, state);
+            var snapshot = state.WorldStates.Single(value =>
+                value.TypeId == MatterWorldStateTypeIds.Inventory);
 
             Assert.That(restored.ExportState(), Is.EqualTo(state));
             Assert.That(
-                state.WorldStates.Single().TypeId,
-                Is.EqualTo(MatterWorldStateTypeIds.Inventory));
-            Assert.That(
-                state.WorldStates.Single().Entries
+                snapshot.Entries
                     .Single(entry => entry.EntryType
                         == MatterInventorySnapshotKeys.BatchEntry)
                     .Values[MatterInventorySnapshotKeys.Value],
@@ -52,12 +51,13 @@ namespace VirtualLab.Chemistry.Tests
                 new EntityId("器材.试管"),
                 new SubstanceBatch(
                     "水",
-                    new Quantity(10m, Unit.Millilitre),
+                    new Quantity(10m, ChemistryUnits.Millilitre),
                     MatterPhase.Liquid,
                     new Temperature(25m)));
             var runtime = Runtime();
             var state = runtime.CreateSession(world).ExportState();
-            var snapshot = state.WorldStates.Single();
+            var snapshot = state.WorldStates.Single(value =>
+                value.TypeId == MatterWorldStateTypeIds.Inventory);
             var invalidEntries = snapshot.Entries.Select(entry =>
             {
                 if (entry.EntryType != MatterInventorySnapshotKeys.BatchEntry)
@@ -72,10 +72,14 @@ namespace VirtualLab.Chemistry.Tests
                 values[MatterInventorySnapshotKeys.LocationId] = "器材.不存在";
                 return new CourseWorldStateEntry(entry.EntryType, values);
             });
-            var invalid = state.WithWorldStates(new[]
-            {
-                new CourseWorldState(snapshot.TypeId, invalidEntries)
-            });
+            var invalidInventory = new CourseWorldState(
+                snapshot.TypeId,
+                invalidEntries);
+            var invalid = state.WithWorldStates(
+                state.WorldStates.Select(value =>
+                    value.TypeId == MatterWorldStateTypeIds.Inventory
+                        ? invalidInventory
+                        : value));
 
             var error = Assert.Throws<CourseStateRestoreException>(() =>
                 ConfigDrivenCourseSession.Restore(runtime, invalid));

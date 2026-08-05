@@ -235,7 +235,7 @@ namespace VirtualLab.Chemistry
                 substanceId.Trim().Length >
                     MixtureTransferExecutor.MaxSubstanceIdCharacters ||
                 quantity.Value <= 0m ||
-                !Enum.IsDefined(typeof(Unit), quantity.Unit))
+                quantity.Unit.IsEmpty)
             {
                 throw new ArgumentException(
                     "A mixture component requires a bounded substance ID, known unit, and positive quantity.");
@@ -329,7 +329,7 @@ namespace VirtualLab.Chemistry
             if (copy.Count == 0 ||
                 copy.Select(value =>
                         value.SubstanceId + "\n" +
-                        (int)value.Quantity.Unit)
+                        value.Quantity.Unit.Id)
                     .Distinct(StringComparer.Ordinal).Count() !=
                     copy.Count)
             {

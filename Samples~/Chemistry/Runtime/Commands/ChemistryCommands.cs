@@ -16,7 +16,7 @@ namespace VirtualLab.Chemistry.Commands
             SimulationTick tick)
             : base(commandId, sessionId, targetEntityId, tick)
         {
-            if (!Enum.IsDefined(typeof(Unit), amount.Unit))
+            if (amount.Unit.IsEmpty)
             {
                 throw new ArgumentOutOfRangeException(nameof(amount));
             }

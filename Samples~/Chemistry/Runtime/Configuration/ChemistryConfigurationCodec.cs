@@ -238,7 +238,7 @@ namespace VirtualLab.Chemistry.Configuration
                         EntityId = value.EntityId,
                         SubstanceId = value.SubstanceId,
                         QuantityValue = value.QuantityValue,
-                        QuantityUnit = value.QuantityUnit,
+                        QuantityUnit = value.QuantityUnit.Id,
                         Phase = value.Phase,
                         TemperatureValue = value.TemperatureValue,
                         TemperatureUnit = value.TemperatureUnit
@@ -269,7 +269,7 @@ namespace VirtualLab.Chemistry.Configuration
                 {
                     SubstanceId = value.SubstanceId,
                     QuantityValue = value.QuantityValue,
-                    QuantityUnit = value.QuantityUnit,
+                    QuantityUnit = value.QuantityUnit.Id,
                     Phase = value.Phase,
                     GramsPerDeclaredUnit = value.GramsPerDeclaredUnit
                 })
@@ -301,7 +301,7 @@ namespace VirtualLab.Chemistry.Configuration
                         item.EntityId,
                         item.SubstanceId,
                         item.QuantityValue,
-                        item.QuantityUnit,
+                        new Unit(item.QuantityUnit),
                         item.Phase,
                         item.TemperatureValue,
                         item.TemperatureUnit)).ToList(),
@@ -318,7 +318,7 @@ namespace VirtualLab.Chemistry.Configuration
                 new ChemistryReactionTerm(
                     item.SubstanceId,
                     item.QuantityValue,
-                    item.QuantityUnit,
+                    new Unit(item.QuantityUnit),
                     item.Phase,
                     item.GramsPerDeclaredUnit)).ToList();
         }
@@ -377,7 +377,7 @@ namespace VirtualLab.Chemistry.Configuration
             [JsonProperty("quantityValue", Required = Required.Always)]
             public decimal QuantityValue { get; set; }
             [JsonProperty("quantityUnit", Required = Required.Always)]
-            public Unit QuantityUnit { get; set; }
+            public string QuantityUnit { get; set; }
             [JsonProperty("phase", Required = Required.Always)]
             public MatterPhase Phase { get; set; }
             [JsonProperty("gramsPerDeclaredUnit", Required = Required.Always)]
@@ -393,7 +393,7 @@ namespace VirtualLab.Chemistry.Configuration
             [JsonProperty("quantityValue", Required = Required.Always)]
             public decimal QuantityValue { get; set; }
             [JsonProperty("quantityUnit", Required = Required.Always)]
-            public Unit QuantityUnit { get; set; }
+            public string QuantityUnit { get; set; }
             [JsonProperty("phase", Required = Required.Always)]
             public MatterPhase Phase { get; set; }
             [JsonProperty("temperatureValue", Required = Required.Always)]

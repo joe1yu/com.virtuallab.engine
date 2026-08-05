@@ -269,7 +269,7 @@ namespace VirtualLab.Chemistry.Courses
                 var total = context.World.RequireMatterInventory().Entries
                     .Where(value => value.LocationId == source
                         && value.Batch.Phase == MatterPhase.Liquid
-                        && value.Batch.Quantity.Unit == Unit.Millilitre)
+                        && value.Batch.Quantity.Unit == ChemistryUnits.Millilitre)
                     .Sum(value => value.Batch.Quantity.Value);
                 return StructuredValue.FromNumber((double)total);
             }
@@ -296,7 +296,7 @@ namespace VirtualLab.Chemistry.Courses
                 var total = context.World.RequireMatterInventory().Entries
                     .Where(value => value.LocationId == source
                         && value.Batch.Phase == _phase
-                        && value.Batch.Quantity.Unit == Unit.Gram)
+                        && value.Batch.Quantity.Unit == ChemistryUnits.Gram)
                     .Sum(value => value.Batch.Quantity.Value);
                 return StructuredValue.FromNumber((double)total);
             }

@@ -23,6 +23,22 @@ namespace VirtualLab.Chemistry.Tests
                 Is.EqualTo("product"));
             Assert.That(payload, Does.Not.Contain("schemaVersion"));
             Assert.That(payload, Does.Not.Contain("contentHash"));
+            Assert.That(payload, Does.Contain("\"quantityUnit\":\"克\""));
+        }
+
+        [Test]
+        public void 课程正文可以往返模块新增的计量单位()
+        {
+            var codec = new ChemistryConfigurationCodec();
+            var mole = new Unit("摩尔");
+
+            var payload = codec.EncodeCourseConfiguration(Configuration(mole));
+            var restored = codec.DecodeCourseConfiguration(payload);
+
+            Assert.That(
+                restored.Reactions.Single().Reactants.Single().QuantityUnit,
+                Is.EqualTo(mole));
+            Assert.That(payload, Does.Contain("\"quantityUnit\":\"摩尔\""));
         }
 
         [Test]
@@ -93,8 +109,10 @@ namespace VirtualLab.Chemistry.Tests
                 Is.EqualTo("chemistry.course.payload.too-large"));
         }
 
-        private static ChemistryRuntimeConfiguration Configuration()
+        private static ChemistryRuntimeConfiguration Configuration(
+            Unit? quantityUnit = null)
         {
+            var unit = quantityUnit ?? ChemistryUnits.Gram;
             return new ChemistryRuntimeConfiguration(
                 new List<ChemistrySubstanceDefinition>
                 {
@@ -120,7 +138,7 @@ namespace VirtualLab.Chemistry.Tests
                             new ChemistryReactionTerm(
                                 "source",
                                 1m,
-                                Unit.Gram,
+                                unit,
                                 MatterPhase.Solid,
                                 1m)
                         },
@@ -129,7 +147,7 @@ namespace VirtualLab.Chemistry.Tests
                             new ChemistryReactionTerm(
                                 "product",
                                 1m,
-                                Unit.Gram,
+                                unit,
                                 MatterPhase.Solid,
                                 1m)
                         },

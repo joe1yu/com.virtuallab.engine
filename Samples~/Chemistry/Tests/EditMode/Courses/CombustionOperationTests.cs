@@ -100,7 +100,7 @@ namespace VirtualLab.Chemistry.Tests.Courses
                 world.RequireMatterInventory().Total(
                     new EntityId("器材.燃烧匙"),
                     "二氧化碳",
-                    Unit.Gram).Value,
+                    ChemistryUnits.Gram).Value,
                 Is.EqualTo(3m));
             Assert.That(
                 events.Events.Select(value => value.EventType),
@@ -165,7 +165,7 @@ namespace VirtualLab.Chemistry.Tests.Courses
                 new EntityId("器材.燃烧匙"),
                 new EntityId("器材.氧气瓶"),
                 "氧气",
-                new Quantity(4m, Unit.Gram),
+                new Quantity(4m, ChemistryUnits.Gram),
                 new SimulationTick(0),
                 new EventCollector());
             var operations = new CombustionOperations(
@@ -203,13 +203,13 @@ namespace VirtualLab.Chemistry.Tests.Courses
                 world.RequireMatterInventory().Total(
                     new EntityId("器材.燃烧匙"),
                     "氧气",
-                    Unit.Gram).Value,
+                    ChemistryUnits.Gram).Value,
                 Is.EqualTo(2m));
             Assert.That(
                 world.RequireMatterInventory().Total(
                     new EntityId("器材.氧气瓶"),
                     "氧气",
-                    Unit.Gram).Value,
+                    ChemistryUnits.Gram).Value,
                 Is.EqualTo(2m));
         }
 
@@ -309,7 +309,7 @@ namespace VirtualLab.Chemistry.Tests.Courses
                 new EntityId("器材.燃烧匙"),
                 new SubstanceBatch(
                     "碳",
-                    new Quantity(2m, Unit.Gram),
+                    new Quantity(2m, ChemistryUnits.Gram),
                     MatterPhase.Solid,
                     new Temperature(temperature)));
             if (validIgniter)
@@ -318,7 +318,7 @@ namespace VirtualLab.Chemistry.Tests.Courses
                     new EntityId("器材.燃烧匙"),
                     new SubstanceBatch(
                         "氧气",
-                        new Quantity(4m, Unit.Gram),
+                        new Quantity(4m, ChemistryUnits.Gram),
                         MatterPhase.Gas,
                         new Temperature(20m)));
             }
@@ -332,12 +332,12 @@ namespace VirtualLab.Chemistry.Tests.Courses
                 "反应.碳燃烧",
                 new[]
                 {
-                    new ReactionTerm("碳", new Quantity(1m, Unit.Gram), MatterPhase.Solid, 1m),
-                    new ReactionTerm("氧气", new Quantity(2m, Unit.Gram), MatterPhase.Gas, 1m)
+                    new ReactionTerm("碳", new Quantity(1m, ChemistryUnits.Gram), MatterPhase.Solid, 1m),
+                    new ReactionTerm("氧气", new Quantity(2m, ChemistryUnits.Gram), MatterPhase.Gas, 1m)
                 },
                 new[]
                 {
-                    new ReactionTerm("二氧化碳", new Quantity(3m, Unit.Gram), MatterPhase.Gas, 1m)
+                    new ReactionTerm("二氧化碳", new Quantity(3m, ChemistryUnits.Gram), MatterPhase.Gas, 1m)
                 });
         }
 

@@ -29,7 +29,7 @@ namespace VirtualLab.Chemistry.Matter
                 throw new ArgumentOutOfRangeException(nameof(quantity), "A substance quantity cannot be negative.");
             }
 
-            if (!Enum.IsDefined(typeof(Unit), quantity.Unit))
+            if (quantity.Unit.IsEmpty)
             {
                 throw new ArgumentOutOfRangeException(nameof(quantity), "A substance quantity must use a known unit.");
             }

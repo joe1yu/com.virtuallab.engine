@@ -766,9 +766,11 @@ namespace VirtualLab.Chemistry.Matter
 
         public static void EnsureKnownUnit(Unit unit)
         {
-            if (!Enum.IsDefined(typeof(Unit), unit))
+            if (unit.IsEmpty)
             {
-                throw new ArgumentOutOfRangeException(nameof(unit), "A matter quantity must use a known unit.");
+                throw new ArgumentOutOfRangeException(
+                    nameof(unit),
+                    "A matter quantity must use a non-empty unit.");
             }
         }
     }

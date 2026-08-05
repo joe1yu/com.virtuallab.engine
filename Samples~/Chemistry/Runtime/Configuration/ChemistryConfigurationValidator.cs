@@ -283,7 +283,7 @@ namespace VirtualLab.Chemistry.Configuration
                         "Reaction quantity must be positive.");
                     valid = false;
                 }
-                if (!Enum.IsDefined(typeof(Unit), value.QuantityUnit))
+                if (value.QuantityUnit.IsEmpty)
                 {
                     Add(issues, "unit.reaction.quantity",
                         itemPath + ".quantityUnit",
@@ -304,7 +304,7 @@ namespace VirtualLab.Chemistry.Configuration
                         "A positive mass input is required.");
                     valid = false;
                 }
-                else if (value.QuantityUnit == Unit.Gram
+                else if (value.QuantityUnit == ChemistryUnits.Gram
                     && Math.Abs(value.GramsPerDeclaredUnit - 1m)
                         > GramUnitTolerance)
                 {
@@ -364,7 +364,7 @@ namespace VirtualLab.Chemistry.Configuration
                         path + ".quantityValue",
                         "Initial quantity cannot be negative.");
                 }
-                if (!Enum.IsDefined(typeof(Unit), value.QuantityUnit))
+                if (value.QuantityUnit.IsEmpty)
                 {
                     Add(issues, "unit.initial-substance.quantity",
                         path + ".quantityUnit",
