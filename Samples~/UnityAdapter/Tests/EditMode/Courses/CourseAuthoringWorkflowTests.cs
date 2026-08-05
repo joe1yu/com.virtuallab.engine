@@ -143,6 +143,34 @@ namespace VirtualLab.Engine.Tests.Courses
             Assert.That(_workflow.Review.GoalsReachable, Is.Null);
         }
 
+        [Test]
+        public void 表现表单分别保存触发对象和作用对象()
+        {
+            _workflow.AddSupplies("配套小件", "玻璃片", 1);
+            _workflow.AddSupplies("容器与反应器皿", "集气瓶", 1);
+
+            _workflow.SetPresentation(
+                "覆盖后隐藏玻璃片",
+                "动作成功",
+                "覆盖",
+                "实体",
+                "玻璃片",
+                "隐藏渲染器",
+                "对象根节点",
+                string.Empty,
+                string.Empty,
+                "玻璃片",
+                "集气瓶");
+
+            var presentation = _workflow.Presentations.Single();
+            Assert.That(presentation.TriggerSourceEntityId,
+                Is.EqualTo("玻璃片"));
+            Assert.That(presentation.TriggerTargetEntityId,
+                Is.EqualTo("集气瓶"));
+            Assert.That(presentation.SubjectSelectorValue,
+                Is.EqualTo("玻璃片"));
+        }
+
         private static CourseAuthoringCatalog Catalog() =>
             CourseAuthoringCatalog.Create(new[]
             {
@@ -175,7 +203,12 @@ namespace VirtualLab.Engine.Tests.Courses
                             AuthoringOptionKind.RelationType,
                             "交互.关系.覆盖",
                             "覆盖",
-                            "覆盖件盖住目标")
+                            "覆盖件盖住目标"),
+                        new AuthoringOptionDescriptor(
+                            AuthoringOptionKind.PresentationSignal,
+                            "隐藏渲染器",
+                            "隐藏渲染器",
+                            "隐藏指定表现对象")
                     }))
             });
 

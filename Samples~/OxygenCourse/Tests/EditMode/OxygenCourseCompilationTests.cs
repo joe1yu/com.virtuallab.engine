@@ -298,7 +298,11 @@ namespace VirtualLab.Engine.Tests.Courses
                     .And.Contain("transform.oscillate")
                     .And.Contain("ui.message"));
             var rejectionMessage = result.Presentation.Effects.Single(value =>
-                value.EffectId == "表现.动作拒绝提示");
+                value.ProtocolId == "ui.message"
+                && value.ParameterBindings.Any(parameter =>
+                    parameter.Name == "文案"
+                    && parameter.ConstantValue.Text
+                    == "当前条件不允许执行该操作"));
             Assert.That(
                 rejectionMessage.ParameterBindings.Single(value =>
                     value.Name == "文案").ConstantValue.Text,

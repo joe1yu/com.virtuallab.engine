@@ -143,6 +143,38 @@ namespace VirtualLab.Engine.Tests.Courses
         }
 
         [Test]
+        public void 调整位置由Unity识别操纵手势且内核不要求对象可被抓取()
+        {
+            var blueprint = CourseBlueprintTestFactory.Blueprint(
+                Object(
+                    "铁架台试管夹",
+                    "可定位源",
+                    "参数.作用组.定位",
+                    "试管夹调节"),
+                Object(
+                    "大试管",
+                    "可定位目标",
+                    "参数.作用组.定位",
+                    "试管夹调节"));
+            var catalog = RecipeCatalog.Create(
+                new CoreRecipePackageProvider(),
+                Array.Empty<IRecipePackageProvider>());
+
+            var result = new RecipeExpander().Expand(blueprint, catalog);
+
+            Assert.That(result.IsSuccess, Is.True);
+            var position = result.Model.Actions.Single(value =>
+                value.Definition.ActionId == "定位");
+            var positionRuleIds = position.Definition.RuleIds.ToHashSet();
+            Assert.That(
+                result.Model.Rules
+                    .Where(value => positionRuleIds.Contains(
+                        value.Definition.RuleId))
+                    .Select(value => value.Definition.FieldId),
+                Does.Not.Contain("来源对象已被操作者拿起"));
+        }
+
+        [Test]
         public void 固定连接自动要求操作者持有目标对象()
         {
             var blueprint = CourseBlueprintTestFactory.Blueprint(

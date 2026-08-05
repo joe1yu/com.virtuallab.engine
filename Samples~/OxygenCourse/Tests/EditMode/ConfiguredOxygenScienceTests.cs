@@ -52,7 +52,7 @@ namespace VirtualLab.Engine.Tests.Courses
         }
 
         [Test]
-        public void 固定器材不可移动且试管夹和玻璃片保持自由配对能力()
+        public void 固定器材不可移动且试管夹可调节并保持玻璃片自由配对()
         {
             var context = CreateRuntime();
             var runtime = context.Runtime;
@@ -77,30 +77,17 @@ namespace VirtualLab.Engine.Tests.Courses
                     fixedEntityId + "不应允许被操作者移动。");
             }
 
+            var adjustClamp = runtime.Session.Execute(Request(
+                "命令.上下移动并旋转试管夹",
+                InteractionSemanticActionIds.Position,
+                "铁架台试管夹",
+                "大试管",
+                ("高度说明", StructuredValue.FromText("沿铁架台上下调节")),
+                ("倾斜说明", StructuredValue.FromText("试管口略向下倾斜"))));
             Assert.That(
-                runtime.Session.Execute(Request(
-                    "命令.握住试管夹调节部位",
-                    InteractionSemanticActionIds.Grab,
-                    "铁架台试管夹",
-                    null)).IsAccepted,
-                Is.True);
-            Assert.That(
-                runtime.Session.Execute(Request(
-                    "命令.上下移动并旋转试管夹",
-                    InteractionSemanticActionIds.Position,
-                    "铁架台试管夹",
-                    "大试管",
-                    ("高度说明", StructuredValue.FromText("沿铁架台上下调节")),
-                    ("倾斜说明", StructuredValue.FromText("试管口略向下倾斜"))))
-                    .IsAccepted,
-                Is.True);
-            Assert.That(
-                runtime.Session.Execute(Request(
-                    "命令.松开试管夹调节部位",
-                    InteractionSemanticActionIds.Release,
-                    "铁架台试管夹",
-                    null)).IsAccepted,
-                Is.True);
+                adjustClamp.IsAccepted,
+                Is.True,
+                string.Join("、", adjustClamp.RejectionCodes));
 
             AssertCrossBottleCover(runtime, "玻璃片一", "集气瓶二");
             AssertCrossBottleCover(runtime, "玻璃片二", "集气瓶一");

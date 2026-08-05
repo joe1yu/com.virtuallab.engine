@@ -174,6 +174,19 @@ namespace VirtualLab.Unity.Authoring.Drafts
         public const string StateExited = "状态退出";
         public const string ActionAvailabilityChanged = "可用性变化";
 
+        public static IReadOnlyList<string> All { get; } =
+            new ReadOnlyCollection<string>(new[]
+            {
+                CourseInitialized,
+                ActionAccepted,
+                ActionRejected,
+                DomainEvent,
+                StateEntered,
+                StateActive,
+                StateExited,
+                ActionAvailabilityChanged
+            });
+
         public static bool SupportsActionEntities(string value) =>
             string.Equals(value, ActionAccepted, StringComparison.Ordinal)
             || string.Equals(value, ActionRejected, StringComparison.Ordinal)

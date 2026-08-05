@@ -3,6 +3,7 @@ using System.Linq;
 using UnityEditor;
 using UnityEngine;
 using VirtualLab.Unity.Authoring.Diagnostics;
+using VirtualLab.Unity.Authoring.Drafts;
 
 namespace VirtualLab.Unity.Authoring.Workbench.Panels
 {
@@ -15,6 +16,9 @@ namespace VirtualLab.Unity.Authoring.Workbench.Panels
         private readonly Action<CourseDiagnosticTarget> _navigate;
         private int _presentationSignal;
         private int _presentationSubject;
+        private int _presentationTriggerType;
+        private int _presentationTriggerSource;
+        private int _presentationTriggerTarget;
         private int _acceptanceOperation;
         private int _acceptanceSource;
         private int _acceptanceTarget;
@@ -136,6 +140,33 @@ namespace VirtualLab.Unity.Authoring.Workbench.Panels
             _presentationTrigger = EditorGUILayout.TextField(
                 "触发值",
                 _presentationTrigger);
+            _presentationTriggerType = EditorGUILayout.Popup(
+                "触发类型",
+                Math.Min(
+                    _presentationTriggerType,
+                    CoursePresentationTriggerNames.All.Count - 1),
+                CoursePresentationTriggerNames.All.ToArray());
+            var triggerType = CoursePresentationTriggerNames.All[
+                _presentationTriggerType];
+            var triggerObjectNames = new[] { "任意对象" }
+                .Concat(objects.Select(value => value.DisplayName))
+                .ToArray();
+            EditorGUI.BeginDisabledGroup(
+                !CoursePresentationTriggerNames.SupportsActionEntities(
+                    triggerType));
+            _presentationTriggerSource = EditorGUILayout.Popup(
+                "触发来源",
+                Math.Min(
+                    _presentationTriggerSource,
+                    triggerObjectNames.Length - 1),
+                triggerObjectNames);
+            _presentationTriggerTarget = EditorGUILayout.Popup(
+                "触发目标",
+                Math.Min(
+                    _presentationTriggerTarget,
+                    triggerObjectNames.Length - 1),
+                triggerObjectNames);
+            EditorGUI.EndDisabledGroup();
             _presentationSignal = EditorGUILayout.Popup(
                 "表现信号",
                 Math.Min(_presentationSignal, signals.Count - 1),
@@ -153,14 +184,22 @@ namespace VirtualLab.Unity.Authoring.Workbench.Panels
                 {
                     _workflow.SetPresentation(
                         _presentationId,
-                        "领域事件",
+                        triggerType,
                         _presentationTrigger,
                         "实体",
                         objects[_presentationSubject].EntityId,
                         signals[_presentationSignal].OptionId,
                         "对象根节点",
                         string.Empty,
-                        _presentationParameters);
+                        _presentationParameters,
+                        TriggerEntityId(
+                            objects,
+                            _presentationTriggerSource,
+                            triggerType),
+                        TriggerEntityId(
+                            objects,
+                            _presentationTriggerTarget,
+                            triggerType));
                     _message = "表现覆盖已保存。";
                 }
                 catch (Exception exception)
@@ -168,6 +207,23 @@ namespace VirtualLab.Unity.Authoring.Workbench.Panels
                     _message = exception.Message;
                 }
             }
+        }
+
+        private static string TriggerEntityId(
+            System.Collections.Generic.IReadOnlyList<
+                CourseDraftObject> objects,
+            int selectedIndex,
+            string triggerType)
+        {
+            if (!CoursePresentationTriggerNames.SupportsActionEntities(
+                    triggerType)
+                || selectedIndex <= 0)
+            {
+                return string.Empty;
+            }
+
+            return objects[Math.Min(selectedIndex - 1, objects.Count - 1)]
+                .EntityId;
         }
 
         private void DrawAcceptanceForm()
