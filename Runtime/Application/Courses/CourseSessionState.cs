@@ -856,10 +856,10 @@ namespace VirtualLab.Application.Courses
                 value => $"evidence:{Token(value.AssessmentId)}"
                     + $"{Token(value.RiskId)}:{value.ScoreDelta}:"
                     + $"{Token(value.Prompt)}{Token(value.CommandId)}:"
-                    + $"{value.Severity}:{value.Recoverability}:"
+                    + $"{value.Severity}:{value.Continuation}:"
                     + string.Join(
                         string.Empty,
-                        value.BlockedGoalIds.Select(Token))));
+                        value.AffectedTargetIds.Select(Token))));
             return string.Join("\n", values);
         }
 

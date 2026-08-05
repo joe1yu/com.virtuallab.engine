@@ -49,6 +49,41 @@ namespace VirtualLab.Engine.Tests.Infrastructure
             Assert.That(json, Does.Not.Contain("\"knownUnits\""));
         }
 
+        [TestCase(
+            CourseConsequenceSeverity.PhenomenonDeviation,
+            CourseContinuationMode.CanContinue)]
+        [TestCase(
+            CourseConsequenceSeverity.ExperimentRisk,
+            CourseContinuationMode.ContinueAfterCorrection)]
+        [TestCase(
+            CourseConsequenceSeverity.ExperimentRisk,
+            CourseContinuationMode.ContinueAfterReplacement)]
+        [TestCase(
+            CourseConsequenceSeverity.SafetyIncident,
+            CourseContinuationMode.RestartRequired)]
+        [TestCase(
+            CourseConsequenceSeverity.SafetyIncident,
+            CourseContinuationMode.CannotContinue)]
+        public void 严重度与继续方式彼此独立且可持久化(
+            CourseConsequenceSeverity severity,
+            CourseContinuationMode continuation)
+        {
+            var json = SessionJson.Serialize(Archive(severity, continuation));
+
+            var evidence = SessionJson.Deserialize(json)
+                .State.Assessment.Evidence.Single();
+
+            Assert.That(evidence.Severity, Is.EqualTo(severity));
+            Assert.That(evidence.Continuation, Is.EqualTo(continuation));
+            Assert.That(
+                evidence.AffectedTargetIds,
+                Is.EqualTo(new[] { "目标.性质验证" }));
+            Assert.That(json, Does.Contain("\"continuation\""));
+            Assert.That(json, Does.Contain("\"affectedTargetIds\""));
+            Assert.That(json, Does.Not.Contain("recoverability"));
+            Assert.That(json, Does.Not.Contain("blockedGoalIds"));
+        }
+
         [Test]
         public void 当前课程存档拒绝未知字段和损坏实体引用()
         {
@@ -144,7 +179,11 @@ namespace VirtualLab.Engine.Tests.Infrastructure
             Assert.That(json, Does.Not.Contain("stateHash"));
         }
 
-        private static SessionArchive Archive()
+        private static SessionArchive Archive(
+            CourseConsequenceSeverity severity =
+                CourseConsequenceSeverity.ExperimentRisk,
+            CourseContinuationMode continuation =
+                CourseContinuationMode.RestartRequired)
         {
             var request = new SemanticActionRequest(
                 "命令.存档",
@@ -207,10 +246,9 @@ namespace VirtualLab.Engine.Tests.Infrastructure
                             -20,
                             "样品已经损坏，需要重新开始实验。",
                             "命令.存档",
-                            CourseConsequenceSeverity
-                                .EquipmentOrSampleDamage,
-                            CourseConsequenceRecoverability.RestartRequired,
-                            new[] { "目标.完成实验" })
+                            severity,
+                            continuation,
+                            new[] { "目标.性质验证" })
                     }),
                 new[] { "尚未开始实验" },
                 new[]

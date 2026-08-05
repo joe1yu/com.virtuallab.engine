@@ -555,8 +555,8 @@ namespace VirtualLab.Unity.Authoring.Normalized
             int order,
             IEnumerable<NormalizedEvaluationConditionDefinition> conditions,
             string consequenceSeverity = null,
-            string recoverability = null,
-            IEnumerable<string> blockedGoalIds = null)
+            string continuation = null,
+            IEnumerable<string> affectedTargetIds = null)
         {
             RiskId = riskId ?? string.Empty;
             DisplayName = displayName ?? string.Empty;
@@ -564,8 +564,8 @@ namespace VirtualLab.Unity.Authoring.Normalized
             TriggerValue = triggerValue ?? string.Empty;
             Order = order;
             ConsequenceSeverity = consequenceSeverity ?? string.Empty;
-            Recoverability = recoverability ?? string.Empty;
-            BlockedGoalIds = (blockedGoalIds ?? Array.Empty<string>())
+            Continuation = continuation ?? string.Empty;
+            AffectedTargetIds = (affectedTargetIds ?? Array.Empty<string>())
                 .Where(value => !string.IsNullOrWhiteSpace(value))
                 .Select(value => value.Trim())
                 .Distinct(StringComparer.Ordinal)
@@ -583,8 +583,8 @@ namespace VirtualLab.Unity.Authoring.Normalized
         public string TriggerValue { get; }
         public int Order { get; }
         public string ConsequenceSeverity { get; }
-        public string Recoverability { get; }
-        public IReadOnlyList<string> BlockedGoalIds { get; }
+        public string Continuation { get; }
+        public IReadOnlyList<string> AffectedTargetIds { get; }
         public IReadOnlyList<NormalizedEvaluationConditionDefinition>
             Conditions { get; }
         public string DefinitionId => "教学风险." + RiskId;

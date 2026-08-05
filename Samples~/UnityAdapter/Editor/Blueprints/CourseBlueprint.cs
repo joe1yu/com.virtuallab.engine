@@ -238,9 +238,8 @@ namespace VirtualLab.Unity.Authoring.Blueprints
         public string ScoreDelta => Value("分值变化");
         public string PromptMessage => Value("提示文案");
         public string ConsequenceSeverity => Value("后果严重度");
-        public string Recoverability => Value("可恢复性");
         public string Continuation => Value("发生后如何继续");
-        public string BlockedGoalIds => Value("受阻目标");
+        public string AffectedTargetIds => Value("受影响目标");
     }
 
     public sealed class CoursePresentationOverrideBlueprint : CourseBlueprintRecord

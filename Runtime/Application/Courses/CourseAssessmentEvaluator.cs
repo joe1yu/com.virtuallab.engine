@@ -12,23 +12,21 @@ namespace VirtualLab.Application.Courses
     /// </summary>
     public enum CourseConsequenceSeverity
     {
-        Advisory,
         PhenomenonDeviation,
         ExperimentRisk,
-        EquipmentOrSampleDamage,
         SafetyIncident
     }
 
     /// <summary>
-    /// 可恢复性与严重度相互独立；严重事故未必阻断目标，轻微污染也可能需要重做。
+    /// 表示后果发生后实验如何继续，与后果严重度相互独立。
     /// </summary>
-    public enum CourseConsequenceRecoverability
+    public enum CourseContinuationMode
     {
-        NoneRequired,
-        RecoverableByOperation,
-        ReplacementRequired,
+        CanContinue,
+        ContinueAfterCorrection,
+        ContinueAfterReplacement,
         RestartRequired,
-        GoalPermanentlyBlocked
+        CannotContinue
     }
 
     public enum CourseRunStatus
@@ -101,9 +99,9 @@ namespace VirtualLab.Application.Courses
             string triggerValue = null,
             CourseConsequenceSeverity severity =
                 CourseConsequenceSeverity.ExperimentRisk,
-            CourseConsequenceRecoverability recoverability =
-                CourseConsequenceRecoverability.RecoverableByOperation,
-            IEnumerable<string> blockedGoalIds = null)
+            CourseContinuationMode continuation =
+                CourseContinuationMode.ContinueAfterCorrection,
+            IEnumerable<string> affectedTargetIds = null)
         {
             if (!Enum.IsDefined(typeof(CourseAssessmentTriggerKind), triggerKind))
             {
@@ -140,25 +138,17 @@ namespace VirtualLab.Application.Courses
             }
 
             if (!Enum.IsDefined(
-                    typeof(CourseConsequenceRecoverability),
-                    recoverability))
+                    typeof(CourseContinuationMode),
+                    continuation))
             {
-                throw new ArgumentOutOfRangeException(nameof(recoverability));
+                throw new ArgumentOutOfRangeException(nameof(continuation));
             }
 
             Severity = severity;
-            Recoverability = recoverability;
-            BlockedGoalIds = CourseContractGuard.CopyStrings(
-                blockedGoalIds ?? Array.Empty<string>(),
-                $"动作评价“{AssessmentId}”的受阻目标");
-            if (Recoverability
-                    == CourseConsequenceRecoverability.GoalPermanentlyBlocked
-                && BlockedGoalIds.Count == 0)
-            {
-                throw new ArgumentException(
-                    $"动作评价“{AssessmentId}”永久阻断目标时必须声明受阻目标。",
-                    nameof(blockedGoalIds));
-            }
+            Continuation = continuation;
+            AffectedTargetIds = CourseContractGuard.CopyStrings(
+                affectedTargetIds ?? Array.Empty<string>(),
+                $"动作评价“{AssessmentId}”的受影响目标");
         }
 
         public static CourseActionAssessmentDefinition ForDomainEvent(
@@ -170,9 +160,9 @@ namespace VirtualLab.Application.Courses
             IEnumerable<CourseConditionDefinition> conditions = null,
             CourseConsequenceSeverity severity =
                 CourseConsequenceSeverity.ExperimentRisk,
-            CourseConsequenceRecoverability recoverability =
-                CourseConsequenceRecoverability.RecoverableByOperation,
-            IEnumerable<string> blockedGoalIds = null) =>
+            CourseContinuationMode continuation =
+                CourseContinuationMode.ContinueAfterCorrection,
+            IEnumerable<string> affectedTargetIds = null) =>
             new CourseActionAssessmentDefinition(
                 assessmentId,
                 string.Empty,
@@ -184,8 +174,8 @@ namespace VirtualLab.Application.Courses
                 CourseAssessmentTriggerKind.DomainEvent,
                 eventType,
                 severity,
-                recoverability,
-                blockedGoalIds);
+                continuation,
+                affectedTargetIds);
 
         public string AssessmentId { get; }
         public string ActionId { get; }
@@ -197,8 +187,8 @@ namespace VirtualLab.Application.Courses
         public CourseAssessmentTriggerKind TriggerKind { get; }
         public string TriggerValue { get; }
         public CourseConsequenceSeverity Severity { get; }
-        public CourseConsequenceRecoverability Recoverability { get; }
-        public IReadOnlyList<string> BlockedGoalIds { get; }
+        public CourseContinuationMode Continuation { get; }
+        public IReadOnlyList<string> AffectedTargetIds { get; }
     }
 
     public sealed class CourseAssessmentEvidence :
@@ -212,9 +202,9 @@ namespace VirtualLab.Application.Courses
             string commandId = null,
             CourseConsequenceSeverity severity =
                 CourseConsequenceSeverity.ExperimentRisk,
-            CourseConsequenceRecoverability recoverability =
-                CourseConsequenceRecoverability.RecoverableByOperation,
-            IEnumerable<string> blockedGoalIds = null)
+            CourseContinuationMode continuation =
+                CourseContinuationMode.ContinueAfterCorrection,
+            IEnumerable<string> affectedTargetIds = null)
         {
             AssessmentId = assessmentId;
             RiskId = riskId;
@@ -227,17 +217,17 @@ namespace VirtualLab.Application.Courses
             }
 
             if (!Enum.IsDefined(
-                    typeof(CourseConsequenceRecoverability),
-                    recoverability))
+                    typeof(CourseContinuationMode),
+                    continuation))
             {
-                throw new ArgumentOutOfRangeException(nameof(recoverability));
+                throw new ArgumentOutOfRangeException(nameof(continuation));
             }
 
             Severity = severity;
-            Recoverability = recoverability;
-            BlockedGoalIds = CourseContractGuard.CopyStrings(
-                blockedGoalIds ?? Array.Empty<string>(),
-                $"评价证据“{AssessmentId}”的受阻目标");
+            Continuation = continuation;
+            AffectedTargetIds = CourseContractGuard.CopyStrings(
+                affectedTargetIds ?? Array.Empty<string>(),
+                $"评价证据“{AssessmentId}”的受影响目标");
         }
 
         public string AssessmentId { get; }
@@ -246,8 +236,8 @@ namespace VirtualLab.Application.Courses
         public string Prompt { get; }
         public string CommandId { get; }
         public CourseConsequenceSeverity Severity { get; }
-        public CourseConsequenceRecoverability Recoverability { get; }
-        public IReadOnlyList<string> BlockedGoalIds { get; }
+        public CourseContinuationMode Continuation { get; }
+        public IReadOnlyList<string> AffectedTargetIds { get; }
 
         public bool Equals(CourseAssessmentEvidence other) =>
             other != null
@@ -257,9 +247,9 @@ namespace VirtualLab.Application.Courses
             && Prompt == other.Prompt
             && CommandId == other.CommandId
             && Severity == other.Severity
-            && Recoverability == other.Recoverability
-            && BlockedGoalIds.SequenceEqual(
-                other.BlockedGoalIds,
+            && Continuation == other.Continuation
+            && AffectedTargetIds.SequenceEqual(
+                other.AffectedTargetIds,
                 StringComparer.Ordinal);
 
         public override bool Equals(object obj) =>
@@ -432,8 +422,8 @@ namespace VirtualLab.Application.Courses
                         assessment.Prompt,
                         request.CommandId,
                         assessment.Severity,
-                        assessment.Recoverability,
-                        assessment.BlockedGoalIds));
+                        assessment.Continuation,
+                        assessment.AffectedTargetIds));
                 scoreDelta += assessment.ScoreDelta;
             }
 
@@ -458,14 +448,14 @@ namespace VirtualLab.Application.Courses
         public CourseOutcomeEvaluationResult(
             CourseRunStatus runStatus,
             CourseResultQuality quality,
-            IEnumerable<string> blockedGoalIds,
+            IEnumerable<string> affectedTargetIds,
             IEnumerable<string> consequenceIds)
         {
             RunStatus = runStatus;
             Quality = quality;
-            BlockedGoalIds = CourseContractGuard.CopyStrings(
-                blockedGoalIds,
-                "课程结局受阻目标");
+            AffectedTargetIds = CourseContractGuard.CopyStrings(
+                affectedTargetIds,
+                "课程结局受影响目标");
             ConsequenceIds = CourseContractGuard.CopyStrings(
                 consequenceIds,
                 "课程结局后果");
@@ -473,15 +463,15 @@ namespace VirtualLab.Application.Courses
 
         public CourseRunStatus RunStatus { get; }
         public CourseResultQuality Quality { get; }
-        public IReadOnlyList<string> BlockedGoalIds { get; }
+        public IReadOnlyList<string> AffectedTargetIds { get; }
         public IReadOnlyList<string> ConsequenceIds { get; }
 
         public bool Equals(CourseOutcomeEvaluationResult other) =>
             other != null
             && RunStatus == other.RunStatus
             && Quality == other.Quality
-            && BlockedGoalIds.SequenceEqual(
-                other.BlockedGoalIds,
+            && AffectedTargetIds.SequenceEqual(
+                other.AffectedTargetIds,
                 StringComparer.Ordinal)
             && ConsequenceIds.SequenceEqual(
                 other.ConsequenceIds,
@@ -515,26 +505,24 @@ namespace VirtualLab.Application.Courses
                 allGoalIds ?? throw new ArgumentNullException(nameof(allGoalIds)),
                 "课程结局全部目标");
             var fatal = assessment.Evidence.Where(value =>
-                    value.Recoverability
-                        == CourseConsequenceRecoverability.RestartRequired
-                    || value.Recoverability
-                        == CourseConsequenceRecoverability
-                            .GoalPermanentlyBlocked)
+                    value.Continuation == CourseContinuationMode.RestartRequired
+                    || value.Continuation
+                        == CourseContinuationMode.CannotContinue)
                 .ToArray();
             var replacementRequired = assessment.Evidence.Any(value =>
-                value.Recoverability
-                    == CourseConsequenceRecoverability.ReplacementRequired);
+                value.Continuation
+                    == CourseContinuationMode.ContinueAfterReplacement);
             var degraded = assessment.Evidence.Any(value =>
                 value.Severity
                     >= CourseConsequenceSeverity.PhenomenonDeviation);
-            var blockedGoals = fatal
-                .SelectMany(value => value.BlockedGoalIds)
+            var affectedTargets = assessment.Evidence
+                .SelectMany(value => value.AffectedTargetIds)
                 .Distinct(StringComparer.Ordinal)
                 .ToList();
-            if (fatal.Any(value => value.Recoverability
-                    == CourseConsequenceRecoverability.RestartRequired))
+            if (fatal.Any(value => value.Continuation
+                    == CourseContinuationMode.RestartRequired))
             {
-                blockedGoals.AddRange(configuredGoals.Where(value =>
+                affectedTargets.AddRange(configuredGoals.Where(value =>
                     !goals.CompletedGoalIds.Contains(
                         value,
                         StringComparer.Ordinal)));
@@ -557,7 +545,7 @@ namespace VirtualLab.Application.Courses
             return new CourseOutcomeEvaluationResult(
                 runStatus,
                 quality,
-                blockedGoals.Distinct(StringComparer.Ordinal),
+                affectedTargets.Distinct(StringComparer.Ordinal),
                 assessment.Evidence
                     .Select(value => value.RiskId)
                     .Distinct(StringComparer.Ordinal));

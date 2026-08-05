@@ -386,7 +386,7 @@ namespace VirtualLab.Engine.Tests.Courses
         }
 
         [Test]
-        public void 永久阻断后果只标记指定目标并判定本轮实验失败()
+        public void 无法继续后果只标记指定目标并判定本轮实验失败()
         {
             var goals = new CourseGoalEvaluationResult(
                 new[] { "目标.已完成" });
@@ -401,8 +401,8 @@ namespace VirtualLab.Engine.Tests.Courses
                         -30,
                         "集气瓶已损坏，无法继续观察铁丝燃烧。",
                         "命令.错误燃烧",
-                        CourseConsequenceSeverity.EquipmentOrSampleDamage,
-                        CourseConsequenceRecoverability.GoalPermanentlyBlocked,
+                        CourseConsequenceSeverity.ExperimentRisk,
+                        CourseContinuationMode.CannotContinue,
                         new[] { "目标.观察铁丝燃烧" })
                 });
 
@@ -414,10 +414,10 @@ namespace VirtualLab.Engine.Tests.Courses
             Assert.That(outcome.RunStatus, Is.EqualTo(CourseRunStatus.Failed));
             Assert.That(outcome.Quality, Is.EqualTo(CourseResultQuality.Degraded));
             Assert.That(
-                outcome.BlockedGoalIds,
+                outcome.AffectedTargetIds,
                 Is.EqualTo(new[] { "目标.观察铁丝燃烧" }));
             Assert.That(
-                outcome.BlockedGoalIds,
+                outcome.AffectedTargetIds,
                 Does.Not.Contain("目标.其他"));
         }
 

@@ -63,21 +63,18 @@ namespace VirtualLab.Engine.Tests.Courses
                 suckBack.Severity,
                 Is.EqualTo(CourseConsequenceSeverity.SafetyIncident));
             Assert.That(
-                suckBack.Recoverability,
-                Is.EqualTo(
-                    CourseConsequenceRecoverability.RestartRequired));
+                suckBack.Continuation,
+                Is.EqualTo(CourseContinuationMode.RestartRequired));
             var thermalDamage = result.Domain.ActionAssessments.Single(value =>
                 value.RiskId == "风险.集气瓶热损伤");
             Assert.That(
                 thermalDamage.Severity,
-                Is.EqualTo(
-                    CourseConsequenceSeverity.EquipmentOrSampleDamage));
+                Is.EqualTo(CourseConsequenceSeverity.ExperimentRisk));
             Assert.That(
-                thermalDamage.Recoverability,
-                Is.EqualTo(CourseConsequenceRecoverability
-                    .GoalPermanentlyBlocked));
+                thermalDamage.Continuation,
+                Is.EqualTo(CourseContinuationMode.CannotContinue));
             Assert.That(
-                thermalDamage.BlockedGoalIds,
+                thermalDamage.AffectedTargetIds,
                 Is.EqualTo(new[] { "目标.观察铁丝燃烧" }));
             Assert.That(
                 result.Domain.Entities.Select(value => value.EntityId),

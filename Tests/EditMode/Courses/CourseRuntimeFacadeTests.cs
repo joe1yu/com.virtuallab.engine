@@ -123,6 +123,64 @@ namespace VirtualLab.Engine.Tests.Courses
                 Is.EqualTo(state.Events.Select(value => value.EventType)));
         }
 
+        [TestCase(
+            CourseConsequenceSeverity.PhenomenonDeviation,
+            CourseContinuationMode.CanContinue,
+            CourseRunStatus.InProgress,
+            CourseResultQuality.Degraded)]
+        [TestCase(
+            CourseConsequenceSeverity.ExperimentRisk,
+            CourseContinuationMode.ContinueAfterCorrection,
+            CourseRunStatus.InProgress,
+            CourseResultQuality.Degraded)]
+        [TestCase(
+            CourseConsequenceSeverity.ExperimentRisk,
+            CourseContinuationMode.ContinueAfterReplacement,
+            CourseRunStatus.InProgress,
+            CourseResultQuality.RecoveryRequired)]
+        [TestCase(
+            CourseConsequenceSeverity.SafetyIncident,
+            CourseContinuationMode.RestartRequired,
+            CourseRunStatus.Failed,
+            CourseResultQuality.Degraded)]
+        [TestCase(
+            CourseConsequenceSeverity.SafetyIncident,
+            CourseContinuationMode.CannotContinue,
+            CourseRunStatus.Failed,
+            CourseResultQuality.Degraded)]
+        public void 严重度与继续方式独立决定课程结局(
+            CourseConsequenceSeverity severity,
+            CourseContinuationMode continuation,
+            CourseRunStatus expectedStatus,
+            CourseResultQuality expectedQuality)
+        {
+            var assessment = new CourseAssessmentEvaluationResult(
+                90,
+                new[] { "风险.测试" },
+                new[]
+                {
+                    new CourseAssessmentEvidence(
+                        "评价.测试",
+                        "风险.测试",
+                        -10,
+                        "测试后果。",
+                        severity: severity,
+                        continuation: continuation,
+                        affectedTargetIds: new[] { "目标.性质验证" })
+                });
+
+            var outcome = CourseOutcomeEvaluator.Evaluate(
+                new[] { "目标.性质验证" },
+                new CourseGoalEvaluationResult(Array.Empty<string>()),
+                assessment);
+
+            Assert.That(outcome.RunStatus, Is.EqualTo(expectedStatus));
+            Assert.That(outcome.Quality, Is.EqualTo(expectedQuality));
+            Assert.That(
+                outcome.AffectedTargetIds,
+                Does.Contain("目标.性质验证"));
+        }
+
         [Test]
         public void 需重启后果判定实验失败但不锁死后续自由操作()
         {
@@ -167,7 +225,7 @@ namespace VirtualLab.Engine.Tests.Courses
                         -30,
                         "本次实验需要重新开始。",
                         severity: CourseConsequenceSeverity.SafetyIncident,
-                        recoverability: CourseConsequenceRecoverability
+                        continuation: CourseContinuationMode
                             .RestartRequired)
                 },
                 100);
@@ -190,7 +248,7 @@ namespace VirtualLab.Engine.Tests.Courses
             Assert.That(facade.Outcome.Quality, Is.EqualTo(
                 CourseResultQuality.Degraded));
             Assert.That(
-                facade.Outcome.BlockedGoalIds,
+                facade.Outcome.AffectedTargetIds,
                 Is.EqualTo(new[] { "目标.完成课程" }));
             Assert.That(followUpResult.IsAccepted, Is.True,
                 "实验失败只描述结局，仍应允许观察和清理等自由操作。");

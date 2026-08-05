@@ -492,7 +492,7 @@ namespace VirtualLab.Unity.Authoring.Drafts
                             Pair("提示文案", item.Prompt),
                             Pair("后果严重度", item.ErrorSeverity),
                             Pair("发生后如何继续", item.Continuation),
-                            Pair("受阻目标", item.AffectedGoals)),
+                            Pair("受影响目标", item.AffectedGoals)),
                             item.Source);
                     }
                 }

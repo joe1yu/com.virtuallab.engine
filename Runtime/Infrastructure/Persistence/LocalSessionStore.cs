@@ -961,9 +961,9 @@ namespace VirtualLab.Infrastructure.Persistence
             [JsonProperty(Required = Required.Always)]
             public CourseConsequenceSeverity Severity { get; set; }
             [JsonProperty(Required = Required.Always)]
-            public CourseConsequenceRecoverability Recoverability { get; set; }
+            public CourseContinuationMode Continuation { get; set; }
             [JsonProperty(Required = Required.Always)]
-            public List<string> BlockedGoalIds { get; set; }
+            public List<string> AffectedTargetIds { get; set; }
 
             public static EvidenceDocument From(
                 CourseAssessmentEvidence value) =>
@@ -975,16 +975,16 @@ namespace VirtualLab.Infrastructure.Persistence
                     Prompt = value.Prompt,
                     CommandId = value.CommandId,
                     Severity = value.Severity,
-                    Recoverability = value.Recoverability,
-                    BlockedGoalIds = value.BlockedGoalIds.ToList()
+                    Continuation = value.Continuation,
+                    AffectedTargetIds = value.AffectedTargetIds.ToList()
                 };
 
             public CourseAssessmentEvidence ToState()
             {
                 Count(
-                    BlockedGoalIds,
+                    AffectedTargetIds,
                     SessionArchiveReadLimits.MaxEntities,
-                    "blockedGoalIds");
+                    "affectedTargetIds");
                 return new CourseAssessmentEvidence(
                     AssessmentId,
                     RiskId,
@@ -992,8 +992,8 @@ namespace VirtualLab.Infrastructure.Persistence
                     Prompt,
                     CommandId,
                     Severity,
-                    Recoverability,
-                    Require(BlockedGoalIds, "blockedGoalIds"));
+                    Continuation,
+                    Require(AffectedTargetIds, "affectedTargetIds"));
             }
         }
 

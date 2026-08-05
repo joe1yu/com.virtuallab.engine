@@ -635,37 +635,24 @@ namespace VirtualLab.Unity.Authoring.Blueprints
                         source,
                         value.Definition.RiskId,
                         diagnostics);
-                    var recoverability = ConsequenceRecoverability(
-                        value.Definition.Recoverability,
+                    var continuation = ConsequenceContinuation(
+                        value.Definition.Continuation,
                         source,
                         value.Definition.RiskId,
                         diagnostics);
-                    var blockedGoalIds = value.Definition.BlockedGoalIds
+                    var affectedTargetIds = value.Definition.AffectedTargetIds
                         .ToArray();
-                    foreach (var blockedGoalId in blockedGoalIds.Where(
-                                 blockedGoalId =>
-                                     !configuredGoalIds.Contains(blockedGoalId)))
+                    foreach (var affectedTargetId in affectedTargetIds.Where(
+                                 affectedTargetId =>
+                                     affectedTargetId != "整个实验"
+                                     && !configuredGoalIds.Contains(affectedTargetId)))
                     {
                         diagnostics.Add(Diagnostic(
-                            "blueprint.asset.risk-blocked-goal-missing",
+                            "blueprint.asset.risk-affected-target-missing",
                             source,
                             value.Definition.RiskId,
-                            $"风险“{value.Definition.RiskId}”引用了不存在的受阻目标“{blockedGoalId}”。",
-                            "在实验流程.csv 中填写已有目标步骤 ID。"));
-                    }
-
-                    if (recoverability
-                            == CourseConsequenceRecoverability
-                                .GoalPermanentlyBlocked
-                        && blockedGoalIds.Length == 0)
-                    {
-                        diagnostics.Add(Diagnostic(
-                            "blueprint.asset.risk-blocked-goal-required",
-                            source,
-                            value.Definition.RiskId,
-                            $"风险“{value.Definition.RiskId}”声明永久阻断目标，但没有填写受阻目标。",
-                            "填写一个或多个以半角分号分隔的目标步骤 ID。"));
-                        return null;
+                            $"风险“{value.Definition.RiskId}”引用了不存在的受影响目标“{affectedTargetId}”。",
+                            "填写已有目标步骤 ID 或“整个实验”。"));
                     }
 
                     if (value.Definition.TriggerType == "领域事件")
@@ -690,8 +677,8 @@ namespace VirtualLab.Unity.Authoring.Blueprints
                             prompt,
                             riskConditions,
                             severity,
-                            recoverability,
-                            blockedGoalIds);
+                            continuation,
+                            affectedTargetIds);
                     }
 
                     var trigger = value.Definition.TriggerValue.Split(
@@ -721,8 +708,8 @@ namespace VirtualLab.Unity.Authoring.Blueprints
                         prompt,
                         riskConditions,
                         severity: severity,
-                        recoverability: recoverability,
-                        blockedGoalIds: blockedGoalIds);
+                        continuation: continuation,
+                        affectedTargetIds: affectedTargetIds);
                 })
                 .Where(value => value != null)
                 .ToArray();
@@ -1090,14 +1077,10 @@ namespace VirtualLab.Unity.Authoring.Blueprints
 
             switch (configured.Trim())
             {
-                case "提示":
-                    return CourseConsequenceSeverity.Advisory;
                 case "现象偏差":
                     return CourseConsequenceSeverity.PhenomenonDeviation;
                 case "实验风险":
                     return CourseConsequenceSeverity.ExperimentRisk;
-                case "器材或样品损坏":
-                    return CourseConsequenceSeverity.EquipmentOrSampleDamage;
                 case "安全事故":
                     return CourseConsequenceSeverity.SafetyIncident;
                 default:
@@ -1106,46 +1089,42 @@ namespace VirtualLab.Unity.Authoring.Blueprints
                         source,
                         riskId,
                         $"风险“{riskId}”使用了未注册的后果严重度“{configured}”。",
-                        "使用提示、现象偏差、实验风险、器材或样品损坏或安全事故。"));
+                        "使用现象偏差、实验风险或安全事故。"));
                     return CourseConsequenceSeverity.ExperimentRisk;
             }
         }
 
-        private static CourseConsequenceRecoverability
-            ConsequenceRecoverability(
-                string configured,
-                ConfigurationSource source,
-                string riskId,
-                ICollection<CourseCompilationDiagnostic> diagnostics)
+        private static CourseContinuationMode ConsequenceContinuation(
+            string configured,
+            ConfigurationSource source,
+            string riskId,
+            ICollection<CourseCompilationDiagnostic> diagnostics)
         {
             if (string.IsNullOrWhiteSpace(configured))
             {
-                return CourseConsequenceRecoverability.RecoverableByOperation;
+                return CourseContinuationMode.ContinueAfterCorrection;
             }
 
             switch (configured.Trim())
             {
-                case "无需恢复":
-                    return CourseConsequenceRecoverability.NoneRequired;
-                case "可通过后续操作恢复":
-                    return CourseConsequenceRecoverability
-                        .RecoverableByOperation;
-                case "需要更换器材或样品":
-                    return CourseConsequenceRecoverability.ReplacementRequired;
-                case "需要重新开始实验":
-                    return CourseConsequenceRecoverability.RestartRequired;
-                case "永久阻断指定目标":
-                    return CourseConsequenceRecoverability
-                        .GoalPermanentlyBlocked;
+                case "可以继续":
+                    return CourseContinuationMode.CanContinue;
+                case "纠正后继续":
+                    return CourseContinuationMode.ContinueAfterCorrection;
+                case "更换样品或器材后继续":
+                    return CourseContinuationMode.ContinueAfterReplacement;
+                case "重新开始":
+                    return CourseContinuationMode.RestartRequired;
+                case "无法继续":
+                    return CourseContinuationMode.CannotContinue;
                 default:
                     diagnostics.Add(Diagnostic(
-                        "blueprint.asset.risk-recoverability-invalid",
+                        "blueprint.asset.risk-continuation-invalid",
                         source,
                         riskId,
-                        $"风险“{riskId}”使用了未注册的可恢复性“{configured}”。",
-                        "使用无需恢复、可通过后续操作恢复、需要更换器材或样品、需要重新开始实验或永久阻断指定目标。"));
-                    return CourseConsequenceRecoverability
-                        .RecoverableByOperation;
+                        $"风险“{riskId}”使用了未注册的继续方式“{configured}”。",
+                        "使用可以继续、纠正后继续、更换样品或器材后继续、重新开始或无法继续。"));
+                    return CourseContinuationMode.ContinueAfterCorrection;
             }
         }
 

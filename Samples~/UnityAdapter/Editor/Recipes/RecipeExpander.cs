@@ -635,8 +635,8 @@ namespace VirtualLab.Unity.Authoring.Recipes
                             first.Order,
                             conditions,
                             first.ConsequenceSeverity,
-                            first.Recoverability,
-                            SplitGroups(first.BlockedGoalIds)),
+                            first.Continuation,
+                            SplitGroups(first.AffectedTargetIds)),
                         sourceArray));
             }
             else if (first.EvaluationType != "评分"
@@ -720,12 +720,12 @@ namespace VirtualLab.Unity.Authoring.Recipes
                     first.ConsequenceSeverity,
                     StringComparison.Ordinal)
                 && string.Equals(
-                    value.Recoverability,
-                    first.Recoverability,
+                    value.Continuation,
+                    first.Continuation,
                     StringComparison.Ordinal)
                 && string.Equals(
-                    value.BlockedGoalIds,
-                    first.BlockedGoalIds,
+                    value.AffectedTargetIds,
+                    first.AffectedTargetIds,
                     StringComparison.Ordinal));
         }
 

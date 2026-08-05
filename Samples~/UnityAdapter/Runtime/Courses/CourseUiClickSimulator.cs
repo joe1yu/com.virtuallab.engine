@@ -220,7 +220,7 @@ namespace VirtualLab.UnityAdapters.Courses
             {
                 Append($"[错误后果] {evidence.Prompt}；"
                        + $"严重度={SeverityText(evidence.Severity)}；"
-                       + $"恢复方式={RecoverabilityText(evidence.Recoverability)}");
+                       + $"发生后如何继续={ContinuationText(evidence.Continuation)}");
             }
 
             _reportedEvidenceCount = runtime.Assessment.Evidence.Count;
@@ -236,10 +236,10 @@ namespace VirtualLab.UnityAdapters.Courses
                        + string.Join("、", runtime.Goals.CompletedGoalIds));
             }
 
-            if (runtime.Outcome.BlockedGoalIds.Count > 0)
+            if (runtime.Outcome.AffectedTargetIds.Count > 0)
             {
-                Append("[受阻目标] "
-                       + string.Join("、", runtime.Outcome.BlockedGoalIds));
+                Append("[受影响目标] "
+                       + string.Join("、", runtime.Outcome.AffectedTargetIds));
             }
         }
 
@@ -264,29 +264,23 @@ namespace VirtualLab.UnityAdapters.Courses
         private static string SeverityText(CourseConsequenceSeverity severity) =>
             severity switch
             {
-                CourseConsequenceSeverity.Advisory => "提示",
                 CourseConsequenceSeverity.PhenomenonDeviation => "现象偏差",
                 CourseConsequenceSeverity.ExperimentRisk => "实验风险",
-                CourseConsequenceSeverity.EquipmentOrSampleDamage =>
-                    "器材或样品损坏",
                 CourseConsequenceSeverity.SafetyIncident => "安全事故",
                 _ => severity.ToString()
             };
 
-        private static string RecoverabilityText(
-            CourseConsequenceRecoverability recoverability) =>
-            recoverability switch
+        private static string ContinuationText(
+            CourseContinuationMode continuation) =>
+            continuation switch
             {
-                CourseConsequenceRecoverability.NoneRequired => "无需恢复",
-                CourseConsequenceRecoverability.RecoverableByOperation =>
-                    "可通过后续操作恢复",
-                CourseConsequenceRecoverability.ReplacementRequired =>
-                    "需更换器材或样品",
-                CourseConsequenceRecoverability.RestartRequired =>
-                    "需重新开始实验",
-                CourseConsequenceRecoverability.GoalPermanentlyBlocked =>
-                    "指定目标已永久受阻",
-                _ => recoverability.ToString()
+                CourseContinuationMode.CanContinue => "可以继续",
+                CourseContinuationMode.ContinueAfterCorrection => "纠正后继续",
+                CourseContinuationMode.ContinueAfterReplacement =>
+                    "更换样品或器材后继续",
+                CourseContinuationMode.RestartRequired => "重新开始",
+                CourseContinuationMode.CannotContinue => "无法继续",
+                _ => continuation.ToString()
             };
 
         private void Append(string line)

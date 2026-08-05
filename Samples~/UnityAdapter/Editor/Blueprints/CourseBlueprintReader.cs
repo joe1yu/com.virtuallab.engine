@@ -119,7 +119,7 @@ namespace VirtualLab.Unity.Authoring.Blueprints
                         },
                         optionalColumns: new[]
                         {
-                            "后果严重度", "可恢复性", "受阻目标"
+                            "后果严重度", "发生后如何继续", "受影响目标"
                         }),
                     [AdvancedOverridesFile] = new FileSchema(
                         "覆盖ID",
@@ -788,8 +788,8 @@ namespace VirtualLab.Unity.Authoring.Blueprints
                         Pair("分值变化", row["分值变化"]),
                         Pair("提示文案", row["提示文案"]),
                         Pair("后果严重度", Optional(row, "后果严重度")),
-                        Pair("可恢复性", Optional(row, "可恢复性")),
-                        Pair("受阻目标", Optional(row, "受阻目标"))),
+                        Pair("发生后如何继续", Optional(row, "发生后如何继续")),
+                        Pair("受影响目标", Optional(row, "受影响目标"))),
                     source));
             }
 
