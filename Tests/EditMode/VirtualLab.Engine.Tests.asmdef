@@ -1,0 +1,26 @@
+{
+  "name": "VirtualLab.Engine.Tests",
+  "rootNamespace": "VirtualLab.Engine.Tests",
+  "references": [
+    "VirtualLab.Kernel",
+    "VirtualLab.Measurement",
+    "VirtualLab.Domain",
+    "VirtualLab.Application",
+    "VirtualLab.Interaction",
+    "VirtualLab.Interaction.Courses",
+    "VirtualLab.Spatial.Courses",
+    "VirtualLab.Teaching.Courses",
+    "VirtualLab.Presentation",
+    "VirtualLab.Infrastructure"
+  ],
+  "overrideReferences": true,
+  "precompiledReferences": [
+    "Newtonsoft.Json.dll"
+  ],
+  "optionalUnityReferences": [
+    "TestAssemblies"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ]
+}

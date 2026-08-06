@@ -1,0 +1,8 @@
+{
+  "name": "VirtualLab.Spatial.Courses",
+  "rootNamespace": "VirtualLab.Spatial.Courses",
+  "references": [
+    "VirtualLab.Application"
+  ],
+  "autoReferenced": true
+}

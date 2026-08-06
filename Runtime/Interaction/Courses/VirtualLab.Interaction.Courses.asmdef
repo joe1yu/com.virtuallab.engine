@@ -1,0 +1,11 @@
+{
+  "name": "VirtualLab.Interaction.Courses",
+  "rootNamespace": "VirtualLab.Interaction.Courses",
+  "references": [
+    "VirtualLab.Kernel",
+    "VirtualLab.Domain",
+    "VirtualLab.Interaction",
+    "VirtualLab.Application"
+  ],
+  "autoReferenced": true
+}

@@ -1,0 +1,6 @@
+{
+  "name": "VirtualLab.Presentation",
+  "rootNamespace": "VirtualLab.Presentation",
+  "references": [],
+  "autoReferenced": true
+}

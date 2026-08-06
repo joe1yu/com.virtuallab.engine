@@ -1,0 +1,19 @@
+{
+  "name": "VirtualLab.UnityAdapters",
+  "rootNamespace": "VirtualLab.UnityAdapters",
+  "references": [
+    "VirtualLab.Kernel",
+    "VirtualLab.Domain",
+    "VirtualLab.Application",
+    "VirtualLab.Interaction",
+    "VirtualLab.Interaction.Courses",
+    "VirtualLab.Spatial.Courses",
+    "VirtualLab.Presentation",
+    "Unity.ugui"
+  ],
+  "overrideReferences": true,
+  "precompiledReferences": [
+    "Newtonsoft.Json.dll"
+  ],
+  "autoReferenced": true
+}

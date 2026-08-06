@@ -1,0 +1,11 @@
+{
+  "name": "VirtualLab.Application",
+  "rootNamespace": "VirtualLab.Application",
+  "references": [
+    "VirtualLab.Kernel",
+    "VirtualLab.Measurement",
+    "VirtualLab.Domain",
+    "VirtualLab.Interaction"
+  ],
+  "autoReferenced": true
+}

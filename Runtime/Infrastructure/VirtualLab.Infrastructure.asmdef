@@ -1,0 +1,15 @@
+{
+  "name": "VirtualLab.Infrastructure",
+  "rootNamespace": "VirtualLab.Infrastructure",
+  "references": [
+    "VirtualLab.Kernel",
+    "VirtualLab.Domain",
+    "VirtualLab.Application"
+  ],
+  "overrideReferences": true,
+  "precompiledReferences": [
+    "Newtonsoft.Json.dll"
+  ],
+  "autoReferenced": true,
+  "noEngineReferences": true
+}

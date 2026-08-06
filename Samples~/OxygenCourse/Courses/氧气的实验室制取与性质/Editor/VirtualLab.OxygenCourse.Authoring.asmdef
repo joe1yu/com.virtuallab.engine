@@ -1,0 +1,17 @@
+{
+  "name": "VirtualLab.OxygenCourse.Authoring",
+  "rootNamespace": "VirtualLab.OxygenCourse.Authoring",
+  "references": [
+    "VirtualLab.Application",
+    "VirtualLab.Domain",
+    "VirtualLab.Interaction",
+    "VirtualLab.UnityAdapters",
+    "VirtualLab.Chemistry",
+    "VirtualLab.Unity.Authoring",
+    "VirtualLab.Chemistry.UnityAdapters",
+    "VirtualLab.Chemistry.Authoring"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "name": "com.virtuallab.engine",
+  "version": "0.1.0",
+  "displayName": "虚拟实验引擎",
+  "unity": "2021.3",
+  "description": "面向多学科自由操作虚拟实验的领域内核。",
+  "samples": [
+    {
+      "displayName": "Unity 适配器",
+      "description": "提供 Unity 场景、输入、资源、表现和课程创作适配；其它 Unity Sample 的前置依赖。",
+      "path": "Samples~/UnityAdapter"
+    },
+    {
+      "displayName": "化学实验",
+      "description": "提供可复用的化学能力、反应、过程、配方和知识；导入前需先导入 Unity 适配器。",
+      "path": "Samples~/Chemistry"
+    },
+    {
+      "displayName": "氧气的实验室制取与性质",
+      "description": "完整的氧气制取与性质课程；导入前需先导入 Unity 适配器和化学实验。",
+      "path": "Samples~/OxygenCourse"
+    }
+  ]
+}

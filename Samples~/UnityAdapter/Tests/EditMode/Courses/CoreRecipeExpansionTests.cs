@@ -1,0 +1,215 @@
+using System;
+using System.IO;
+using System.Linq;
+using NUnit.Framework;
+using VirtualLab.Application.Courses;
+using VirtualLab.Unity.Authoring.Blueprints;
+using VirtualLab.Unity.Authoring.Diagnostics;
+using VirtualLab.Unity.Authoring.Recipes;
+
+namespace VirtualLab.Engine.Tests.Courses
+{
+    public sealed class CoreRecipeExpansionTests
+    {
+        [Test]
+        public void 可抓取特征从平台CSV自动生成抓取释放状态表现和预制体要求()
+        {
+            var blueprint = ReadBlueprint("大试管", "可抓取");
+            var catalog = RecipeCatalog.Create(
+                new CoreRecipePackageProvider(),
+                Array.Empty<IRecipePackageProvider>());
+
+            Assert.That(catalog.IsValid, Is.True);
+            var result = new RecipeExpander().Expand(blueprint, catalog);
+
+            Assert.That(result.IsSuccess, Is.True);
+            Assert.That(result.Diagnostics, Is.Empty);
+            Assert.That(
+                result.Model.Actions.Select(value =>
+                    value.Definition.PolicyId),
+                Is.EquivalentTo(new[]
+                {
+                    "策略.通用抓取.大试管",
+                    "策略.通用释放.大试管"
+                }));
+            var operationIds = result.Model.StateChanges.Select(value =>
+                value.Definition.OperationId);
+            Assert.That(
+                operationIds,
+                Does.Contain(ConfiguredStateOperationIds.RelationSet));
+            Assert.That(
+                operationIds,
+                Does.Contain(ConfiguredStateOperationIds.RelationRemove));
+            Assert.That(
+                result.Model.PresentationStates.Select(value =>
+                    value.Definition.StateId),
+                Does.Contain("状态.大试管被学生持有"));
+            Assert.That(
+                result.Model.PresentationEffects.Select(value =>
+                    value.Definition.ProtocolId),
+                Is.EquivalentTo(new[]
+                {
+                    "interaction.follow-anchor",
+                    "interaction.stop-follow"
+                }));
+            Assert.That(
+                result.Model.PrefabContracts.Select(value =>
+                    value.Definition.Identifier),
+                Does.Contain("抓取锚点"));
+
+            var grab = result.Model.Actions.Single(value =>
+                value.Definition.PolicyId == "策略.通用抓取.大试管");
+            Assert.That(grab.Definition.OperationId, Is.EqualTo("抓取"));
+            Assert.That(
+                grab.Definition.Lifecycle,
+                Is.EqualTo(SemanticActionLifecycle.Manipulation));
+            Assert.That(
+                grab.Definition.ExecutionModeId,
+                Is.EqualTo("直接操纵"));
+            Assert.That(
+                grab.Definition.Phase,
+                Is.EqualTo(SemanticActionPhase.Start));
+            Assert.That(
+                grab.Provenance.Sources
+                    .Select(value => value.Layer)
+                    .Distinct(),
+                Is.EquivalentTo(new[]
+                {
+                    ConfigurationLayer.Course,
+                    ConfigurationLayer.Platform
+                }));
+            Assert.That(
+                grab.Provenance.Sources.Any(value =>
+                    value.FileName == "实验对象.csv" && value.Line == 2),
+                Is.True);
+            Assert.That(
+                grab.Provenance.Sources.Any(value =>
+                    value.FileName == "操作.csv" && value.Line > 1),
+                Is.True);
+        }
+
+        [Test]
+        public void 未声明可抓取特征的墙壁不生成抓取候选()
+        {
+            var blueprint = ReadBlueprint("墙壁", "可夹持");
+            var catalog = RecipeCatalog.Create(
+                new CoreRecipePackageProvider(),
+                Array.Empty<IRecipePackageProvider>());
+
+            var result = new RecipeExpander().Expand(blueprint, catalog);
+
+            Assert.That(result.IsSuccess, Is.True);
+            Assert.That(result.Model.Entities.Single().Definition.EntityId,
+                Is.EqualTo("墙壁"));
+            Assert.That(result.Model.Actions, Is.Empty);
+            Assert.That(result.Model.StateChanges, Is.Empty);
+            Assert.That(result.Model.PresentationEffects, Is.Empty);
+            Assert.That(result.Model.PrefabContracts, Is.Empty);
+        }
+
+        [Test]
+        public void 可观察特征自动获得平台默认提示表现()
+        {
+            var blueprint = ReadBlueprint("试管", "可观察");
+            var catalog = RecipeCatalog.Create(
+                new CoreRecipePackageProvider(),
+                Array.Empty<IRecipePackageProvider>());
+
+            var result = new RecipeExpander().Expand(blueprint, catalog);
+
+            Assert.That(result.IsSuccess, Is.True);
+            Assert.That(
+                result.Model.Actions.Single().Definition.PresentationGroupId,
+                Is.Not.Empty);
+            Assert.That(result.Model.PresentationGroups.Count(), Is.EqualTo(1));
+            Assert.That(
+                result.Model.PresentationEffects.Select(value =>
+                    value.Definition.ProtocolId),
+                Does.Contain("ui.message"));
+        }
+
+        [Test]
+        public void 平台提供者从七张结构化CSV保留配方来源行()
+        {
+            var package = new CoreRecipePackageProvider().Load();
+
+            Assert.That(package.PackageId, Is.EqualTo("平台通用"));
+            Assert.That(package.Recipes.Select(value => value.RecipeId),
+                Does.Contain("通用.抓取"));
+            Assert.That(
+                package.Actions
+                    .Where(value => value.RecipeId == "通用.抓取")
+                    .Select(value => value.SemanticCommandId),
+                Is.EquivalentTo(new[] { "抓取", "释放" }));
+            Assert.That(
+                package.Actions.All(value =>
+                    value.Source != null
+                    && value.Source.FileName == "操作.csv"
+                    && value.Source.Line > 1),
+                Is.True);
+        }
+
+        [Test]
+        public void 操作表拒绝英文生命周期且不保留旧协议兼容()
+        {
+            var sourceDirectory = Path.GetFullPath(Path.Combine(
+                "Packages",
+                "com.virtuallab.engine",
+                "Samples~",
+                "UnityAdapter",
+                "Editor",
+                "Recipes",
+                "平台通用"));
+            var temporaryDirectory = Path.Combine(
+                Path.GetTempPath(),
+                "VirtualLab.RecipeLifecycle."
+                + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(temporaryDirectory);
+            try
+            {
+                foreach (var sourcePath in Directory.GetFiles(sourceDirectory))
+                {
+                    File.Copy(
+                        sourcePath,
+                        Path.Combine(
+                            temporaryDirectory,
+                            Path.GetFileName(sourcePath)));
+                }
+
+                var actionPath = Path.Combine(
+                    temporaryDirectory,
+                    "操作.csv");
+                var actions = File.ReadAllText(actionPath);
+                File.WriteAllText(
+                    actionPath,
+                    actions.Replace(
+                        ",操纵,直接操纵,开始,",
+                        ",Manipulation,直接操纵,开始,"));
+
+                Assert.That(
+                    () => new RecipePackageCsvLoader().Load(
+                        "平台通用",
+                        RecipeLayer.Platform,
+                        temporaryDirectory),
+                    Throws.TypeOf<InvalidOperationException>()
+                        .With.Message.Contains(
+                            "未注册操作生命周期“Manipulation”"));
+            }
+            finally
+            {
+                if (Directory.Exists(temporaryDirectory))
+                {
+                    Directory.Delete(temporaryDirectory, true);
+                }
+            }
+        }
+
+        private static CourseBlueprint ReadBlueprint(
+            string entityId,
+            string features) =>
+            CourseBlueprintTestFactory.Blueprint(
+                CourseBlueprintTestFactory.Object(
+                    entityId,
+                    features.Split('|')));
+    }
+}

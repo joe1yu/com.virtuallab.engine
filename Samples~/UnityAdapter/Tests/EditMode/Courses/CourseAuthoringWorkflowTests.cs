@@ -1,0 +1,243 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using NUnit.Framework;
+using VirtualLab.Unity.Authoring.Catalogs;
+using VirtualLab.Unity.Authoring.Diagnostics;
+using VirtualLab.Unity.Authoring.Drafts;
+using VirtualLab.Unity.Authoring.Workbench;
+
+namespace VirtualLab.Engine.Tests.Courses
+{
+    public sealed class CourseAuthoringWorkflowTests
+    {
+        private string _root;
+        private CourseAuthoringWorkflow _workflow;
+
+        [SetUp]
+        public void SetUp()
+        {
+            _root = Path.Combine(
+                Path.GetTempPath(),
+                "VirtualLab-Workflow-" + Guid.NewGuid().ToString("N"));
+            var created = new CourseAuthoringDraftCreator().Create(
+                _root,
+                "测试课程",
+                "测试课程",
+                "化学基础",
+                "课程资源/测试.prefab");
+            _workflow = new CourseAuthoringWorkflow(
+                CourseAuthoringSession.Load(
+                    created.AuthoringDirectory,
+                    Catalog()));
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            if (Directory.Exists(_root))
+            {
+                Directory.Delete(_root, true);
+            }
+        }
+
+        [Test]
+        public void 从类别选择模板和数量会创建唯一实体标识()
+        {
+            var added = _workflow.AddSupplies(
+                "容器与反应器皿",
+                "集气瓶",
+                2);
+
+            Assert.That(
+                added.Select(value => value.EntityId),
+                Is.EqualTo(new[] { "集气瓶一", "集气瓶二" }));
+            Assert.That(
+                added.Select(value => value.EntityType).Distinct(),
+                Is.EqualTo(new[] { "集气瓶" }));
+        }
+
+        [Test]
+        public void 初始关系只接受目录注册类型和现有实体端点()
+        {
+            _workflow.AddSupplies("容器与反应器皿", "集气瓶", 1);
+            _workflow.AddSupplies("配套小件", "玻璃片", 1);
+
+            var success = _workflow.TrySetRelation(
+                "覆盖",
+                "玻璃片",
+                "集气瓶");
+            var invalid = _workflow.TrySetRelation(
+                "任意关系",
+                "玻璃片",
+                "不存在");
+
+            Assert.That(success.IsSuccess, Is.True, success.Message);
+            Assert.That(invalid.IsSuccess, Is.False);
+            Assert.That(
+                _workflow.Session.Draft.InitialRelations.Single().RelationType,
+                Is.EqualTo("交互.关系.覆盖"));
+        }
+
+        [Test]
+        public void 风险表单分别保存严重度继续方式和受影响目标()
+        {
+            _workflow.SetRisk(new RiskFormValue(
+                "风险.冷凝水倒吸",
+                "安全事故",
+                "重新开始",
+                new[] { "整个实验" }));
+
+            var risk = _workflow.Session.Draft.TeachingItems.Single();
+            Assert.That(risk.ErrorSeverity, Is.EqualTo("安全事故"));
+            Assert.That(risk.Continuation, Is.EqualTo("重新开始"));
+            Assert.That(risk.AffectedGoals.Split(';'),
+                Is.EqualTo(new[] { "整个实验" }));
+        }
+
+        [Test]
+        public void 普通操作表单不暴露状态操作协议()
+        {
+            Assert.That(_workflow.VisibleOperationFields,
+                Does.Not.Contain("协议操作"));
+            Assert.That(_workflow.VisibleOperationFields,
+                Does.Not.Contain("操作指令"));
+        }
+
+        [Test]
+        public void 编译诊断保留结构化修复目标且草稿修改后自动失效()
+        {
+            var target = new CourseDiagnosticTarget(
+                CourseAuthoringTableNames.Objects,
+                "集气瓶一",
+                CourseAuthoringColumns.Object.EntityType,
+                CourseDiagnosticActionIds.SelectEntity);
+            var diagnostic = new CourseCompilationDiagnostic(
+                "course.test",
+                "配方.csv",
+                2,
+                1,
+                string.Empty,
+                "测试规则",
+                "没有可配对的实验对象。",
+                "选择实验对象。",
+                CourseDiagnosticSeverity.Error,
+                null,
+                target);
+
+            _workflow.SetCompiledReview(
+                new CourseAuthoringReviewSummary(1, 0, 0, false, false, false),
+                new[] { diagnostic });
+
+            Assert.That(
+                _workflow.CompilationDiagnostics.Single().Target,
+                Is.SameAs(target));
+            Assert.That(
+                CourseAuthoringSections.IndexForTable(target.FileName),
+                Is.EqualTo(1));
+
+            _workflow.AddSupplies("容器与反应器皿", "集气瓶", 1);
+
+            Assert.That(_workflow.CompilationDiagnostics, Is.Empty);
+            Assert.That(_workflow.Review.GoalsReachable, Is.Null);
+        }
+
+        [Test]
+        public void 表现表单分别保存触发对象和作用对象()
+        {
+            _workflow.AddSupplies("配套小件", "玻璃片", 1);
+            _workflow.AddSupplies("容器与反应器皿", "集气瓶", 1);
+
+            _workflow.SetPresentation(
+                "覆盖后隐藏玻璃片",
+                "动作成功",
+                "覆盖",
+                "实体",
+                "玻璃片",
+                "隐藏渲染器",
+                "对象根节点",
+                string.Empty,
+                string.Empty,
+                "玻璃片",
+                "集气瓶");
+
+            var presentation = _workflow.Presentations.Single();
+            Assert.That(presentation.TriggerSourceEntityId,
+                Is.EqualTo("玻璃片"));
+            Assert.That(presentation.TriggerTargetEntityId,
+                Is.EqualTo("集气瓶"));
+            Assert.That(presentation.SubjectSelectorValue,
+                Is.EqualTo("玻璃片"));
+        }
+
+        private static CourseAuthoringCatalog Catalog() =>
+            CourseAuthoringCatalog.Create(new[]
+            {
+                new Provider(new CourseAuthoringModuleDescriptor(
+                    "化学基础",
+                    new[]
+                    {
+                        new AuthoringCategoryDescriptor(
+                            "容器与反应器皿",
+                            "容器与反应器皿",
+                            string.Empty,
+                            1),
+                        new AuthoringCategoryDescriptor(
+                            "配套小件",
+                            "配套小件",
+                            string.Empty,
+                            2)
+                    },
+                    Array.Empty<AuthoringComponentDescriptor>(),
+                    new[]
+                    {
+                        Template("集气瓶", "容器与反应器皿"),
+                        Template("玻璃片", "配套小件")
+                    },
+                    Array.Empty<AuthoringOperationDescriptor>(),
+                    Array.Empty<AuthoringProcessDescriptor>(),
+                    new[]
+                    {
+                        new AuthoringOptionDescriptor(
+                            AuthoringOptionKind.RelationType,
+                            "交互.关系.覆盖",
+                            "覆盖",
+                            "覆盖件盖住目标"),
+                        new AuthoringOptionDescriptor(
+                            AuthoringOptionKind.PresentationSignal,
+                            "隐藏渲染器",
+                            "隐藏渲染器",
+                            "隐藏指定表现对象")
+                    }))
+            });
+
+        private static AuthoringItemTemplateDescriptor Template(
+            string id,
+            string category) =>
+            new AuthoringItemTemplateDescriptor(
+                id,
+                category,
+                id,
+                string.Empty,
+                1,
+                Array.Empty<string>(),
+                Array.Empty<KeyValuePair<string, string>>(),
+                Array.Empty<string>(),
+                Array.Empty<string>(),
+                Array.Empty<string>());
+
+        private sealed class Provider : ICourseAuthoringCatalogProvider
+        {
+            private readonly CourseAuthoringModuleDescriptor _module;
+
+            public Provider(CourseAuthoringModuleDescriptor module)
+            {
+                _module = module;
+            }
+
+            public string PackageId => _module.PackageId;
+            public CourseAuthoringModuleDescriptor Load() => _module;
+        }
+    }
+}

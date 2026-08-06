@@ -1,0 +1,6 @@
+{
+  "name": "VirtualLab.Kernel",
+  "rootNamespace": "VirtualLab.Kernel",
+  "references": [],
+  "autoReferenced": true
+}
